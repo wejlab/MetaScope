@@ -1,0 +1,27 @@
+Package: MetaScope
+Type: Package
+Title: This package contains tools and functions for preprocessing microbiome data
+Version: 0.1.0
+Author: W. Evan Johnson
+Maintainer: W. Evan Johnson <wej@bu.edu>
+Description: This package contains the tools and methods for preprocessing microbiome data
+    It contains tools for library generation, demultiplexing, alignment, microbe identification
+    Is is essentially an R translation of PathoScope 2.0, or MetaScope
+License: Artistic-2.0
+Encoding: UTF-8
+LazyData: true
+Depends:
+    R (>= 3.6.0)
+Imports:
+    Biostrings,
+    tools,
+    Rsubread,
+    Rsamtools,
+    taxize,
+    BiocParallel
+biocViews:
+    MicrobiomeData,
+    ReproducibleResearch,
+    SequencingData
+VignetteBuilder: knitr
+RoxygenNote: 6.1.1
