@@ -22,7 +22,80 @@ editor_options:
 ---
 
 # Introduction
+The MetaScope package contains the tools and methods for rapidly and accurately quantifying the proportions of reads from individual microbial strains present in metagenomic sequencing data from environmental or clinical samples. The pipeline performs all necessary computational analysis steps; including reference genome library extraction and indexing, read quality control and alignment, strain identification, and summarization and annotation of results. This package is an R translation of the Python package PathoScope 2.0, and contains much of the same functionality. 
+
+
+In this tutorial, we present the basics of using PathoScope to analyze metagenomic samples via a step-by-step procedure that will transform your unintelligible sequencing reads into a meaningful picture of the microbial content present in your sample.
 
 ## Installation
 
+Install the development version of the package from Github:
+
+``` r
+if (!requireNamespace("devtools", quietly=TRUE))
+  install.packages("devtools")
+devtools::install_github("compbiomed/MetaScope")
+```
+# A Tutorial for MetaScope
+
+MetaScope is based on the previous package Pathoscope 2.0 (Hong 2014). In the same manner, Metascope consists of four core and two optional analysis modules for metagenomic profiling. 
+
+
+**Core modules**: PathoLib extracts custom genome reference libraries, PathoMap aligns the reads to the reference library and filters host reads, PathoID identifies and estimates the proportions from each genome, and PathoReport provides detailed summary reports of the results. PathoDB provides additional annotation and PathoQC can be used to preprocess the reads prior to alignment.
+
+**NOTE TO SELF: CHANGE THIS TO REFLECT METASCOPE**
+
+![](workflow_patho.png)
+ 
+## Reference Genome Library
+
+The MetaScope library module is designed to assist with collection of sequence data from the National Center for Biotechnology Information (NCBI) database. Prior to doing so, the potential targets and filters for the analysis should be identified. That is, what "target" species do you expect to find in your metagenomic sample that you would like to identify, and what reads would you like to "filter" out from the data that are not essential to your analysis?
+
+
+Typically, the targets of the analysis are microbes (that is, viruses, bacteria, and fungi), and we wish to filter out or discard any reads from the host in addition to artificially added sequences, such as PhiX174. Following identification of the targets and filters, we use a reference genome library to realign the vast number of sample reads back to the respective regions of origin in various species.
+
+
+The `download_refseq()` function automatically extracts custom reference genome libraries in a FASTA file for microbial or host genomes. The user must first indicate a kingdom for which to download the genomes, such as 'archaea' or 'viral'. They may then specify whether they wish to download only the RefSeq reference genomes, or both the reference and representative genomes. The compress option then allows users to specify whether to compress the output FASTA file; this is done by default.
+
+In the following code, we us download only the viral reference genomes from the NCBI database, in an uncompressed FASTA format.
+
+```{R ref lib}
+download_refseq('viral', compress = FALSE)
+```
+
+
+## Alignment with Reference Library
+
+- First: Create one or more subread indices from a FASTA file, `usingmk_subread_index()`
+- Second: Create path, this is where we use BAM tools?? Then map your reads (fastq) to whatever indices and create a single merged SAM file via align_target()
+
+** From Pathoscope vignette**
+This module will take your reads and map them against a target library. Then it will map the mapping reads against a filter library. All the reads that map to the filter library with a score equal or greater than the mapping score to the target library will be discarded. The reads mapping with a better score to the target library will be used downstream by the PathoID module.
+
+This computational subtraction mapping approach starts by building genome indices for your target and filter libraries, splitting the libraries as necessary to comply to Bowtie2 architecture (in files of up to 4.3 Gb; Step 1). Then, PathoMap is going to map your reads (fastq) to whatever indices and create a single merged sam file (Step 2). The resulting file will be a filtered sam file, which serves as input for PathoID.
+
+**** End pathoscope vignette material
+
+Make an index and align to a single reference genome library
+```{R alignment}
+# Make one or more Subread indices
+mk_subread_index('viral.fasta')
+
+readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+viral_map <- align_target(readPath, "viral", "virus_example")
+```
+
+## Animalcules
+
+Apply animalcules ID:
+```{R}
+animalcules_id(viral_map)
+```
+
+## Application to Asthma
+
 # Session Info
+```{r session info}
+sessionInfo()
+
+```
