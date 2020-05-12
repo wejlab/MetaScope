@@ -2,7 +2,7 @@
 #'
 #' This function will automatically download RefSeq genome libraries in a .fasta format from the specified kingdom. The function will first download the summary report at: ftp://ftp.ncbi.nlm.nih.gov/genomes/**kingdom**/overview.txt, and then use this file to download genomes and combine them in a single compressed or uncompressed .fasta file.
 #' @param kingdom Select the kingdom taxonomy to download. Options are 'archaea', 'bacteria', 'fungi', 'invertebrate', 'plant', 'protozoa', 'vertibrate', 'vertibrate_other', 'viral'
-#' @param reference Download only RefSeq reference genomes? Defaults to TRUE. Automatically set to TURE if representative is TRUE
+#' @param reference Download only RefSeq reference genomes? Defaults to TRUE. Automatically set to TRUE if representative is TRUE
 #' @param representative Download only RefSeq representative genomes? Defaults to FALSE. If TRUE, reference is automatically set at TRUE
 #' @param compress Compress the output .fasta file? Defaults to TRUE
 #' @return Returns a .fasta or .fasta.gz file of the desired RefSeq genomes. This file is named after the kindom selectd and saved to the current directory (e.g. 'bacteria.fasta.gz'). Currently, this function also returns a .fasta file formatted for PathoScope as well (e.g. 'bacteria.pathoscope.fasta.gz'), but this will soon be retired.  

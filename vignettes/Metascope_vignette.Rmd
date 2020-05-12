@@ -57,6 +57,7 @@ Typically, the targets of the analysis are microbes (that is, viruses, bacteria,
 
 The `download_refseq()` function automatically extracts custom reference genome libraries in a FASTA file for microbial or host genomes. The user must first indicate a kingdom for which to download the genomes, such as 'archaea' or 'viral'. They may then specify whether they wish to download only the RefSeq reference genomes, or both the reference and representative genomes. The compress option then allows users to specify whether to compress the output FASTA file; this is done by default.
 
+
 In the following code, we us download only the viral reference genomes from the NCBI database, in an uncompressed FASTA format.
 
 ```{R ref lib}
@@ -66,11 +67,12 @@ download_refseq('viral', compress = FALSE)
 
 ## Alignment with Reference Library
 
+After acquiring the target and filtering genome libraries, we will be able to take the sequencing reads from our sample and map them first to a target library, and then to the filter library. All reads that map to the filter library with a score equal or greater than the mapping score for the target library will be discarded; all reads mapping with a better score to the target library will be used downstream for further sample analysis.
+
 - First: Create one or more subread indices from a FASTA file, `usingmk_subread_index()`
 - Second: Create path, this is where we use BAM tools?? Then map your reads (fastq) to whatever indices and create a single merged SAM file via align_target()
 
 ** From Pathoscope vignette**
-This module will take your reads and map them against a target library. Then it will map the mapping reads against a filter library. All the reads that map to the filter library with a score equal or greater than the mapping score to the target library will be discarded. The reads mapping with a better score to the target library will be used downstream by the PathoID module.
 
 This computational subtraction mapping approach starts by building genome indices for your target and filter libraries, splitting the libraries as necessary to comply to Bowtie2 architecture (in files of up to 4.3 Gb; Step 1). Then, PathoMap is going to map your reads (fastq) to whatever indices and create a single merged sam file (Step 2). The resulting file will be a filtered sam file, which serves as input for PathoID.
 
