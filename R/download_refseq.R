@@ -5,6 +5,7 @@
 #' @param reference Download only RefSeq reference genomes? Defaults to TRUE. Automatically set to TRUE if representative is TRUE
 #' @param representative Download only RefSeq representative genomes? Defaults to FALSE. If TRUE, reference is automatically set at TRUE
 #' @param compress Compress the output .fasta file? Defaults to TRUE
+#' @param patho_out Create duplicate outpute files compatible with PathoScope? Defaults to FALSE.
 #' @return Returns a .fasta or .fasta.gz file of the desired RefSeq genomes. This file is named after the kindom selectd and saved to the current directory (e.g. 'bacteria.fasta.gz'). Currently, this function also returns a .fasta file formatted for PathoScope as well (e.g. 'bacteria.pathoscope.fasta.gz'), but this will soon be retired.  
 #'
 #' @examples
@@ -20,7 +21,7 @@
 #' @export
 
 download_refseq <- function(kingdom, reference = TRUE, representative = FALSE, 
-                            compress = TRUE) {
+                            compress = TRUE, patho_out = FALSE) {
   ## check if user provided a valid kingdom
   kingdom_list <- c("archaea", "bacteria", "fungi", "invertebrate", "plant", 
                     "protozoa", "vertibrate", "vertibrate_other", "viral")
@@ -53,10 +54,11 @@ download_refseq <- function(kingdom, reference = TRUE, representative = FALSE,
   total_genomes <- nrow(king_table)
   message(paste("Downloading", total_genomes, kingdom, "genomes from RefSeq"))
   
-  ## delete existing genome files and combined fasta--make these
-  ## user-defined
+  ## delete existing genome files and combined fasta--make these user-defined
+  
   download_dir <- paste(kingdom, "refseq_download", sep = "_")
-  unlink(download_dir, recursive = T)  #remove any existing files/directories
+  # remove any existing files/directories
+  unlink(download_dir, recursive = TRUE, force = TRUE)
   if (compress) {
     combined_fasta <- paste(kingdom, "fasta.gz", sep = ".")
     combined_fasta_patho <- paste(kingdom, "pathoscope.fasta.gz", sep = ".")
@@ -107,10 +109,16 @@ download_refseq <- function(kingdom, reference = TRUE, representative = FALSE,
                                   compress = compress)
       
       ## delete intermediate download files
-      unlink(download_dir, recursive = T)
+      unlink(download_dir, recursive = TRUE, force = TRUE)
     }, error = function(e) {
       cat("ERROR :", conditionMessage(e), "\n")
     })
   }
-  message("DONE! Downloaded ", i, " genomes to ", combined_fasta)
+  # Remove pathoscope file if unwanted
+  if (!patho_out) file.remove(combined_fasta_patho)
+  
+  # Ensure removal of intermediate folder of files
+  unlink("viral_refseq_download", recursive = TRUE, force = TRUE)
+  
+  message("DONE! Downloaded", i, "genomes to", combined_fasta, sep = " ")
 }

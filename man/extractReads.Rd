@@ -4,8 +4,16 @@
 \alias{extractReads}
 \title{Helper function for demultiplexing}
 \usage{
-extractReads(barcodeIndex, barcodes, sampleNames, index, reads,
-  location = "./demultiplex_fastq", rcBarcodes = TRUE, hDist = 0)
+extractReads(
+  barcodeIndex,
+  barcodes,
+  sampleNames,
+  index,
+  reads,
+  location = "./demultiplex_fastq",
+  rcBarcodes = TRUE,
+  hDist = 0
+)
 }
 \arguments{
 \item{barcodeIndex}{Which barcode (integer number or index) in the barcodes or sample name to use for read extraction}
@@ -32,13 +40,13 @@ Helper function for demultiplexing sequencing reads, designed in a way to allow 
 }
 \examples{
 ## Load example barcode, index, and read data into R session:
-barcodePath <- system.file("extdata", "barcodes.txt", package = "animalcules.preprocess")
-bcFile <- read.table(barcodePath, sep = "\\t", header = T)
+barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
+bcFile <- read.table(barcodePath, sep = "\t", header = T)
 
-indexPath <- system.file("extdata", "virus_example_index.fastq", package = "animalcules.preprocess")
+indexPath <- system.file("extdata", "virus_example_index.fastq", package = "MetaScope")
 inds <- Biostrings::readDNAStringSet(indexPath, format = "fastq")
 
-readPath <- system.file("extdata", "virus_example.fastq", package = "animalcules.preprocess")
+readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
 reads <- Biostrings::readQualityScaledDNAStringSet(readPath)
 
 ## Extract reads from the first barcode

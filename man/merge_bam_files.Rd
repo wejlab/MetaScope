@@ -4,8 +4,11 @@
 \alias{merge_bam_files}
 \title{Merge multiple .bam files}
 \usage{
-merge_bam_files(bam_files, destination, head_file = paste(destination,
-  "_header.sam", sep = ""))
+merge_bam_files(
+  bam_files,
+  destination,
+  head_file = paste(destination, "_header.sam", sep = "")
+)
 }
 \arguments{
 \item{bam_files}{A list of file names for the .bam files to be merged}
@@ -23,8 +26,8 @@ This function merges .bam files. It first used the combined_header funtion to ge
 \examples{
 download_refseq('viral', compress = FALSE)
 mk_subread_index('viral.fasta', split = .0005)
-readPath <- system.file("extdata", "virus_example.fastq", package = "animalcules.preprocess")
-Rsubread::align(index = "viral_1", readfile1 = readPath, output_file = "virus_example1.bam")
+readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+Rsubread::align(index = "viral_1", readfile1 = readPath, output_file = "virus_example1.bam", maxMismatches = 3)
 Rsubread::align(index = "viral_2", readfile1 = readPath, output_file = "virus_example2.bam")
 bam_files <- c('virus_example1.bam','virus_example2.bam')
 com_head <- combined_header(bam_files)

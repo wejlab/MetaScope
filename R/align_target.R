@@ -9,7 +9,7 @@
 #' @examples
 #' download_refseq('viral', compress = FALSE)
 #' mk_subread_index('viral.fasta')
-#' readPath <- system.file("extdata", "virus_example.fastq", package = "animalcules.preprocess")
+#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
 #' Rsubread::align(index = "viral", readfile1 = readPath, output_file = "virus_example.bam")
 #' filtered <- filter_unmapped_reads("virus_example.bam")
 #' 
@@ -43,7 +43,7 @@ filter_unmapped_reads <- function(bamfile) {
 #' @examples
 #' download_refseq('viral', compress = FALSE)
 #' mk_subread_index('viral.fasta', split = .0005)
-#' readPath <- system.file("extdata", "virus_example.fastq", package = "animalcules.preprocess")
+#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
 #' Rsubread::align(index = "viral_1", readfile1 = readPath, output_file = "virus_example1.bam")
 #' Rsubread::align(index = "viral_2", readfile1 = readPath, output_file = "virus_example2.bam")
 #' bam_files <- c('virus_example1.bam','virus_example2.bam')
@@ -88,7 +88,7 @@ combined_header <- function(bam_files, header_file = "header_tmp.sam") {
 #' @examples
 #' download_refseq('viral', compress = FALSE)
 #' mk_subread_index('viral.fasta', split = .0005)
-#' readPath <- system.file("extdata", "virus_example.fastq", package = "animalcules.preprocess")
+#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
 #' Rsubread::align(index = "viral_1", readfile1 = readPath, output_file = "virus_example1.bam")
 #' Rsubread::align(index = "viral_2", readfile1 = readPath, output_file = "virus_example2.bam")
 #' bam_files <- c('virus_example1.bam','virus_example2.bam')
@@ -140,7 +140,7 @@ bam_reheader_R <- function(head, old_bam,
 #' @examples
 #' download_refseq('viral', compress = FALSE)
 #' mk_subread_index('viral.fasta', split = .0005)
-#' readPath <- system.file("extdata", "virus_example.fastq", package = "animalcules.preprocess")
+#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
 #' Rsubread::align(index = "viral_1", readfile1 = readPath, output_file = "virus_example1.bam", maxMismatches = 3)
 #' Rsubread::align(index = "viral_2", readfile1 = readPath, output_file = "virus_example2.bam")
 #' bam_files <- c('virus_example1.bam','virus_example2.bam')
@@ -179,7 +179,7 @@ merge_bam_files <- function(bam_files, destination, head_file = paste(destinatio
 
 #' Align microbiome reads to a set of reference libraries 
 #' 
-#' This is the main animalcules target library mapping function, using Rsubread and multiple libraries. Aligns to each library separately, filters unmapped reads from each file, and then merges and sorts the .bam files from each library into one output file.
+#' This is the main MetaScope target library mapping function, using Rsubread and multiple libraries. Aligns to each library separately, filters unmapped reads from each file, and then merges and sorts the .bam files from each library into one output file.
 #' @param reads Location to the .fastq file to align 
 #' @param libs A list of Subread index headers for alignment
 #' @param project_name A name for the project, which names the output .bam file (e.g. project_name.bam). Defaults to the basename of the reads file.
@@ -187,7 +187,8 @@ merge_bam_files <- function(bam_files, destination, head_file = paste(destinatio
 #' @param mismatch Numeric value giving the maximum number of mis-matched bases allowed in the alignment. Default is 3. Mis-matches found in soft-clipped bases are not counted.
 #' 
 #' @return
-#' This function writes to file a merged and sorted .bam file after aligning to all reference libraries given. The function also outputs the new .bam filename.  
+#' This function writes a merged and sorted .bam file after aligning to all reference libraries given, along with a summary report file, to the user's working directory.
+#' The function also outputs the new .bam filename.  
 #' 
 #' @examples
 #' ## Get a reference genome library
@@ -195,15 +196,15 @@ merge_bam_files <- function(bam_files, destination, head_file = paste(destinatio
 #' 
 #' ## Make and align to a single a reference genome library
 #' mk_subread_index('viral.fasta')
-#' readPath <- system.file("extdata", "virus_example.fastq", package = "animalcules.preprocess")
-#' viral_map <- align_target( readPath, "viral", "virus_example")
-#' viral_map_sam <- Rsamtools::asSam(viral_map, overwrite=T)
+#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+#' viral_map <- align_target(readPath, "viral", "virus_example")
+#' viral_map_sam <- Rsamtools::asSam(viral_map, overwrite = TRUE)
 #' 
 #' ## Make and align to a multiple reference genome libraries
-#' mk_subread_index('viral.fasta', split=0.005)
+#' mk_subread_index('viral.fasta', split = 0.005)
 #' targLibs <- c("viral_1", "viral_2")
-#' readPath <- system.file("extdata", "virus_example.fastq", package = "animalcules.preprocess")
-#' viral_map <- align_target( readPath, targLibs, "virus_example")
+#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+#' viral_map <- align_target(readPath, targLibs, "virus_example")
 #' 
 #' @export
 #' 
@@ -229,6 +230,7 @@ align_target <- function(reads, libs, project_name = tools::file_path_sans_ext(r
     file.rename(bam_files, paste(project_name, ".bam", sep = ""))
     file.remove(paste(bam_files, ".indel.vcf", sep = ""))  # remove Rsubread .vcf files for now
   }
+
   message(paste("DONE! Alignments written to ", project_name, ".bam", 
                 sep = ""))
   return(paste(project_name, ".bam", sep = ""))

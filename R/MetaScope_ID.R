@@ -1,10 +1,10 @@
-#' Animalcules ID 
+#' MetaScope ID
 #'
 #' This function will read in a .bam file, annotate the taxonomy and genome names, reduce the mapping ambiguity using a mixture model, and output a .csv file with the results. Right now, it assumes that the genome library/.bam files uses NCBI accession names for reference names (rnames in .bam file). 
 #' @param bam_file The .bam file that needs to be summarized, annotated, and needs removal of ambiguity
-#' @param out_file The name of the .csv output file. Deacults to the bam_file basename plus "animalculesID.csv"
+#' @param out_file The name of the .csv output file. Defaults to the bam_file basename plus ".MetaScopeID.csv"
 #' @param EMconv The convergence parameter of the EM algorithm. Default set at 0.001
-#' @param EMmaxIts The maximum number of EM iterations, regardless of whether the EMconv is below the threshhold. Default set at 50. If set at 0, the algorithm skips the EM step and summarizes the .bam file 'as is'.  
+#' @param EMmaxIts The maximum number of EM iterations, regardless of whether the EMconv is below the threshhold. Default set at 50. If set at 0, the algorithm skips the EM step and summarizes the .bam file 'as is'
 #' 
 #' @return
 #' This function returns a .csv file with annotated read counts to genomes with mapped reads. The function iself returns the output .csv file name. 
@@ -15,16 +15,16 @@
 #' 
 #' ## Make and align to a single a reference genome library
 #' mk_subread_index('viral.fasta')
-#' readPath <- system.file("extdata", "virus_example.fastq", package = "animalcules.preprocess")
-#' viral_map <- align_target( readPath, "viral", "virus_example")
+#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+#' viral_map <- align_target(readPath, "viral", "virus_example")
 #' 
-#' #### Apply animalcules ID:
-#' animalcules_id( viral_map )
+#' #### Apply MetaScope ID:
+#' MetaScope_id(viral_map)
 #' 
 #' @export
 
-animalcules_id <- function(bam_file, out_file = paste(tools::file_path_sans_ext(bam_file), 
-                                                      ".animalculesID.csv", sep = ""), EMconv = 0.001, EMmaxIts = 50) {
+MetaScope_id <- function(bam_file, out_file = paste(tools::file_path_sans_ext(bam_file), 
+                                                      ".MetaScopeID.csv", sep = ""), EMconv = 0.001, EMmaxIts = 50) {
   ## read in .bam file
   message("Reading .bam file: ", bam_file)
   reads <- Rsamtools::scanBam(bam_file, param = Rsamtools::ScanBamParam(what = c("qname", 
@@ -60,9 +60,9 @@ animalcules_id <- function(bam_file, out_file = paste(tools::file_path_sans_ext(
   
   ## EM algorithm for reducing abiguity in the alignments
   gammas_new <- gammas
-  pi_old <- 1/nrow(gammas)
+  pi_old <- 1 / nrow(gammas)
   pi_new <- apply(gammas_new, 2, mean)
-  conv <- max(abs(pi_new - pi_old)/pi_old)
+  conv <- max(abs(pi_new - pi_old) / pi_old)
   it <- 0
   
   message("Starting EM iterations")
@@ -80,22 +80,23 @@ animalcules_id <- function(bam_file, out_file = paste(tools::file_path_sans_ext(
     
     ## Check convergence
     it <- it + 1
-    conv <- max(abs(pi_new - pi_old)/pi_old, na.rm = TRUE)
+    conv <- max(abs(pi_new - pi_old) / pi_old, na.rm = TRUE)
     pi_old <- pi_new
   }
   message("\tDONE!")
   
   ## Collect results
-  best_hit <- table(unlist(apply(gammas_new, 1, function(x) which(x == 
-                                                                    max(x)))))
+  best_hit <- table(unlist(apply(gammas_new, 1,
+                                 function(x) which(x == max(x)))))
   hits_ind <- as.numeric(names(best_hit))
   final_taxids <- unique_taxids[hits_ind]
   final_genomes <- unique_genome_names[hits_ind]
   proportion <- best_hit/sum(best_hit)
   EMreads <- round(colSums(gammas_new)[hits_ind], 1)
-  EMprop <- colSums(gammas_new)[hits_ind]/sum(gammas_new)
+  EMprop <- colSums(gammas_new)[hits_ind] / sum(gammas_new)
   results <- cbind(TaxonomyID = final_taxids, Genome = final_genomes, 
-                   read_count = best_hit, Proportion = proportion, EMreads = EMreads, 
+                   read_count = best_hit, Proportion = proportion,
+                   EMreads = EMreads, 
                    EMProportion = EMprop)
   results <- results[order(best_hit, decreasing = TRUE), ]
   message("Found reads for ", length(best_hit), " genomes")

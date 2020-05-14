@@ -14,13 +14,13 @@
 #'
 #' @examples
 #' ## Load example barcode, index, and read data into R session:
-#' barcodePath <- system.file("extdata", "barcodes.txt", package = "animalcules.preprocess")
+#' barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
 #' bcFile <- read.table(barcodePath, sep = "\t", header = T)
 #' 
-#' indexPath <- system.file("extdata", "virus_example_index.fastq", package = "animalcules.preprocess")
+#' indexPath <- system.file("extdata", "virus_example_index.fastq", package = "MetaScope")
 #' inds <- Biostrings::readDNAStringSet(indexPath, format = "fastq")
 #' 
-#' readPath <- system.file("extdata", "virus_example.fastq", package = "animalcules.preprocess")
+#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
 #' reads <- Biostrings::readQualityScaledDNAStringSet(readPath)
 #' 
 #' ## Extract reads from the first barcode
@@ -81,9 +81,9 @@ extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads,
 #'
 #' @examples
 #' ## Get barcode, index, and read data locations
-#' barcodePath <- system.file("extdata", "barcodes.txt", package = "animalcules.preprocess")
-#' indexPath <- system.file("extdata", "virus_example_index.fastq", package = "animalcules.preprocess")
-#' readPath <- system.file("extdata", "virus_example.fastq", package = "animalcules.preprocess")
+#' barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
+#' indexPath <- system.file("extdata", "virus_example_index.fastq", package = "MetaScope")
+#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
 #' 
 #' ## Get barcode, index, and read data locations
 #' demult <- demultiplex(barcodePath, indexPath, readPath, rcBarcodes = FALSE, 

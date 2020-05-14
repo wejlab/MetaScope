@@ -4,8 +4,15 @@
 \alias{demultiplex}
 \title{Demultiplexing sequencing reads}
 \usage{
-demultiplex(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
-  location = "./demultiplex_fastq", cores = 1, hammingDist = 0)
+demultiplex(
+  barcodeFile,
+  indexFile,
+  readFile,
+  rcBarcodes = TRUE,
+  location = "./demultiplex_fastq",
+  cores = 1,
+  hammingDist = 0
+)
 }
 \arguments{
 \item{barcodeFile}{File name for a file containing a .tsv matrix with a header row, and then sample names (column 1) and barcodes (column 2).}
@@ -30,9 +37,9 @@ Function for demultiplexing sequencing reads arranged in a common format provide
 }
 \examples{
 ## Get barcode, index, and read data locations
-barcodePath <- system.file("extdata", "barcodes.txt", package = "animalcules.preprocess")
-indexPath <- system.file("extdata", "virus_example_index.fastq", package = "animalcules.preprocess")
-readPath <- system.file("extdata", "virus_example.fastq", package = "animalcules.preprocess")
+barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
+indexPath <- system.file("extdata", "virus_example_index.fastq", package = "MetaScope")
+readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
 
 ## Get barcode, index, and read data locations
 demult <- demultiplex(barcodePath, indexPath, readPath, rcBarcodes = FALSE, 

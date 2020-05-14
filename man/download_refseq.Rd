@@ -4,17 +4,24 @@
 \alias{download_refseq}
 \title{Download RefSeq genome libraries}
 \usage{
-download_refseq(kingdom, reference = TRUE, representative = FALSE,
-  compress = TRUE)
+download_refseq(
+  kingdom,
+  reference = TRUE,
+  representative = FALSE,
+  compress = TRUE,
+  patho_out = FALSE
+)
 }
 \arguments{
 \item{kingdom}{Select the kingdom taxonomy to download. Options are 'archaea', 'bacteria', 'fungi', 'invertebrate', 'plant', 'protozoa', 'vertibrate', 'vertibrate_other', 'viral'}
 
-\item{reference}{Download only RefSeq reference genomes? Defaults to TRUE. Automatically set to TURE if representative is TRUE}
+\item{reference}{Download only RefSeq reference genomes? Defaults to TRUE. Automatically set to TRUE if representative is TRUE}
 
 \item{representative}{Download only RefSeq representative genomes? Defaults to FALSE. If TRUE, reference is automatically set at TRUE}
 
 \item{compress}{Compress the output .fasta file? Defaults to TRUE}
+
+\item{patho_out}{Create duplicate outpute files compatible with PathoScope? Defaults to FALSE.}
 }
 \value{
 Returns a .fasta or .fasta.gz file of the desired RefSeq genomes. This file is named after the kindom selectd and saved to the current directory (e.g. 'bacteria.fasta.gz'). Currently, this function also returns a .fasta file formatted for PathoScope as well (e.g. 'bacteria.pathoscope.fasta.gz'), but this will soon be retired.
