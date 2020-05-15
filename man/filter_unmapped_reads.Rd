@@ -7,19 +7,29 @@
 filter_unmapped_reads(bamfile)
 }
 \arguments{
-\item{bamfile}{Location for the .bam file to filter/remove all unmapped reads}
+\item{bamfile}{Location for the .bam file to filter & remove all unmapped
+reads}
 }
 \value{
-This function will overwrite the existing .bam file with a new .bam file in the same location that has only mapped lines. The function iself returns the output .bam file name.
+This function will overwrite the existing .bam file with a new .bam file in
+the same location that has only mapped lines. The function iself returns the
+output .bam file name.
 }
 \description{
-This function will to remove all unmapped reads or lines in a .bam file (warning: overwrites the original file!). This function is needed because combining multiple .bam files from different microbial libraries may lead to some reads that mapped to one library and have unmapped entries from another library. This will just remove any unmapped entries and leave all referene mapped lines in the .bam file.
+This function will to remove all unmapped reads or lines in a .bam file
+(warning: overwrites the original file!). This function is needed because
+combining multiple .bam files from different microbial libraries may lead
+to some reads that mapped to one library and have unmapped entries from
+another library. This will just remove any unmapped entries and leave all
+referene mapped lines in the .bam file.
 }
 \examples{
 download_refseq('viral', compress = FALSE)
 mk_subread_index('viral.fasta')
-readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
-Rsubread::align(index = "viral", readfile1 = readPath, output_file = "virus_example.bam")
+readPath <- system.file("extdata", "virus_example.fastq",
+package = "MetaScope")
+Rsubread::align(index = "viral", readfile1 = readPath,
+output_file = "virus_example.bam")
 filtered <- filter_unmapped_reads("virus_example.bam")
 
 }

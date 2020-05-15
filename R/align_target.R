@@ -33,7 +33,7 @@ filter_unmapped_reads <- function(bamfile) {
   # index bam file
   bam_index <- Rsamtools::indexBam(sorted_bamfile)
   # filter umapped reads
-  filtered_bam <- Rsamtools::filterBam(sorted_bamfile, bamfile,
+  filtered_bam <- Rsamtools::filterBam(sorted_bamfile, destination = bamfile,
                                        index = bam_index, 
                                        indexDestination = FALSE,
                                        param = Rsamtools::ScanBamParam(
@@ -231,8 +231,10 @@ merge_bam_files <- function(bam_files, destination,
 #' and multiple libraries. Aligns to each library separately, filters
 #' unmapped reads from each file, and then merges and sorts the .bam files
 #' from each library into one output file.
-#' @param reads Location to the .fastq file to align
-#' @param libs A list of Subread index headers for alignment
+#' @param reads Location of the .fastq file to align
+#' @param libs A vector of character strings giving the basenames of the
+#' Subread index files for alignment. These should be located in the current
+#' directory
 #' @param project_name A name for the project, which names the output .bam
 #' file (e.g. project_name.bam). Defaults to the basename of the reads file.
 #' @param threads The number of threads for the Subread alignment.
@@ -271,17 +273,17 @@ align_target <- function(reads, libs,
                          project_name = tools::file_path_sans_ext(reads),
                          threads = 8, mismatch = 5) {
   ## needs to make a system call to samtools to merge
-  bam_files <- NULL
-  for (i in 1:length(libs)) {
-    bam_files <- c(bam_files, paste(tools::file_path_sans_ext(reads),
-                                    ".", libs[i], ".bam", sep = ""))
+  bam_files <- numeric(length(libs))
+  for (i in seq_along(libs)) {
+    bam_files[i] <- paste(tools::file_path_sans_ext(reads),
+                          ".", libs[i], ".bam", sep = "")
     Rsubread::align(index = libs[i], readfile1 = reads,
-                    output_file = bam_files[length(bam_files)],
+                    output_file = bam_files[i],
                     type = "dna", nthreads = threads,
                     unique = FALSE, nBestLocations = 16,
                     maxMismatches = mismatch)
     ## remove umapped reads
-    filter_unmapped_reads(bam_files[length(bam_files)])
+    filter_unmapped_reads(bam_files[i])
   }
   # merge bam files if needed; rename if not
   if (length(bam_files) > 1) {

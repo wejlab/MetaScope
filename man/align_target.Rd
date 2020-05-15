@@ -13,22 +13,33 @@ align_target(
 )
 }
 \arguments{
-\item{reads}{Location to the .fastq file to align}
+\item{reads}{Location of the .fastq file to align}
 
-\item{libs}{A list of Subread index headers for alignment}
+\item{libs}{A vector of character strings giving the basenames of the
+Subread index files for alignment. These should be located in the current
+directory}
 
-\item{project_name}{A name for the project, which names the output .bam file (e.g. project_name.bam). Defaults to the basename of the reads file.}
+\item{project_name}{A name for the project, which names the output .bam
+file (e.g. project_name.bam). Defaults to the basename of the reads file.}
 
-\item{threads}{The number of threads for the Subread alignment. Defaults to 8}
+\item{threads}{The number of threads for the Subread alignment.
+Defaults to 8}
 
-\item{mismatch}{Numeric value giving the maximum number of mis-matched bases allowed in the alignment. Default is 3. Mis-matches found in soft-clipped bases are not counted.}
+\item{mismatch}{Numeric value giving the maximum number of mis-matched
+bases allowed in the alignment. Default is 3. Mis-matches found in
+soft-clipped bases are not counted.}
 }
 \value{
-This function writes a merged and sorted .bam file after aligning to all reference libraries given, along with a summary report file, to the user's working directory.
+This function writes a merged and sorted .bam file after aligning to all
+reference libraries given, along with a summary report file, to the user's
+working directory.
 The function also outputs the new .bam filename.
 }
 \description{
-This is the main MetaScope target library mapping function, using Rsubread and multiple libraries. Aligns to each library separately, filters unmapped reads from each file, and then merges and sorts the .bam files from each library into one output file.
+This is the main MetaScope target library mapping function, using Rsubread
+and multiple libraries. Aligns to each library separately, filters
+unmapped reads from each file, and then merges and sorts the .bam files
+from each library into one output file.
 }
 \examples{
 ## Get a reference genome library
@@ -36,14 +47,16 @@ download_refseq('viral', compress = FALSE)
 
 ## Make and align to a single a reference genome library
 mk_subread_index('viral.fasta')
-readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+readPath <- system.file("extdata", "virus_example.fastq",
+package = "MetaScope")
 viral_map <- align_target(readPath, "viral", "virus_example")
 viral_map_sam <- Rsamtools::asSam(viral_map, overwrite = TRUE)
 
 ## Make and align to a multiple reference genome libraries
 mk_subread_index('viral.fasta', split = 0.005)
 targLibs <- c("viral_1", "viral_2")
-readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+readPath <- system.file("extdata", "virus_example.fastq",
+package = "MetaScope")
 viral_map <- align_target(readPath, targLibs, "virus_example")
 
 }

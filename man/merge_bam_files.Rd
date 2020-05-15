@@ -15,20 +15,30 @@ merge_bam_files(
 
 \item{destination}{A file name and location for the merged .bam file}
 
-\item{head_file}{A file name and location for the combined header file. Defaults to the destiation . For example, 'example.bam' will be written as 'exampleh.bam'}
+\item{head_file}{A file name and location for the combined header file.
+Defaults to the destiation . For example, 'example.bam' will be written
+as 'exampleh.bam'}
 }
 \value{
-This function merges .bam files and combines them into a single file. The function also outputs the new .bam filename.
+This function merges .bam files and combines them into a single file.
+The function also outputs the new .bam filename.
 }
 \description{
-This function merges .bam files. It first used the combined_header funtion to generate a combined header for all the files, reheaders the files, and then merges and sorts the .bam files. This is similar to the 'samtools merge' function, but it allows the .bam files to have different headers.
+This function merges .bam files. It first used the combined_header funtion
+to generate a combined header for all the files, reheaders the files, and
+then merges and sorts the .bam files. This is similar to the
+'samtools merge' function, but it allows the .bam files to have different
+headers.
 }
 \examples{
 download_refseq('viral', compress = FALSE)
 mk_subread_index('viral.fasta', split = .0005)
-readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
-Rsubread::align(index = "viral_1", readfile1 = readPath, output_file = "virus_example1.bam", maxMismatches = 3)
-Rsubread::align(index = "viral_2", readfile1 = readPath, output_file = "virus_example2.bam")
+readPath <- system.file("extdata", "virus_example.fastq",
+package = "MetaScope")
+Rsubread::align(index = "viral_1", readfile1 = readPath,
+output_file = "virus_example1.bam", maxMismatches = 3)
+Rsubread::align(index = "viral_2", readfile1 = readPath,
+output_file = "virus_example2.bam")
 bam_files <- c('virus_example1.bam','virus_example2.bam')
 com_head <- combined_header(bam_files)
 bam_reheader_R(com_head, 'virus_example1.bam')

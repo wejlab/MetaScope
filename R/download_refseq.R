@@ -8,7 +8,7 @@
 #' compressed or uncompressed .fasta file.
 #' @param kingdom Select the kingdom taxonomy to download.
 #' Options are 'archaea', 'bacteria', 'fungi', 'invertebrate', 'plant',
-#' 'protozoa', 'vertibrate', 'vertibrate_other', 'viral'
+#' 'protozoa', 'vertebrate', 'vertebrate_other', 'viral'
 #' @param reference Download only RefSeq reference genomes? Defaults to TRUE.
 #' Automatically set to TRUE if representative is TRUE
 #' @param representative Download only RefSeq representative genomes?
@@ -40,7 +40,7 @@ download_refseq <- function(kingdom, reference = TRUE,
                             compress = TRUE, patho_out = FALSE) {
   ## check if user provided a valid kingdom
   kingdom_list <- c("archaea", "bacteria", "fungi", "invertebrate", "plant",
-                    "protozoa", "vertibrate", "vertibrate_other", "viral")
+                    "protozoa", "vertebrate", "vertebrate_other", "viral")
   if (!(kingdom %in% kingdom_list)) {
     stop("You supplied a kingdom not in the kingdom list")
   }

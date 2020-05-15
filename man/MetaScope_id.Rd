@@ -12,19 +12,29 @@ MetaScope_id(
 )
 }
 \arguments{
-\item{bam_file}{The .bam file that needs to be summarized, annotated, and needs removal of ambiguity}
+\item{bam_file}{The .bam file that needs to be summarized, annotated, and
+needs removal of ambiguity}
 
-\item{out_file}{The name of the .csv output file. Defaults to the bam_file basename plus ".MetaScopeID.csv"}
+\item{out_file}{The name of the .csv output file. Defaults to the bam_file
+basename plus ".MetaScopeID.csv"}
 
-\item{EMconv}{The convergence parameter of the EM algorithm. Default set at 0.001}
+\item{EMconv}{The convergence parameter of the EM algorithm. Default set at
+0.001}
 
-\item{EMmaxIts}{The maximum number of EM iterations, regardless of whether the EMconv is below the threshhold. Default set at 50. If set at 0, the algorithm skips the EM step and summarizes the .bam file 'as is'}
+\item{EMmaxIts}{The maximum number of EM iterations, regardless of whether
+the EMconv is below the threshhold. Default set at 50. If set at 0, the
+algorithm skips the EM step and summarizes the .bam file 'as is'}
 }
 \value{
-This function returns a .csv file with annotated read counts to genomes with mapped reads. The function iself returns the output .csv file name.
+This function returns a .csv file with annotated read counts to genomes with
+mapped reads. The function iself returns the output .csv file name.
 }
 \description{
-This function will read in a .bam file, annotate the taxonomy and genome names, reduce the mapping ambiguity using a mixture model, and output a .csv file with the results. Right now, it assumes that the genome library/.bam files uses NCBI accession names for reference names (rnames in .bam file).
+This function will read in a .bam file, annotate the taxonomy and genome
+names, reduce the mapping ambiguity using a mixture model, and output a
+.csv file with the results. Currently it assumes that the genome
+library/.bam files uses NCBI accession names for reference names (rnames in
+.bam file).
 }
 \examples{
 ## Get a reference genome library
@@ -32,7 +42,8 @@ download_refseq('viral', compress = FALSE)
 
 ## Make and align to a single a reference genome library
 mk_subread_index('viral.fasta')
-readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+readPath <- system.file("extdata", "virus_example.fastq",
+package = "MetaScope")
 viral_map <- align_target(readPath, "viral", "virus_example")
 
 #### Apply MetaScope ID:
