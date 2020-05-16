@@ -40,7 +40,7 @@ download_refseq <- function(kingdom, reference = TRUE,
                             compress = TRUE, patho_out = FALSE) {
   ## check if user provided a valid kingdom
   kingdom_list <- c("archaea", "bacteria", "fungi", "invertebrate", "plant",
-                    "protozoa", "vertebrate", "vertebrate_other", "viral")
+                    "protozoa", "vertebrate_mammalian", "vertebrate_other", "viral")
   if (!(kingdom %in% kingdom_list)) {
     stop("You supplied a kingdom not in the kingdom list")
   }
