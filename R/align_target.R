@@ -74,20 +74,24 @@ filter_unmapped_reads <- function(bamfile) {
 
 combined_header <- function(bam_files, header_file = "header_tmp.sam") {
   print(paste("Making a combined header file:", header_file))
+
   # get first and last line of header
   bam_head <- Rsamtools::scanBamHeader(bam_files[1])
   n <- length(bam_head[[1]]$text)
   last <- c(names(bam_head[[1]]$text)[n], bam_head[[1]]$text[[n]])
+
   # open and print the first line of header
   head_con <- file(header_file, open = "w")
   cat(c(names(bam_head[[1]]$text)[1], bam_head[[1]]$text[[1]]),
       file = head_con, 
       sep = "\t")
   cat("\n", file = head_con, sep = "")
+
   # print genomes from all .bam files
   for (bfile in bam_files) {
     # print(paste('Reading/writing genomes from', bfile))
     bam_head <- Rsamtools::scanBamHeader(bfile)
+    
     for (j in 2:(length(bam_head[[1]]$text) - 1)) {
       cat(c(names(bam_head[[1]]$text)[j], bam_head[[1]]$text[[j]]), 
           file = head_con, sep = "\t")

@@ -1,14 +1,38 @@
 #' Helper function to remove reads matched to filter libraries
-remove_matches <- function(){
+#' 
+#' Within the `filter_r()` function, we align our sequencing sample to all
+#' filter libraries of interest. The `remove_matches()` function allows
+#' use the header 
+#' 
+#' @param reads_bam
+#' @param header_names
+#' 
+#' @return
+#' 
+#' @examples
+#' 
+remove_matches <- function(reads_bam, header_names){
   
-  # Note that output of align_R is already sorted by chromosome
-  # Maybe then we sort the BAM files from filtering and do it that way?
+  # Note: reads_BAM and filter-aligned files are already sorted by chromosome
+  this_header <- Rsamtools::scanBamHeader(reads_bam,
+                                            what = c("text"))[[1]]$text
+  # Extract all header info for reference sequence dictionary
+  SQ_ind <- names(this_header) %in% "@SQ"
+  target_header <- sapply(this_header[SQ_ind], function(x) x[1])
   
-  # Now use Rsamtools; steal code from align_target??
+  # header_names is a list potentially, need to do sapply or loop
+  for (k in seq_along(header_names)) {
+    header_names[[k]] %in% target_header
+  }
+
   # Go into original BAM file and remove anything with same read name
   # To do this - check helper function in align_target
   
   # rename bam file?
+  
+  # To do:
+  # See if there are "SQ" that are present in both, then filter?
+  
 }
 
 
@@ -17,7 +41,7 @@ remove_matches <- function(){
 #'
 #' Although we have already filtered out any unmapped reads, which may belong
 #' to one or more host species or otherwise, there may still remain some sort
-#' of unwelcome contamination in the data from the filter species, which we
+#' of unwelcome contamination in the data from the filter species which we
 #' wish to remove. To do this, we employ `filter_r()`, which takes as input
 #' the location of the BAM file created from `align_target()`, and produces a
 #' sorted BAM file with any reads that match the filter libraries removed. We
@@ -30,7 +54,8 @@ remove_matches <- function(){
 #' @param threads
 #' @param mismatch
 #'
-#' @return
+#' @return This function overwrites the inputted BAM file and removes any
+#' contamination from species in the filter genome library.
 #' 
 #' @examples
 #' # How to get previous BAM file??? Rerun code? Or include it?
@@ -48,21 +73,23 @@ filter_r <- function(reads_bam, libs,
     # Create output file name for BAM
     lib_file <- paste(project_name, ".", libs[i], ".bam", sep = "")
     # Align BAM to the lib & generate new file
-    Rsubread::align(index = libs[i], readfile1 = reads,
+    Rsubread::align(index = libs[i], readfile1 = reads_bam,
                     input_format = "bam",
                     output_file = lib_file,
                     type = "dna", nthreads = threads,
                     unique = FALSE, nBestLocations = 16,
                     maxMismatches = mismatch)
-    # Remove umapped reads
+    # sort BAM file and remove umapped reads (package helper function)
     filter_unmapped_reads(lib_file)
-    # Save into a running list the BAM headers specifying the read names that
-    # positively hit the current filter library
-    header_names[[i]] <- scanBamHeader(lib_file)
-
+    
+    # Function - filter out read names
+    
+   
     # throw away BAM file
     file.remove(lib_file)
-    # throw away other files...
+    # throw away vcf file
+    file.remove(paste(lib_file, ".indel.vcf", sep = ""))
+    # keep summary file for now
   }
   
   # Helper function to sort headers and filter BAM file
@@ -73,3 +100,15 @@ filter_r <- function(reads_bam, libs,
                 sep = ""))
   return(paste(project_name, ".bam", sep = ""))
 }
+
+
+filtered_bam <- Rsamtools::filterBam(sorted_bamfile, destination = bamfile,
+                                     index = bam_index, 
+                                     indexDestination = FALSE,
+                                     param = Rsamtools::ScanBamParam(
+                                       flag = Rsamtools::scanBamFlag(
+                                         isUnmappedQuery = F)))
+# flag: is query in list?
+# remember to index file
+# cross-check lists, insert T/F flag?
+# How to delete a set of reads from a BAM file

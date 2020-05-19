@@ -38,16 +38,13 @@ devtools::install_github("compbiomed/MetaScope")
 ```
 # A Tutorial for MetaScope
 
-MetaScope is based on the previous package Pathoscope 2.0 (Hong 2014). In the same manner as the module, Metascope consists of multiple workflows to carry out metagenomic profiling. 
+MetaScope is based on the previous package Pathoscope 2.0 (Hong 2014). In the same manner as the module, Metascope consists of multiple workflows to carry out metagenomic profiling. These include genome library, dmultiplexing, sequence mapping identification, and report workflows. The library workflow extracts custom genome reference libraries, the mapping workflow aligns the reads to the reference library and filters host reads, the ID workflow identifies and estimates the proportions from each genome, and the report workflow presents detailed summary reports of the results. 
 
-**CHANGE THIS TO REFLECT METASCOPE Workflows**
-
-**Core modules**: PathoLib extracts custom genome reference libraries, PathoMap aligns the reads to the reference library and filters host reads, PathoID identifies and estimates the proportions from each genome, and PathoReport provides detailed summary reports of the results. PathoDB provides additional annotation and PathoQC can be used to preprocess the reads prior to alignment.
-
+**CHANGE DIAGRAM TO REFLECT PATHOSCOPE**
 ![](workflow_patho.png)
  
 ## Working Directory
-**Include a quick note about the working directory**
+When utilizing the MetaScope package, keep in mind that many (if not all) functions output the name of .bam or other file(s) that are written automatically to the user's working directory. As such, it is vital that the user selects a working directory that can store all intermediate and final files prior to beginning any of the MetaScope workflows.
  
 ## Reference Genome Library
 
@@ -66,13 +63,14 @@ In the following code, we us download only the viral reference genomes from the 
 download_refseq('viral', compress = FALSE)
 ```
 
-**Add code to create filter library**
+We will also download appropriate material from the NCBI database to create a filter library for bacterial genomes.
+
+```{R ref lib}
+download_refseq('bacterial', compress = FALSE)
+```
 
 ## Demultiplex
-**Add something here to explain Demultiplex step if needed**
-- Will be used for 16s experiments or illumina experiments
-- If somebody did illumina sequencing, had two files with read barcodes and indexes, then you could use demultiplex on those two files
-- Part of pre-processing, another module
+Sequence runs on NGS instruments are typically carried out with multiple samples pooled together. An index tag (also called a barcode) consisting of a unique sequence of between 6 and 12bp is added to each sample so that the sequence reads from different samples can be identified. For 16s experiments or sequencing conducted using an Illumina machine, the process of demultiplexing (dividing your sequence reads into separate files for each index tag/sample) and generating the fastq data files required for downstream analysis can be done using the MetaScope demultiplexing workflow. This consists of the `demultiplex()` function, which takes as arguments a matrix of sample names/barcodes, a FASTQ file of barcodes by sequence header, and a FASTQ file of reads corresponding to the barcodes. Based on the barcodes given, the function extracts all reads for the indexed barcode and writes all the reads from that barcode to separate FASTQ files. 
 
 ## Alignment with Reference Libraries
 
@@ -98,10 +96,10 @@ The last step in the mapping workflow is to filter the previously outputted BAM 
 ```{R alignment}
 # This will be working directory?
 readPath2 <- system.file("extdata", "virus_example.bam", package = "MetaScope")
-viral_map <- align_r(readPath2, "viral", "virus_example")
+final_map <- align_r(readPath2, "bacterial", "virus_example")
 ```
 
-## MetaScope
+## Genome Identification
 
 Apply MetaScope ID:
 ```{R}
