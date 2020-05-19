@@ -17,13 +17,13 @@ align_target(
 
 \item{libs}{A vector of character strings giving the basenames of the
 Subread index files for alignment. These should be located in the current
-directory}
+directory.}
 
 \item{project_name}{A name for the project, which names the output .bam
 file (e.g. project_name.bam). Defaults to the basename of the reads file.}
 
 \item{threads}{The number of threads for the Subread alignment.
-Defaults to 8}
+Defaults to `8``}
 
 \item{mismatch}{Numeric value giving the maximum number of mis-matched
 bases allowed in the alignment. Default is 3. Mis-matches found in
@@ -39,13 +39,15 @@ The function also outputs the new .bam filename.
 This is the main MetaScope target library mapping function, using Rsubread
 and multiple libraries. Aligns to each library separately, filters
 unmapped reads from each file, and then merges and sorts the .bam files
-from each library into one output file.
+from each library into one output file. If desired, output can be
+passed to `filter_host()` to remove reads that also map to filter library
+genomes.
 }
 \examples{
 ## Get a reference genome library
 download_refseq('viral', compress = FALSE)
 
-## Make and align to a single a reference genome library
+## Make and align to a single reference genome library
 mk_subread_index('viral.fasta')
 readPath <- system.file("extdata", "virus_example.fastq",
 package = "MetaScope")
