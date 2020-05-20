@@ -9,8 +9,7 @@ filter_host(
   reads_bam,
   libs,
   output = paste(tools::file_path_sans_ext(reads_bam), "filtered", "bam", sep = "."),
-  threads = 8,
-  mismatch = 5
+  settings = align_details
 )
 }
 \arguments{
@@ -25,12 +24,12 @@ directory.}
 \item{output}{The desired name of the output .bam file. Default is
 the basename of `reads_bam` + `.filtered.bam`}
 
-\item{threads}{The number of threads for the Subread alignment.
-Defaults to `8``}
-
-\item{mismatch}{Numeric value giving the maximum number of mis-matched
-bases allowed in the alignment. Default is 3. Mis-matches found in
-soft-clipped bases are not counted.}
+\item{settings}{A named `list` specifying alignment parameters for
+the `Rsubread::align()` function, which is called inside `align_target()`.
+Elements should include type, nthreads, maxMismatches, nsubreads,
+phredOffset, unique, and nBestLocations. Descriptions of these parameters
+are available under `?Rsubread::align`. Defaults to the global
+`align_details` object.}
 }
 \value{
 The name of a filtered, sorted .bam file written to the user's

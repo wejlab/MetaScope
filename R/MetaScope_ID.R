@@ -2,9 +2,10 @@
 #'
 #' This function will read in a .bam file, annotate the taxonomy and genome
 #' names, reduce the mapping ambiguity using a mixture model, and output a
-#' .csv file with the results. Currently it assumes that the genome
-#' library/.bam files uses NCBI accession names for reference names (rnames in
+#' .csv file with the results. Currently, it assumes that the genome
+#' library/.bam files use NCBI accession names for reference names (rnames in
 #' .bam file). 
+#'
 #' @param bam_file The .bam file that needs to be summarized, annotated, and
 #' needs removal of ambiguity
 #' @param out_file The name of the .csv output file. Defaults to the bam_file

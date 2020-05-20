@@ -1,3 +1,4 @@
+globalVariables(c("align_details"))
 #' Filter unmapped reads
 #'
 #' This function will to remove all unmapped reads or lines in a .bam file
@@ -244,11 +245,12 @@ merge_bam_files <- function(bam_files, destination,
 #' directory.
 #' @param project_name A name for the project, which names the output .bam
 #' file (e.g. project_name.bam). Defaults to the basename of the reads file.
-#' @param threads The number of threads for the Subread alignment.
-#' Defaults to `8``
-#' @param mismatch Numeric value giving the maximum number of mis-matched
-#' bases allowed in the alignment. Default is 3. Mis-matches found in
-#' soft-clipped bases are not counted.
+#' @param settings A named `list` specifying alignment parameters for
+#' the `Rsubread::align()` function, which is called inside `align_target()`.
+#' Elements should include type, nthreads, maxMismatches, nsubreads,
+#' phredOffset, unique, and nBestLocations. Descriptions of these parameters
+#' are available under `?Rsubread::align`. Defaults to the global
+#' `align_details` object.
 #'
 #' @return
 #' This function writes a merged and sorted .bam file after aligning to all
@@ -278,7 +280,7 @@ merge_bam_files <- function(bam_files, destination,
 #'
 align_target <- function(reads, libs,
                          project_name = tools::file_path_sans_ext(reads),
-                         threads = 8, mismatch = 5) {
+                         settings = align_details) {
   ## needs to make a system call to samtools to merge
   bam_files <- numeric(length(libs))
   for (i in seq_along(libs)) {
@@ -286,9 +288,13 @@ align_target <- function(reads, libs,
                           ".", libs[i], ".bam", sep = "")
     Rsubread::align(index = libs[i], readfile1 = reads,
                     output_file = bam_files[i],
-                    type = "dna", nthreads = threads,
-                    unique = FALSE, nBestLocations = 16,
-                    maxMismatches = mismatch)
+                    type = settings[["type"]],
+                    nthreads = settings[["nthreads"]],
+                    maxMismatches = settings[["maxMismatches"]],
+                    nsubreads = settings[["nsubreads"]],
+                    phredOffset = settings[["phredOffset"]],
+                    unique = settings[["unique"]],
+                    nBestLocations = settings[["nBestLocations"]])
     ## remove umapped reads
     filter_unmapped_reads(bam_files[i])
   }

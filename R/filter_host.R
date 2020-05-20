@@ -1,3 +1,4 @@
+globalVariables(c("align_details"))
 #' Helper function to remove reads matched to filter libraries
 #' 
 #' Within the `filter_host()` function, we align our sequencing sample to all
@@ -65,6 +66,8 @@ remove_matches <- function(reads_bam, read_names, name_out){
 #' @return The name of a filtered, sorted .bam file written to the user's
 #' current working directory.
 #' 
+#' @export
+#' 
 #' @examples
 #' # How to get previous BAM file??? Rerun code? Or include it?
 #' # Create an index for filter libraries
@@ -74,7 +77,7 @@ remove_matches <- function(reads_bam, read_names, name_out){
 filter_host <- function(reads_bam, libs,
                      output = paste(tools::file_path_sans_ext(reads_bam),
                                     "filtered", "bam", sep = "."),
-                     threads = 8, mismatch = 5) {
+                     settings = align_details) {
   # Initialize list of names
   read_names <- vector(mode = "list", length(libs))
   
@@ -86,13 +89,17 @@ filter_host <- function(reads_bam, libs,
     Rsubread::align(index = libs[i], readfile1 = reads_bam,
                     input_format = "bam",
                     output_file = lib_file,
-                    type = "dna", nthreads = threads,
-                    unique = FALSE, nBestLocations = 16,
-                    maxMismatches = mismatch)
+                    type = settings[["type"]],
+                    nthreads = settings[["nthreads"]],
+                    maxMismatches = settings[["maxMismatches"]],
+                    nsubreads = settings[["nsubreads"]],
+                    phredOffset = settings[["phredOffset"]],
+                    unique = settings[["unique"]],
+                    nBestLocations = settings[["nBestLocations"]])
     # sort BAM file and remove umapped reads (package helper function)
     filter_unmapped_reads(lib_file)
     
-    # function - filter out read names
+    # Extract target query names from mapped BAM file
     read_names[[i]] <- Rsamtools::scanBam(lib_file)[[1]]$qname
     
     # throw away BAM, vcf file
@@ -101,7 +108,7 @@ filter_host <- function(reads_bam, libs,
     # keep summary file for now
   }
   
-  # Helper function to sort headers and filter BAM file
+  # helper function to sort headers and filter BAM file
   remove_matches(reads_bam, read_names, output)
   
   # output final filtered BAM file

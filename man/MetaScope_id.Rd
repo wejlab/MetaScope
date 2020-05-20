@@ -32,8 +32,8 @@ mapped reads. The function iself returns the output .csv file name.
 \description{
 This function will read in a .bam file, annotate the taxonomy and genome
 names, reduce the mapping ambiguity using a mixture model, and output a
-.csv file with the results. Currently it assumes that the genome
-library/.bam files uses NCBI accession names for reference names (rnames in
+.csv file with the results. Currently, it assumes that the genome
+library/.bam files use NCBI accession names for reference names (rnames in
 .bam file).
 }
 \examples{
