@@ -81,6 +81,7 @@ The MetaScope mapping workflow incorporates three functions - `mk_subread_index(
 
 ```{R}
 mk_subread_index('viral.fasta')
+mk_subread_index('bacterial.fasta')
 ```
 
 Following index creation, we will use the Subread aligner to map the reads to the target genome with `align_target()`. The function primarily takes as an input the location of the FASTQ file to align, which should be a text string. In practice, `align_target()` maps reads to each target library separately, removes the unmapped reads from each file, and finally merges and sorts by chromosome the BAM files from each library into a single output file. The BAM file is written automatically to the user's working directory; the output of the function is the name of the written file.
@@ -95,7 +96,8 @@ The last step in the mapping workflow is to filter the previously outputted BAM 
 
 ```{R alignment}
 # This will be working directory?
-readPath2 <- system.file("extdata", "virus_example.bam", package = "MetaScope")
+readPath2 <- system.file("extdata", "virus_example.bam",
+                         package = "MetaScope")
 final_map <- filter_host(readPath2, libs = "bacterial")
 ```
 
