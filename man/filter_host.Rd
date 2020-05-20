@@ -15,33 +15,29 @@ filter_host(
 \arguments{
 \item{reads_bam}{The name of a merged, sorted .bam file that has previously
 been aligned to a reference library. Likely, the output from running an
-instance of `align_target()`}
+instance of \code{align_target()}.}
 
 \item{libs}{A vector of character strings giving the basenames of the
 Subread index files for alignment. These should be located in the current
 directory.}
 
 \item{output}{The desired name of the output .bam file. Default is
-the basename of `reads_bam` + `.filtered.bam`}
+the basename of \code{reads_bam} + \code{.filtered.bam}.}
 
-\item{settings}{A named `list` specifying alignment parameters for
-the `Rsubread::align()` function, which is called inside `align_target()`.
+\item{settings}{A named \code{list} specifying alignment parameters for
+the \code{Rsubread::align()} function, which is
+called inside \code{align_target()}.
 Elements should include type, nthreads, maxMismatches, nsubreads,
 phredOffset, unique, and nBestLocations. Descriptions of these parameters
-are available under `?Rsubread::align`. Defaults to the global
-`align_details` object.}
+are available under \code{?Rsubread::align}. Defaults to the global
+\code{align_details} object.}
 }
 \value{
 The name of a filtered, sorted .bam file written to the user's
 current working directory.
 }
 \description{
-After a sample is aligned to a target library with `align_target()`,
-we may use `filter_host()` to remove unwelcome host contamination using
-filter reference libraries. This function takes as input the name
-of the .bam file produced via `align_target()`, and produces a
-sorted .bam file with any reads that match the filter libraries removed.
-This resulting .bam file may be used upstream for further analysis.
+
 }
 \examples{
 # How to get previous BAM file??? Rerun code? Or include it?

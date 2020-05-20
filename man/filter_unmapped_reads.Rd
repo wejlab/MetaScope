@@ -20,7 +20,7 @@ This function will to remove all unmapped reads or lines in a .bam file
 (warning: overwrites the original file!). This function is needed because
 combining multiple .bam files from different microbial libraries may lead
 to some reads that mapped to one library and have unmapped entries from
-another library. This will just remove any unmapped entries and leave all
+another library. This will remove any unmapped entries and leave all
 referene mapped lines in the .bam file.
 }
 \examples{

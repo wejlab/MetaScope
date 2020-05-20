@@ -108,20 +108,21 @@ extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads,
 #' header row, and then sample names (column 1) and barcodes (column 2).
 #' @param indexFile Location to a .fastq file that contains the barcodes
 #' for each read. The headers should be the same (and in the same order)
-#' as the readFile, and the sequence in the indexFile should be the
-#' corresponding barcode for each read. Quality scores are not considered
+#' as \code{readFile}, and the sequence in the \code{indexFile} should be the
+#' corresponding barcode for each read. Quality scores are not considered.
 #' @param readFile Location to the sequencing read .fastq file that corresponds
-#' to the indexFile
+#' to the \code{indexFile}.
 #' @param rcBarcodes Should the barcode indexes in the barcodeFile be reverse
-#' complemented to match the sequences in the indexFile? Defaults to TRUE
+#' complemented to match the sequences in the \code{indexFile}?
+#' Defaults to \code{TRUE}.
 #' @param location A directory location to store the demuliplexed read files.
 #' Defaults to generate a new subdirectory at './demultiplex_fastq'
 #' @param cores The number of cores to use for parallelization (BiocParallel).
 #' This function will parallelize over the barcodes and extract reads for each
-#' barcode separately and write them to separate demultiplexed files
+#' barcode separately and write them to separate demultiplexed files.
 #' @param hammingDist Uses a Hamming Distance or number of base differences to
-#' allow for inexact matches for the barcodes/indexes. Defaults to 0.
-#' Warning: if the Hamming Distance is >=1 and this leads to inexact index
+#' allow for inexact matches for the barcodes/indexes. Defaults to \code{0}.
+#' Warning: if the Hamming Distance is \code{>=1} and this leads to inexact index
 #' matches to more than one barcode, that read will be written to more than
 #' one demultiplexed read files
 #' 

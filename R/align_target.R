@@ -5,7 +5,7 @@ globalVariables(c("align_details"))
 #' (warning: overwrites the original file!). This function is needed because
 #' combining multiple .bam files from different microbial libraries may lead
 #' to some reads that mapped to one library and have unmapped entries from
-#' another library. This will just remove any unmapped entries and leave all
+#' another library. This will remove any unmapped entries and leave all
 #' referene mapped lines in the .bam file. 
 #'
 #' @param bamfile Location for the .bam file to filter & remove all unmapped
@@ -51,25 +51,28 @@ filter_unmapped_reads <- function(bamfile) {
 #' Create a combined .bam header
 #' 
 #' This function generates a combined header from multiple .bam files from
-#' different reference libraries (e.g. a split bacterial library)
+#' different reference libraries (e.g. a split bacterial library).
+#'
 #' @param bamfiles A list of the locations/file names of .bam files from which
-#' to combine the headers
+#' to combine the headers.
 #' @param header_file A file name and location for the output file for the
 #' combined header. This will be a .sam format file without any reads.
 #' Defaults to 'header_tmp.sam'.
 #' 
 #' @return
-#' This function will return a combined header from all the supplied .bam files
+#' This function will return a combined header from all the supplied .bam files.
 #' 
 #' @examples
 #' download_refseq('viral', compress = FALSE)
 #' mk_subread_index('viral.fasta', split = .0005)
+#'
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
 #' Rsubread::align(index = "viral_1", readfile1 = readPath,
 #' output_file = "virus_example1.bam")
 #' Rsubread::align(index = "viral_2", readfile1 = readPath,
 #' output_file = "virus_example2.bam")
+#'
 #' bam_files <- c('virus_example1.bam','virus_example2.bam')
 #' com_head <- combined_header(bam_files)
 
@@ -92,7 +95,7 @@ combined_header <- function(bam_files, header_file = "header_tmp.sam") {
   for (bfile in bam_files) {
     # print(paste('Reading/writing genomes from', bfile))
     bam_head <- Rsamtools::scanBamHeader(bfile)
-    
+
     for (j in 2:(length(bam_head[[1]]$text) - 1)) {
       cat(c(names(bam_head[[1]]$text)[j], bam_head[[1]]$text[[j]]), 
           file = head_con, sep = "\t")
@@ -105,16 +108,17 @@ combined_header <- function(bam_files, header_file = "header_tmp.sam") {
 }
 
 #' Replace the header from a .bam file
-#' 
+#'
 #' This function replaces the header from one .bam file with a header from a
 #' different .sam file. This function mimicks the function of the 'reheader'
 #' function in samtools.
-#' @param head A file name and location for the .sam file with the new header
-#' @param old_bam A file name and location for the .bam file for which you
-#' want to reheader
+#'
+#' @param head A file name and location for the .sam file with the new header.
+#' @param old_bam A file name and location for the .bam file which you
+#' would like to reheader.
 #' @param new_bam A file name for the new .bam file with a replaced header.
 #' Defaults to the same base filename plus 'h.bam'. For example, 'example.bam'
-#' will be written as 'exampleh.bam'  
+#' will be written as 'exampleh.bam'  .
 #' 
 #' @return
 #' This function will return a new .bam file with a replaced header.
@@ -125,13 +129,16 @@ combined_header <- function(bam_files, header_file = "header_tmp.sam") {
 #' mk_subread_index('viral.fasta', split = .0005)
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
+#'
 #' Rsubread::align(index = "viral_1", readfile1 = readPath,
 #' output_file = "virus_example1.bam")
 #' Rsubread::align(index = "viral_2", readfile1 = readPath,
 #' output_file = "virus_example2.bam")
+#'
 #' bam_files <- c('virus_example1.bam','virus_example2.bam')
 #' com_head <- combined_header(bam_files)
 #' bam_reheader_R(com_head, 'virus_example2.bam')
+#'
 #' ## Note that the following would be an equivalent command if samtools is
 #' installed
 #' #system("samtools reheader header_tmp.sam virus_example2.bam > virus_example2h.bam")
@@ -172,12 +179,13 @@ bam_reheader_R <- function(head, old_bam,
 #' to generate a combined header for all the files, reheaders the files, and
 #' then merges and sorts the .bam files. This is similar to the
 #' 'samtools merge' function, but it allows the .bam files to have different
-#' headers. 
-#' @param bam_files A list of file names for the .bam files to be merged
-#' @param destination A file name and location for the merged .bam file
+#' headers.
+#'
+#' @param bam_files A list of file names for the .bam files to be merged.
+#' @param destination A file name and location for the merged .bam file.
 #' @param head_file A file name and location for the combined header file.
 #' Defaults to the destiation . For example, 'example.bam' will be written
-#' as 'exampleh.bam'  
+#' as 'exampleh.bam'.
 #'
 #' @return
 #' This function merges .bam files and combines them into a single file.
@@ -186,12 +194,14 @@ bam_reheader_R <- function(head, old_bam,
 #' @examples
 #' download_refseq('viral', compress = FALSE)
 #' mk_subread_index('viral.fasta', split = .0005)
+#'
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
 #' Rsubread::align(index = "viral_1", readfile1 = readPath,
 #' output_file = "virus_example1.bam", maxMismatches = 3)
 #' Rsubread::align(index = "viral_2", readfile1 = readPath,
 #' output_file = "virus_example2.bam")
+#'
 #' bam_files <- c('virus_example1.bam','virus_example2.bam')
 #' com_head <- combined_header(bam_files)
 #' bam_reheader_R(com_head, 'virus_example1.bam')
@@ -245,12 +255,13 @@ merge_bam_files <- function(bam_files, destination,
 #' directory.
 #' @param project_name A name for the project, which names the output .bam
 #' file (e.g. project_name.bam). Defaults to the basename of the reads file.
-#' @param settings A named `list` specifying alignment parameters for
-#' the `Rsubread::align()` function, which is called inside `align_target()`.
+#' @param settings A named \code{list} specifying alignment parameters for
+#' the \code{Rsubread::align()} function, which is
+#' called inside \code{align_target()}.
 #' Elements should include type, nthreads, maxMismatches, nsubreads,
 #' phredOffset, unique, and nBestLocations. Descriptions of these parameters
-#' are available under `?Rsubread::align`. Defaults to the global
-#' `align_details` object.
+#' are available under \code{?Rsubread::align}. Defaults to the global
+#' \code{align_details} object.
 #'
 #' @return
 #' This function writes a merged and sorted .bam file after aligning to all

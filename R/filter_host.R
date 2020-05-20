@@ -1,16 +1,16 @@
 globalVariables(c("align_details"))
 #' Helper function to remove reads matched to filter libraries
 #' 
-#' Within the `filter_host()` function, we align our sequencing sample to all
-#' filter libraries of interest. The `remove_matches()` function allows
+#' Within the \code{filter_host()} function, we align our sequencing sample to all
+#' filter libraries of interest. The \code{remove_matches()} function allows
 #' for removal of any target reads that are also aligned to filter libraries.
 #' 
 #' @param reads_bam The name of a merged, sorted .bam file that has previously
 #' been aligned to a reference library. Likely, the output from running an
-#' instance of `align_target()`.
-#' @param read_names A `list` of target query names from `reads_bam` that
-#' have also aligned to a filter reference library. Each `list` element
-#' should be a vector of read names.
+#' instance of \code{align_target()}.
+#' @param read_names A \code{list} of target query names from \code{reads_bam}
+#' that have also aligned to a filter reference library. Each \code{list}
+#' element should be a vector of read names.
 #' @param name_out The name of the .bam file that to which the filtered alignments
 #' will be written.
 #' 
@@ -49,18 +49,18 @@ remove_matches <- function(reads_bam, read_names, name_out){
 #' Align reads against one or more filter libraries and subsequently
 #' remove mapped reads
 #'
-#' After a sample is aligned to a target library with `align_target()`,
-#' we may use `filter_host()` to remove unwelcome host contamination using
+#' After a sample is aligned to a target library with \code{align_target()},
+#' we may use \code{filter_host()` to remove unwelcome host contamination using
 #' filter reference libraries. This function takes as input the name
-#' of the .bam file produced via `align_target()`, and produces a
+#' of the .bam file produced via \code{align_target()}, and produces a
 #' sorted .bam file with any reads that match the filter libraries removed.
 #' This resulting .bam file may be used upstream for further analysis.
 #'
 #' @param reads_bam The name of a merged, sorted .bam file that has previously
 #' been aligned to a reference library. Likely, the output from running an
-#' instance of `align_target()`
+#' instance of \code{align_target()}.
 #' @param output The desired name of the output .bam file. Default is
-#' the basename of `reads_bam` + `.filtered.bam`
+#' the basename of \code{reads_bam} + \code{.filtered.bam}.
 #' @inheritParams align_target
 #'
 #' @return The name of a filtered, sorted .bam file written to the user's

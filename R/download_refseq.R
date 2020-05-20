@@ -7,20 +7,23 @@
 #' and then use this file to download genomes and combine them in a single
 #' compressed or uncompressed .fasta file.
 #' @param kingdom Select the kingdom taxonomy to download.
-#' Options are 'archaea', 'bacteria', 'fungi', 'invertebrate', 'plant',
-#' 'protozoa', 'vertebrate', 'vertebrate_other', 'viral'
-#' @param reference Download only RefSeq reference genomes? Defaults to TRUE.
-#' Automatically set to TRUE if representative is TRUE
+#' Options are \code{'archaea'}, \code{'bacteria'}, \code{'fungi'},
+#' \code{'invertebrate'}, \code{'plant'}, \code{'protozoa'},
+#' \code{'vertebrate_mammalian'}, \code{'vertebrate_other'}, or \code{'viral'}.
+#' @param reference Download only RefSeq reference genomes?
+#' Defaults to \code{TRUE}.
+#' Automatically set to \code{TRUE} if \code{representative = TRUE}.
 #' @param representative Download only RefSeq representative genomes?
-#' Defaults to FALSE. If TRUE, reference is automatically set at TRUE
-#' @param compress Compress the output .fasta file? Defaults to TRUE
+#' Defaults to \code{FALSE}.
+#' If \code{TRUE}, reference is automatically set at \code{TRUE}.
+#' @param compress Compress the output .fasta file? Defaults to \code{TRUE}.
 #' @param patho_out Create duplicate outpute files compatible with PathoScope?
-#' Defaults to FALSE.
+#' Defaults to \code{FALSE}.
 #' @return Returns a .fasta or .fasta.gz file of the desired RefSeq genomes.
 #' This file is named after the kindom selectd and saved to the current
 #' directory (e.g. 'bacteria.fasta.gz'). Currently, this function also returns
 #' a .fasta file formatted for PathoScope as well
-#' (e.g. bacteria.pathoscope.fasta.gz') if `path_out = TRUE`.
+#' (e.g. bacteria.pathoscope.fasta.gz') if \code{path_out = TRUE}.
 #'
 #' @examples
 #' ## Download all RefSeq reference bacterial genomes

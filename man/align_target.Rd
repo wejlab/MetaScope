@@ -21,12 +21,13 @@ directory.}
 \item{project_name}{A name for the project, which names the output .bam
 file (e.g. project_name.bam). Defaults to the basename of the reads file.}
 
-\item{settings}{A named `list` specifying alignment parameters for
-the `Rsubread::align()` function, which is called inside `align_target()`.
+\item{settings}{A named \code{list} specifying alignment parameters for
+the \code{Rsubread::align()} function, which is
+called inside \code{align_target()}.
 Elements should include type, nthreads, maxMismatches, nsubreads,
 phredOffset, unique, and nBestLocations. Descriptions of these parameters
-are available under `?Rsubread::align`. Defaults to the global
-`align_details` object.}
+are available under \code{?Rsubread::align}. Defaults to the global
+\code{align_details} object.}
 }
 \value{
 This function writes a merged and sorted .bam file after aligning to all

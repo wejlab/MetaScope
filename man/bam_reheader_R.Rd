@@ -11,14 +11,14 @@ bam_reheader_R(
 )
 }
 \arguments{
-\item{head}{A file name and location for the .sam file with the new header}
+\item{head}{A file name and location for the .sam file with the new header.}
 
-\item{old_bam}{A file name and location for the .bam file for which you
-want to reheader}
+\item{old_bam}{A file name and location for the .bam file which you
+would like to reheader.}
 
 \item{new_bam}{A file name for the new .bam file with a replaced header.
 Defaults to the same base filename plus 'h.bam'. For example, 'example.bam'
-will be written as 'exampleh.bam'}
+will be written as 'exampleh.bam'  .}
 }
 \value{
 This function will return a new .bam file with a replaced header.
@@ -34,13 +34,16 @@ download_refseq('viral', compress = FALSE)
 mk_subread_index('viral.fasta', split = .0005)
 readPath <- system.file("extdata", "virus_example.fastq",
 package = "MetaScope")
+
 Rsubread::align(index = "viral_1", readfile1 = readPath,
 output_file = "virus_example1.bam")
 Rsubread::align(index = "viral_2", readfile1 = readPath,
 output_file = "virus_example2.bam")
+
 bam_files <- c('virus_example1.bam','virus_example2.bam')
 com_head <- combined_header(bam_files)
 bam_reheader_R(com_head, 'virus_example2.bam')
+
 ## Note that the following would be an equivalent command if samtools is
 installed
 #system("samtools reheader header_tmp.sam virus_example2.bam > virus_example2h.bam")

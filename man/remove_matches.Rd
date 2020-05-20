@@ -9,11 +9,11 @@ remove_matches(reads_bam, read_names, name_out)
 \arguments{
 \item{reads_bam}{The name of a merged, sorted .bam file that has previously
 been aligned to a reference library. Likely, the output from running an
-instance of `align_target()`.}
+instance of \code{align_target()}.}
 
-\item{read_names}{A `list` of target query names from `reads_bam` that
-have also aligned to a filter reference library. Each `list` element
-should be a vector of read names.}
+\item{read_names}{A \code{list} of target query names from \code{reads_bam}
+that have also aligned to a filter reference library. Each \code{list}
+element should be a vector of read names.}
 
 \item{name_out}{The name of the .bam file that to which the filtered alignments
 will be written.}
@@ -23,7 +23,7 @@ The name of a filtered, sorted .bam file written to the user's
 current working directory.
 }
 \description{
-Within the `filter_host()` function, we align our sequencing sample to all
-filter libraries of interest. The `remove_matches()` function allows
+Within the \code{filter_host()} function, we align our sequencing sample to all
+filter libraries of interest. The \code{remove_matches()} function allows
 for removal of any target reads that are also aligned to filter libraries.
 }

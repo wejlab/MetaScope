@@ -7,14 +7,14 @@
 #' .bam file). 
 #'
 #' @param bam_file The .bam file that needs to be summarized, annotated, and
-#' needs removal of ambiguity
+#' needs removal of ambiguity.
 #' @param out_file The name of the .csv output file. Defaults to the bam_file
-#' basename plus ".MetaScopeID.csv"
+#' basename plus ".MetaScopeID.csv".
 #' @param EMconv The convergence parameter of the EM algorithm. Default set at
-#' 0.001
+#' \code{0.001}.
 #' @param EMmaxIts The maximum number of EM iterations, regardless of whether
-#' the EMconv is below the threshhold. Default set at 50. If set at 0, the
-#' algorithm skips the EM step and summarizes the .bam file 'as is'
+#' the EMconv is below the threshhold. Default set at \code{50}.
+#' If set at \code{0}, the algorithm skips the EM step and summarizes the .bam file 'as is'
 #' 
 #' @return
 #' This function returns a .csv file with annotated read counts to genomes with
