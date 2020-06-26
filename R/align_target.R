@@ -220,8 +220,10 @@ merge_bam_files <- function(bam_files, destination,
     new_bam_h <- bam_reheader_R(com_head, bam_files[i])
     bam_files_h <- c(bam_files_h, new_bam_h)
     file.remove(bam_files[i])
-    # remove .bam and .vcf files for each alignment
+    # remove .bam and .vcf and .bam.summary files for each alignment
     suppressWarnings(file.remove(paste(bam_files[i], ".indel.vcf",
+                                       sep = "")))
+    suppressWarnings(file.remove(paste(bam_files[i], ".bam.summary",
                                        sep = "")))
   }
   merged_bam <- Rsamtools::mergeBam(bam_files_h,
@@ -319,8 +321,9 @@ align_target <- function(reads, libs,
     merged_all <- merge_bam_files(bam_files, project_name)
   } else {
     file.rename(bam_files, paste(project_name, ".bam", sep = ""))
-    # remove Rsubread .vcf files for now
+    # remove Rsubread .vcf and .bam.summary files for now
     file.remove(paste(bam_files, ".indel.vcf", sep = ""))
+    file.remove(paste(bam_files, ".bam.summary", sep = ""))
   }
 
   message(paste("DONE! Alignments written to ", project_name, ".bam",
