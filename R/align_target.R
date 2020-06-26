@@ -278,7 +278,7 @@ merge_bam_files <- function(bam_files, destination,
 #' mk_subread_index('viral.fasta')
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
-#' viral_map <- align_target(readPath, "viral", "virus_example")
+#' viral_map <- align_target(readPath, "viral", project_name="virus_example")
 #' viral_map_sam <- Rsamtools::asSam(viral_map, overwrite = TRUE)
 #'
 #' ## Make and align to a multiple reference genome libraries
@@ -286,7 +286,7 @@ merge_bam_files <- function(bam_files, destination,
 #' targLibs <- c("viral_1", "viral_2")
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
-#' viral_map <- align_target(readPath, targLibs, "virus_example")
+#' viral_map <- align_target(readPath, targLibs, project_name="virus_example")
 #'
 #' @export
 #'
