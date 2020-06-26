@@ -7,6 +7,7 @@
 align_target(
   reads,
   libs,
+  lib_dir = NULL,
   project_name = tools::file_path_sans_ext(reads),
   settings = align_details
 )
@@ -15,8 +16,10 @@ align_target(
 \item{reads}{Location of the .fastq file to align}
 
 \item{libs}{A vector of character strings giving the basenames of the
-Subread index files for alignment. These should be located in the current
-directory.}
+Subread index files for alignment. These should be located in the same
+directory and the current directory if lib_dir=NULL.}
+
+\item{lib_dir}{path to the library index files (all libraries should be here)}
 
 \item{project_name}{A name for the project, which names the output .bam
 file (e.g. project_name.bam). Defaults to the basename of the reads file.}
