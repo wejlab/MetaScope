@@ -74,7 +74,7 @@ remove_matches <- function(reads_bam, read_names, name_out){
 #' # filter
 #' 
 
-filter_host <- function(reads_bam, libs,
+filter_host <- function(reads_bam, libs,lib_dir=NULL,
                      output = paste(tools::file_path_sans_ext(reads_bam),
                                     "filtered", "bam", sep = "."),
                      settings = align_details) {
@@ -86,7 +86,8 @@ filter_host <- function(reads_bam, libs,
     lib_file <- paste(tools::file_path_sans_ext(reads_bam),
                       ".", libs[i], ".bam", sep = "")
     # Align BAM to the lib & generate new file
-    Rsubread::align(index = libs[i], readfile1 = reads_bam,
+    Rsubread::align(index = paste(lib_dir,libs[i],sep=""), 
+                    readfile1 = reads_bam,
                     input_format = "bam",
                     output_file = lib_file,
                     type = settings[["type"]],
