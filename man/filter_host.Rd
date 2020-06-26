@@ -8,6 +8,7 @@ remove mapped reads}
 filter_host(
   reads_bam,
   libs,
+  lib_dir = NULL,
   output = paste(tools::file_path_sans_ext(reads_bam), "filtered", "bam", sep = "."),
   settings = align_details
 )
@@ -18,8 +19,10 @@ been aligned to a reference library. Likely, the output from running an
 instance of \code{align_target()}.}
 
 \item{libs}{A vector of character strings giving the basenames of the
-Subread index files for alignment. These should be located in the current
-directory.}
+Subread index files for alignment. These should be located in the same
+directory and the current directory if lib_dir=NULL.}
+
+\item{lib_dir}{path to the library index files (all libraries should be here)}
 
 \item{output}{The desired name of the output .bam file. Default is
 the basename of \code{reads_bam} + \code{.filtered.bam}.}
