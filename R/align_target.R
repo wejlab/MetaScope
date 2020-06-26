@@ -227,8 +227,8 @@ merge_bam_files <- function(bam_files, destination,
                                        sep = "")))
   }
   merged_bam <- Rsamtools::mergeBam(bam_files_h,
-                                    paste("unsorted_", destination,
-                                          ".bam", sep = ""), overwrite = T)
+                                    paste(tools::file_path_sans_ext(destination),
+                                          "_unsorted.bam", sep = ""), overwrite = T)
   # clean up
   file.remove(com_head)
   for (i in bam_files_h) {
