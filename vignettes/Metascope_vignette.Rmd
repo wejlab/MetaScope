@@ -1,0 +1,119 @@
+---
+title: "Introduction to MetaScope"
+author: 
+- name: Aubrey Odom
+  affiliation: 
+  - Program in Bioinformatics, Boston University, Boston, MA
+  email: aodom@bu.edu
+- name: W. Evan Johnson
+  affiliation:
+  - The Section of Computational Biomedicine, Boston University School of Medicine, Boston, MA
+  email: wej@bu.edu
+date: '`r format(Sys.Date(), "%B %e, %Y")`'
+package: MetaScope
+output: 
+  BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{"Introduction to MetaScope"}
+  %\VignetteEncoding{UTF-8}  
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+# Introduction
+The MetaScope package contains the tools and methods for rapidly and accurately quantifying the proportions of reads from individual microbial strains present in metagenomic sequencing data from environmental or clinical samples. The pipeline performs all necessary computational analysis steps; including reference genome library extraction and indexing, read quality control and alignment, strain identification, and summarization and annotation of results. This package is an R translation of the Python package PathoScope 2.0, and contains much of the same functionality. 
+
+
+In this tutorial, we present the basics of using PathoScope to analyze metagenomic samples via a step-by-step procedure that will transform your unintelligible sequencing reads into a meaningful picture of the microbial content present in your sample.
+
+## Installation
+
+Install the development version of the package from Github:
+
+``` r
+if (!requireNamespace("devtools", quietly=TRUE))
+  install.packages("devtools")
+devtools::install_github("compbiomed/MetaScope")
+```
+# A Tutorial for MetaScope
+
+MetaScope is based on a previously created Python package, PathoScope 2.0 (Hong 2014). In the same manner as the PathoScope modules, MetaScope consists of multiple workflows to carry out metagenomic profiling. These include genome library, dmultiplexing, sequence mapping identification, and report workflows. The library workflow extracts custom genome reference libraries, the mapping workflow aligns the reads to the reference library and filters host reads, the ID workflow identifies and estimates the proportions from each genome, and the report workflow presents detailed summary reports of the results. 
+
+**CHANGE DIAGRAM TO REFLECT METASCOPE**
+![](workflow_patho.png)
+ 
+## Working Directory
+When utilizing the MetaScope package, keep in mind that many (if not all) functions output the name of a .bam file or other file(s) that are written automatically to the user's working directory. As such, it is vital that the user selects a working directory that can store all intermediate and final files prior to beginning any of the MetaScope workflows.
+ 
+## Reference Genome Library
+
+The MetaScope genome library workflow is designed to assist with collection of sequence data from the National Center for Biotechnology Information (NCBI) database. Prior to doing so, the potential targets and filters for the analysis should be identified. That is, what "target" species do you expect to find in your metagenomic sample that you would like to identify, and what reads would you like to "filter" out from the data that are not essential to your analysis?
+
+
+Typically, the targets of the analysis are microbes (that is, viruses, bacteria, and fungi), and we wish to filter out or discard any reads from the host in addition to artificially added sequences, such as PhiX174. Following identification of the targets and filters, we use a reference genome library to realign the vast number of sample reads back to the respective regions of origin in various species.
+
+
+The `download_refseq()` function automatically extracts custom reference genome libraries in a FASTA file for microbial or host genomes. The user must first indicate a kingdom for which to download the genomes, such as 'archaea' or 'viral'. They may then specify whether they wish to download only the RefSeq reference genomes, or both the reference and representative genomes. The compress option then allows users to specify whether to compress the output FASTA file; this is done by default.
+
+
+In the following code, we us download only the viral reference genomes from the NCBI database, in an uncompressed FASTA format.
+
+```{R ref lib}
+download_refseq('viral', compress = FALSE)
+```
+
+We will also download appropriate material from the NCBI database to create a filter library for bacterial genomes.
+
+```{R ref lib}
+download_refseq('bacterial', compress = FALSE)
+```
+
+## Demultiplex
+Sequence runs on NGS instruments are typically carried out with multiple samples pooled together. An index tag (also called a barcode) consisting of a unique sequence of between 6 and 12bp is added to each sample so that the sequence reads from different samples can be identified. For 16s experiments or sequencing conducted using an Illumina machine, the process of demultiplexing (dividing your sequence reads into separate files for each index tag/sample) and generating the fastq data files required for downstream analysis can be done using the MetaScope demultiplexing workflow. This consists of the `demultiplex()` function, which takes as arguments a matrix of sample names/barcodes, a FASTQ file of barcodes by sequence header, and a FASTQ file of reads corresponding to the barcodes. Based on the barcodes given, the function extracts all reads for the indexed barcode and writes all the reads from that barcode to separate FASTQ files. 
+
+## Alignment with Reference Libraries
+
+After acquiring the target and filtering genome libraries, we may then take the sequencing reads from our sample and map them first to a target library, and then to the filter library. MetaScope's mapping module utilizes the Subread aligner  (Liao 2013) which maps reads to a reference genome via an efficient and simple seed-and-vote strategy. Essentially, the algorithm creates a large number of short equi-spaced seeds from each read, which we call subreads, that are extracted from each read. All seeds are then allowed the seeds to vote on an optical genome location. Overlapping subreads are used when read length is less than 160 bp, and more conventional alignment procedures (such as dynamic processing) are used to fill in detailed mismatch and indel information between the subreads that make up the winning voting block.
+
+
+The MetaScope mapping workflow incorporates three functions - `mk_subread_index()`, `align_target()`, and `filter_r()`. First, we use `mk_subread_index()`, a wrapper for `Rsubread::buildindex()`, to generate one or more Subread indexes from a FASTA file. To build an index, 16 bp sequences are extracted from the reference genome in every three bases, that is, there is a 2 bp gap between each pair of neighboring 16 bp sequences. Correspondingly, each read has to be scanned three times for the mapping, that is, three sets of subreads are extracted, which start from the first, second and third base of the read, respectively. A hash table is then used for a reference genome to enable fast access to the chromosomal locations of subreads extracted from each read. The index-building function provides the option of breaking the index into multiple parts so as to reduce the memory footprint (only one part is present in the memory at any time). 
+
+```{R}
+mk_subread_index('viral.fasta')
+mk_subread_index('bacterial.fasta')
+```
+
+Following index creation, we will use the Subread aligner to map the reads to the target genome with `align_target()`. The function primarily takes as an input the location of the FASTQ file to align, which should be a text string. In practice, `align_target()` maps reads to each target library separately, removes the unmapped reads from each file, and finally merges and sorts by chromosome the BAM files from each library into a single output file. The BAM file is written automatically to the user's working directory; the output of the function is the name of the written file.
+
+```{R alignment}
+readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+viral_map <- align_target(readPath, libs = "viral",
+                          project_name = "virus_example")
+```
+
+The last step in the mapping workflow is to filter the previously outputted BAM file according to the reference genome for the filter/host species. Although we have already filtered out any unmapped reads, which may belong to one or more host species or otherwise, there may still remain some sort of unwelcome contamination in the data from the filter species, which we wish to remove. To do this, we employ `filter_r()`, which takes as input the location of the BAM file created from `align_target()`, and produces a sorted BAM file with any reads that match the filter libraries removed. We will then use this final BAM file downstream for further analysis.
+
+```{R alignment}
+# This will be working directory?
+readPath2 <- system.file("extdata", "virus_example.bam",
+                         package = "MetaScope")
+final_map <- filter_host(readPath2, libs = "bacterial")
+```
+
+## Genome Identification
+
+Following the proper alignment of a sample to all filter and target libraries of interest, we may proceed in identifying which genomes are most likely to be represented in the sample. This identification workflow is the core of MetaScope; it features a Bayesian read reassignment model which dramatically improves specificity and sensitivity over other methods (Francis et. al 2013). This is because such a method identifies reads with unique alignments and uses them to guide the reassignment of reads with ambiguous alignments. 
+
+The identification workflow consists of a single function, `MetaScope_ID()`, which reads in a .bam file, annotates the taxonomy and genome names, reduces the mapping ambiguity using a mixture model, and outputs a .csv file with the results. Currently, it assumes that the genome library/.bam files use NCBI accession names for reference names. 
+
+```{R}
+MetaScope_id(final_map)
+```
+
+
+# Session Info
+```{r session info}
+sessionInfo()
+
+```

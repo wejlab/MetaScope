@@ -7,22 +7,31 @@
 combined_header(bam_files, header_file = "header_tmp.sam")
 }
 \arguments{
-\item{header_file}{A file name and location for the output file for the combined header. This will be a .sam format file without any reads. Defaults to 'header_tmp.sam'.}
+\item{header_file}{A file name and location for the output file for the
+combined header. This will be a .sam format file without any reads.
+Defaults to 'header_tmp.sam'.}
 
-\item{bamfiles}{A list of the locations/file names of .bam files from which to combine the headers}
+\item{bamfiles}{A list of the locations/file names of .bam files from which
+to combine the headers.}
 }
 \value{
-This function will return a combined header from all the supplied .bam files
+This function will return a combined header from all the supplied .bam files.
 }
 \description{
-This function generates a combined header from multiple .bam files from different reference libraries (e.g. a split bacterial library)
+This function generates a combined header from multiple .bam files from
+different reference libraries (e.g. a split bacterial library).
 }
 \examples{
 download_refseq('viral', compress = FALSE)
 mk_subread_index('viral.fasta', split = .0005)
-readPath <- system.file("extdata", "virus_example.fastq", package = "animalcules.preprocess")
-Rsubread::align(index = "viral_1", readfile1 = readPath, output_file = "virus_example1.bam")
-Rsubread::align(index = "viral_2", readfile1 = readPath, output_file = "virus_example2.bam")
+
+readPath <- system.file("extdata", "virus_example.fastq",
+package = "MetaScope")
+Rsubread::align(index = "viral_1", readfile1 = readPath,
+output_file = "virus_example1.bam")
+Rsubread::align(index = "viral_2", readfile1 = readPath,
+output_file = "virus_example2.bam")
+
 bam_files <- c('virus_example1.bam','virus_example2.bam')
 com_head <- combined_header(bam_files)
 }

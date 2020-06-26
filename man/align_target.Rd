@@ -4,38 +4,61 @@
 \alias{align_target}
 \title{Align microbiome reads to a set of reference libraries}
 \usage{
-align_target(reads, libs,
-  project_name = tools::file_path_sans_ext(reads), threads = 8)
+align_target(
+  reads,
+  libs,
+  project_name = tools::file_path_sans_ext(reads),
+  settings = align_details
+)
 }
 \arguments{
-\item{reads}{Location to the .fastq file to align}
+\item{reads}{Location of the .fastq file to align}
 
-\item{libs}{A list of Subread index headers for alignment}
+\item{libs}{A vector of character strings giving the basenames of the
+Subread index files for alignment. These should be located in the current
+directory.}
 
-\item{project_name}{A name for the project, which names the output .bam file (e.g. project_name.bam). Defaults to the basename of the reads file.}
+\item{project_name}{A name for the project, which names the output .bam
+file (e.g. project_name.bam). Defaults to the basename of the reads file.}
 
-\item{threads}{The number of threads for the Subread alignment. Defaults to 8}
+\item{settings}{A named \code{list} specifying alignment parameters for
+the \code{Rsubread::align()} function, which is
+called inside \code{align_target()}.
+Elements should include type, nthreads, maxMismatches, nsubreads,
+phredOffset, unique, and nBestLocations. Descriptions of these parameters
+are available under \code{?Rsubread::align}. Defaults to the global
+\code{align_details} object.}
 }
 \value{
-This function writes to file a merged and sorted .bam file after aligning to all reference libraries given. The function also outputs the new .bam filename.
+This function writes a merged and sorted .bam file after aligning to all
+reference libraries given, along with a summary report file, to the user's
+working directory.
+The function also outputs the new .bam filename.
 }
 \description{
-This is the main animalcules target library mapping function, using Rsubread and multiple libraries. Aligns to each library separately, filters unmapped reads from each file, and then merges and sorts the .bam files from each library into one output file.
+This is the main MetaScope target library mapping function, using Rsubread
+and multiple libraries. Aligns to each library separately, filters
+unmapped reads from each file, and then merges and sorts the .bam files
+from each library into one output file. If desired, output can be
+passed to `filter_host()` to remove reads that also map to filter library
+genomes.
 }
 \examples{
 ## Get a reference genome library
 download_refseq('viral', compress = FALSE)
 
-## Make and align to a single a reference genome library
+## Make and align to a single reference genome library
 mk_subread_index('viral.fasta')
-readPath <- system.file("extdata", "virus_example.fastq", package = "animalcules.preprocess")
-viral_map <- align_target( readPath, "viral", "virus_example")
-viral_map_sam <- Rsamtools::asSam(viral_map, overwrite=T)
+readPath <- system.file("extdata", "virus_example.fastq",
+package = "MetaScope")
+viral_map <- align_target(readPath, "viral", "virus_example")
+viral_map_sam <- Rsamtools::asSam(viral_map, overwrite = TRUE)
 
 ## Make and align to a multiple reference genome libraries
-mk_subread_index('viral.fasta', split=0.005)
+mk_subread_index('viral.fasta', split = 0.005)
 targLibs <- c("viral_1", "viral_2")
-readPath <- system.file("extdata", "virus_example.fastq", package = "animalcules.preprocess")
-viral_map <- align_target( readPath, targLibs, "virus_example")
+readPath <- system.file("extdata", "virus_example.fastq",
+package = "MetaScope")
+viral_map <- align_target(readPath, targLibs, "virus_example")
 
 }
