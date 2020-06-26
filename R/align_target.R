@@ -251,8 +251,9 @@ merge_bam_files <- function(bam_files, destination,
 #'
 #' @param reads Location of the .fastq file to align
 #' @param libs A vector of character strings giving the basenames of the
-#' Subread index files for alignment. These should be located in the current
-#' directory.
+#' Subread index files for alignment. These should be located in the same
+#' directory and the current directory if lib_dir=NULL.
+#' @param lib_dir path to the library index files (all libraries should be here)
 #' @param project_name A name for the project, which names the output .bam
 #' file (e.g. project_name.bam). Defaults to the basename of the reads file.
 #' @param settings A named \code{list} specifying alignment parameters for
@@ -290,6 +291,7 @@ merge_bam_files <- function(bam_files, destination,
 #' @export
 #'
 align_target <- function(reads, libs,
+                         lib_dir=NULL,
                          project_name = tools::file_path_sans_ext(reads),
                          settings = align_details) {
   ## needs to make a system call to samtools to merge
@@ -297,7 +299,8 @@ align_target <- function(reads, libs,
   for (i in seq_along(libs)) {
     bam_files[i] <- paste(tools::file_path_sans_ext(reads),
                           ".", libs[i], ".bam", sep = "")
-    Rsubread::align(index = libs[i], readfile1 = reads,
+    Rsubread::align(index = paste(lib_dir,libs[i],sep=""), 
+                    readfile1 = reads,
                     output_file = bam_files[i],
                     type = settings[["type"]],
                     nthreads = settings[["nthreads"]],
