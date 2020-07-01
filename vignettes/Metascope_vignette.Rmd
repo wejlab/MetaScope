@@ -1,28 +1,12 @@
 ---
 title: "Introduction to MetaScope"
-author: 
-- name: Aubrey Odom
-  affiliation: 
-  - Program in Bioinformatics, Boston University, Boston, MA
-  email: aodom@bu.edu
-- name: W. Evan Johnson
-  affiliation:
-  - The Section of Computational Biomedicine, Boston University School of Medicine, Boston, MA
-  email: wej@bu.edu
-date: '`r format(Sys.Date(), "%B %e, %Y")`'
-package: MetaScope
-output: 
-  BiocStyle::html_document
-vignette: >
-  %\VignetteIndexEntry{"Introduction to MetaScope"}
-  %\VignetteEncoding{UTF-8}  
-  %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
-  chunk_output_type: console
+author: "Aubrey Odom"
+date: "6/15/2020"
+output: html_document
 ---
 
 # Introduction
-The MetaScope package contains the tools and methods for rapidly and accurately quantifying the proportions of reads from individual microbial strains present in metagenomic sequencing data from environmental or clinical samples. The pipeline performs all necessary computational analysis steps; including reference genome library extraction and indexing, read quality control and alignment, strain identification, and summarization and annotation of results. This package is an R translation of the Python package PathoScope 2.0, and contains much of the same functionality. 
+The MetaScope package contains the tools and methods for rapidly and accurately quantifying the proportions of reads from individual microbial strains present in metagenomic sequencing data from environmental or clinical samples. The pipeline performs all necessary computational analysis steps; including reference genome library extraction and indexing, read alignment, strain identification, and summarization and annotation of results. This package is an R translation of the Python package PathoScope 2.0, and contains much of the same functionality. 
 
 
 In this tutorial, we present the basics of using PathoScope to analyze metagenomic samples via a step-by-step procedure that will transform your unintelligible sequencing reads into a meaningful picture of the microbial content present in your sample.
@@ -40,7 +24,7 @@ devtools::install_github("compbiomed/MetaScope")
 
 MetaScope is based on a previously created Python package, PathoScope 2.0 (Hong 2014). In the same manner as the PathoScope modules, MetaScope consists of multiple workflows to carry out metagenomic profiling. These include genome library, dmultiplexing, sequence mapping identification, and report workflows. The library workflow extracts custom genome reference libraries, the mapping workflow aligns the reads to the reference library and filters host reads, the ID workflow identifies and estimates the proportions from each genome, and the report workflow presents detailed summary reports of the results. 
 
-**CHANGE DIAGRAM TO REFLECT METASCOPE**
+**PathoScope Workflow**
 ![](workflow_patho.png)
  
 ## Working Directory
@@ -59,13 +43,13 @@ The `download_refseq()` function automatically extracts custom reference genome 
 
 In the following code, we us download only the viral reference genomes from the NCBI database, in an uncompressed FASTA format.
 
-```{R ref lib}
+```{R ref lib, eval = FALSE}
 download_refseq('viral', compress = FALSE)
 ```
 
 We will also download appropriate material from the NCBI database to create a filter library for bacterial genomes.
 
-```{R ref lib}
+```{R ref lib bacterial, eval = FALSE}
 download_refseq('bacterial', compress = FALSE)
 ```
 
@@ -79,14 +63,14 @@ After acquiring the target and filtering genome libraries, we may then take the 
 
 The MetaScope mapping workflow incorporates three functions - `mk_subread_index()`, `align_target()`, and `filter_r()`. First, we use `mk_subread_index()`, a wrapper for `Rsubread::buildindex()`, to generate one or more Subread indexes from a FASTA file. To build an index, 16 bp sequences are extracted from the reference genome in every three bases, that is, there is a 2 bp gap between each pair of neighboring 16 bp sequences. Correspondingly, each read has to be scanned three times for the mapping, that is, three sets of subreads are extracted, which start from the first, second and third base of the read, respectively. A hash table is then used for a reference genome to enable fast access to the chromosomal locations of subreads extracted from each read. The index-building function provides the option of breaking the index into multiple parts so as to reduce the memory footprint (only one part is present in the memory at any time). 
 
-```{R}
+```{R make indexes, eval = FALSE}
 mk_subread_index('viral.fasta')
 mk_subread_index('bacterial.fasta')
 ```
 
 Following index creation, we will use the Subread aligner to map the reads to the target genome with `align_target()`. The function primarily takes as an input the location of the FASTQ file to align, which should be a text string. In practice, `align_target()` maps reads to each target library separately, removes the unmapped reads from each file, and finally merges and sorts by chromosome the BAM files from each library into a single output file. The BAM file is written automatically to the user's working directory; the output of the function is the name of the written file.
 
-```{R alignment}
+```{R alignment align, eval = FALSE}
 readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
 viral_map <- align_target(readPath, libs = "viral",
                           project_name = "virus_example")
@@ -94,8 +78,7 @@ viral_map <- align_target(readPath, libs = "viral",
 
 The last step in the mapping workflow is to filter the previously outputted BAM file according to the reference genome for the filter/host species. Although we have already filtered out any unmapped reads, which may belong to one or more host species or otherwise, there may still remain some sort of unwelcome contamination in the data from the filter species, which we wish to remove. To do this, we employ `filter_r()`, which takes as input the location of the BAM file created from `align_target()`, and produces a sorted BAM file with any reads that match the filter libraries removed. We will then use this final BAM file downstream for further analysis.
 
-```{R alignment}
-# This will be working directory?
+```{R alignment filter, eval = FALSE}
 readPath2 <- system.file("extdata", "virus_example.bam",
                          package = "MetaScope")
 final_map <- filter_host(readPath2, libs = "bacterial")
@@ -107,7 +90,7 @@ Following the proper alignment of a sample to all filter and target libraries of
 
 The identification workflow consists of a single function, `MetaScope_ID()`, which reads in a .bam file, annotates the taxonomy and genome names, reduces the mapping ambiguity using a mixture model, and outputs a .csv file with the results. Currently, it assumes that the genome library/.bam files use NCBI accession names for reference names. 
 
-```{R}
+```{R identification, eval = FALSE}
 MetaScope_id(final_map)
 ```
 
