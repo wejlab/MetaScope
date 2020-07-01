@@ -220,13 +220,15 @@ merge_bam_files <- function(bam_files, destination,
     new_bam_h <- bam_reheader_R(com_head, bam_files[i])
     bam_files_h <- c(bam_files_h, new_bam_h)
     file.remove(bam_files[i])
-    # remove .bam and .vcf files for each alignment
+    # remove .bam and .vcf and .bam.summary files for each alignment
     suppressWarnings(file.remove(paste(bam_files[i], ".indel.vcf",
+                                       sep = "")))
+    suppressWarnings(file.remove(paste(bam_files[i], ".summary",
                                        sep = "")))
   }
   merged_bam <- Rsamtools::mergeBam(bam_files_h,
-                                    paste("unsorted_", destination,
-                                          ".bam", sep = ""), overwrite = T)
+                                    paste(tools::file_path_sans_ext(destination),
+                                          "_unsorted.bam", sep = ""), overwrite = T)
   # clean up
   file.remove(com_head)
   for (i in bam_files_h) {
@@ -251,8 +253,9 @@ merge_bam_files <- function(bam_files, destination,
 #'
 #' @param reads Location of the .fastq file to align
 #' @param libs A vector of character strings giving the basenames of the
-#' Subread index files for alignment. These should be located in the current
-#' directory.
+#' Subread index files for alignment. These should be located in the same
+#' directory and the current directory if lib_dir=NULL.
+#' @param lib_dir path to the library index files (all libraries should be here)
 #' @param project_name A name for the project, which names the output .bam
 #' file (e.g. project_name.bam). Defaults to the basename of the reads file.
 #' @param settings A named \code{list} specifying alignment parameters for
@@ -277,7 +280,7 @@ merge_bam_files <- function(bam_files, destination,
 #' mk_subread_index('viral.fasta')
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
-#' viral_map <- align_target(readPath, "viral", "virus_example")
+#' viral_map <- align_target(readPath, "viral", project_name="virus_example")
 #' viral_map_sam <- Rsamtools::asSam(viral_map, overwrite = TRUE)
 #'
 #' ## Make and align to a multiple reference genome libraries
@@ -285,11 +288,12 @@ merge_bam_files <- function(bam_files, destination,
 #' targLibs <- c("viral_1", "viral_2")
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
-#' viral_map <- align_target(readPath, targLibs, "virus_example")
+#' viral_map <- align_target(readPath, targLibs, project_name="virus_example")
 #'
 #' @export
 #'
 align_target <- function(reads, libs,
+                         lib_dir=NULL,
                          project_name = tools::file_path_sans_ext(reads),
                          settings = align_details) {
   ## needs to make a system call to samtools to merge
@@ -297,7 +301,8 @@ align_target <- function(reads, libs,
   for (i in seq_along(libs)) {
     bam_files[i] <- paste(tools::file_path_sans_ext(reads),
                           ".", libs[i], ".bam", sep = "")
-    Rsubread::align(index = libs[i], readfile1 = reads,
+    Rsubread::align(index = paste(lib_dir,libs[i],sep=""), 
+                    readfile1 = reads,
                     output_file = bam_files[i],
                     type = settings[["type"]],
                     nthreads = settings[["nthreads"]],
@@ -316,8 +321,9 @@ align_target <- function(reads, libs,
     merged_all <- merge_bam_files(bam_files, project_name)
   } else {
     file.rename(bam_files, paste(project_name, ".bam", sep = ""))
-    # remove Rsubread .vcf files for now
+    # remove Rsubread .vcf and .bam.summary files for now
     file.remove(paste(bam_files, ".indel.vcf", sep = ""))
+    file.remove(paste(bam_files, ".summary", sep = ""))
   }
 
   message(paste("DONE! Alignments written to ", project_name, ".bam",

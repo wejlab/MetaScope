@@ -54,7 +54,7 @@ download_refseq <- function(kingdom, reference = TRUE,
   message(paste("Downloading kingdom assembly list from:", table_name))
   kingdom_table <- read.table(table_name, header = T, sep = "\t",
                               comment.char = "",
-                              quote = "\"", skip = 1)
+                              quote = "", skip = 1)
 
   ## Reduce the table size based on reference or represenative
   if (representative) {
