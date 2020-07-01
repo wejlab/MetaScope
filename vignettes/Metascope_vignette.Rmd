@@ -20,27 +20,7 @@ vignette: >
 editor_options: 
   chunk_output_type: console
 ---
-# Introduction
-The MetaScope package contains the tools and methods for rapidly and accurately quantifying the proportions of reads from individual microbial strains present in metagenomic sequencing data from environmental or clinical samples. The pipeline performs all necessary computational analysis steps; including reference genome library extraction and indexing, read alignment, strain identification, and summarization and annotation of results. This package is an R translation of the Python package PathoScope 2.0, and contains much of the same functionality. 
 
-
-In this tutorial, we present the basics of using PathoScope to analyze metagenomic samples via a step-by-step procedure that will transform your unintelligible sequencing reads into a meaningful picture of the microbial content present in your sample.
-
-## Installation
-
-Install the development version of the package from Github:
-
-``` r
-if (!requireNamespace("devtools", quietly=TRUE))
-  install.packages("devtools")
-devtools::install_github("compbiomed/MetaScope")
-```
-# A Tutorial for MetaScope
-
-MetaScope is based on a previously created Python package, PathoScope 2.0 (Hong 2014). In the same manner as the PathoScope modules, MetaScope consists of multiple workflows to carry out metagenomic profiling. These include genome library, dmultiplexing, sequence mapping identification, and report workflows. The library workflow extracts custom genome reference libraries, the mapping workflow aligns the reads to the reference library and filters host reads, the ID workflow identifies and estimates the proportions from each genome, and the report workflow presents detailed summary reports of the results. 
-
-**PathoScope Workflow**
-![](workflow_patho.png)
  
 ## Working Directory
 When utilizing the MetaScope package, keep in mind that many (if not all) functions output the name of a .bam file or other file(s) that are written automatically to the user's working directory. As such, it is vital that the user selects a working directory that can store all intermediate and final files prior to beginning any of the MetaScope workflows.
