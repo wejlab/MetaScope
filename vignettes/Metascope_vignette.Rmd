@@ -1,10 +1,25 @@
 ---
 title: "Introduction to MetaScope"
-author: "Aubrey Odom"
-date: "6/15/2020"
-output: html_document
+author: 
+- name: Aubrey Odom
+  affiliation: 
+  - Program in Bioinformatics, Boston University, Boston, MA
+  email: aodom@bu.edu
+- name: W. Evan Johnson
+  affiliation:
+  - The Section of Computational Biomedicine, Boston University School of Medicine, Boston, MA
+  email: wej@bu.edu
+date: '`r format(Sys.Date(), "%B %e, %Y")`'
+package: MetaScope
+output: 
+  BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{Introdution to MetaScope}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+editor_options: 
+  chunk_output_type: console
 ---
-
 # Introduction
 The MetaScope package contains the tools and methods for rapidly and accurately quantifying the proportions of reads from individual microbial strains present in metagenomic sequencing data from environmental or clinical samples. The pipeline performs all necessary computational analysis steps; including reference genome library extraction and indexing, read alignment, strain identification, and summarization and annotation of results. This package is an R translation of the Python package PathoScope 2.0, and contains much of the same functionality. 
 
