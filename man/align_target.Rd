@@ -62,6 +62,6 @@ mk_subread_index('viral.fasta', split = 0.005)
 targLibs <- c("viral_1", "viral_2")
 readPath <- system.file("extdata", "virus_example.fastq",
 package = "MetaScope")
-viral_map <- align_target(readPath, targLibs, project_name="virus_example")
+viral_map <- align_target(readPath, targLibs, project_name = "virus_example")
 
 }

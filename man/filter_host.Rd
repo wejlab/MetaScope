@@ -47,4 +47,18 @@ current working directory.
 # Create an index for filter libraries
 # filter
 
+#' ## Get reference and filter genome libraries
+download_refseq('viral', compress = FALSE)
+download_refseq('bacterial', compress = FALSE)
+
+## Make and align to a single reference genome library
+mk_subread_index('viral.fasta')
+readPath <- system.file("extdata", "virus_example.fastq",
+                         package = "MetaScope")
+viral_map <- align_target(readPath, "viral", project_name = "virus_example")
+
+# Filter with separate reference genome library
+mk_subread_index('bacterial.fasta')
+filter_host(viral_map, libs = "bacterial")
+
 }

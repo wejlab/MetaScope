@@ -27,7 +27,7 @@ The function also outputs the new .bam filename.
 \description{
 This function replaces the header from one .bam file with a header from a
 different .sam file. This function mimicks the function of the 'reheader'
-function in samtools.
+function in samtools. It is not intended for use by users.
 }
 \examples{
 download_refseq('viral', compress = FALSE)

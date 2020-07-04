@@ -28,7 +28,7 @@ This function merges .bam files. It first used the combined_header funtion
 to generate a combined header for all the files, reheaders the files, and
 then merges and sorts the .bam files. This is similar to the
 'samtools merge' function, but it allows the .bam files to have different
-headers.
+headers. It is not intended for use by users.
 }
 \examples{
 download_refseq('viral', compress = FALSE)

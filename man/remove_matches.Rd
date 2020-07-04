@@ -26,4 +26,5 @@ current working directory.
 Within the \code{filter_host()} function, we align our sequencing sample to all
 filter libraries of interest. The \code{remove_matches()} function allows
 for removal of any target reads that are also aligned to filter libraries.
+It is not intended for use by users.
 }

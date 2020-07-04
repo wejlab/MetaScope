@@ -6,7 +6,8 @@ globalVariables(c("align_details"))
 #' combining multiple .bam files from different microbial libraries may lead
 #' to some reads that mapped to one library and have unmapped entries from
 #' another library. This will remove any unmapped entries and leave all
-#' referene mapped lines in the .bam file. 
+#' reference mapped lines in the .bam file. 
+#' It is not intended for use by users.
 #'
 #' @param bamfile Location for the .bam file to filter & remove all unmapped
 #' reads
@@ -52,6 +53,7 @@ filter_unmapped_reads <- function(bamfile) {
 #' 
 #' This function generates a combined header from multiple .bam files from
 #' different reference libraries (e.g. a split bacterial library).
+#' It is not intended for use by users.
 #'
 #' @param bamfiles A list of the locations/file names of .bam files from which
 #' to combine the headers.
@@ -111,7 +113,7 @@ combined_header <- function(bam_files, header_file = "header_tmp.sam") {
 #'
 #' This function replaces the header from one .bam file with a header from a
 #' different .sam file. This function mimicks the function of the 'reheader'
-#' function in samtools.
+#' function in samtools. It is not intended for use by users.
 #'
 #' @param head A file name and location for the .sam file with the new header.
 #' @param old_bam A file name and location for the .bam file which you
@@ -179,7 +181,7 @@ bam_reheader_R <- function(head, old_bam,
 #' to generate a combined header for all the files, reheaders the files, and
 #' then merges and sorts the .bam files. This is similar to the
 #' 'samtools merge' function, but it allows the .bam files to have different
-#' headers.
+#' headers. It is not intended for use by users.
 #'
 #' @param bam_files A list of file names for the .bam files to be merged.
 #' @param destination A file name and location for the merged .bam file.
@@ -288,8 +290,8 @@ merge_bam_files <- function(bam_files, destination,
 #' targLibs <- c("viral_1", "viral_2")
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
-#' viral_map <- align_target(readPath, targLibs, project_name="virus_example")
-#'
+#' viral_map <- align_target(readPath, targLibs, project_name = "virus_example")
+#' 
 #' @export
 #'
 align_target <- function(reads, libs,

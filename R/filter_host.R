@@ -4,6 +4,7 @@ globalVariables(c("align_details"))
 #' Within the \code{filter_host()} function, we align our sequencing sample to all
 #' filter libraries of interest. The \code{remove_matches()} function allows
 #' for removal of any target reads that are also aligned to filter libraries.
+#' It is not intended for use by users.
 #' 
 #' @param reads_bam The name of a merged, sorted .bam file that has previously
 #' been aligned to a reference library. Likely, the output from running an
@@ -31,8 +32,11 @@ remove_matches <- function(reads_bam, read_names, name_out){
 
   # define logical vector of which reads to keep, based on query names (qnames)
   filter_which <- !(target_reads %in% filter_reads)
-
-  filtered_bam <- Rsamtools::filterBam(reads_bam, destination = name_out,
+  
+  # create BamFile instance to set yieldSize
+  bf <- Rsamtools::BamFile(reads_bam, yieldSize = length(filter_which))
+  
+  filtered_bam <- Rsamtools::filterBam(bf, destination = name_out,
                                        index = bam_index,
                                        indexDestination = FALSE,
                                        filter = filter_which,
@@ -55,6 +59,7 @@ remove_matches <- function(reads_bam, read_names, name_out){
 #' of the .bam file produced via \code{align_target()}, and produces a
 #' sorted .bam file with any reads that match the filter libraries removed.
 #' This resulting .bam file may be used upstream for further analysis.
+#' It is not intended for use by users.
 #'
 #' @param reads_bam The name of a merged, sorted .bam file that has previously
 #' been aligned to a reference library. Likely, the output from running an
@@ -73,8 +78,22 @@ remove_matches <- function(reads_bam, read_names, name_out){
 #' # Create an index for filter libraries
 #' # filter
 #' 
+#' #' ## Get reference and filter genome libraries
+#' download_refseq('viral', compress = FALSE)
+#' download_refseq('bacterial', compress = FALSE)
+#'
+#' ## Make and align to a single reference genome library
+#' mk_subread_index('viral.fasta')
+#' readPath <- system.file("extdata", "virus_example.fastq",
+#'                          package = "MetaScope")
+#' viral_map <- align_target(readPath, "viral", project_name = "virus_example")
+#'
+#' # Filter with separate reference genome library
+#' mk_subread_index('bacterial.fasta')
+#' filter_host(viral_map, libs = "bacterial")
+#' 
 
-filter_host <- function(reads_bam, libs,lib_dir=NULL,
+filter_host <- function(reads_bam, libs, lib_dir=NULL,
                      output = paste(tools::file_path_sans_ext(reads_bam),
                                     "filtered", "bam", sep = "."),
                      settings = align_details) {

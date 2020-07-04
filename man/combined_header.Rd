@@ -20,6 +20,7 @@ This function will return a combined header from all the supplied .bam files.
 \description{
 This function generates a combined header from multiple .bam files from
 different reference libraries (e.g. a split bacterial library).
+It is not intended for use by users.
 }
 \examples{
 download_refseq('viral', compress = FALSE)
