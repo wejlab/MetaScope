@@ -237,7 +237,7 @@ merge_bam_files <- function(bam_files, destination,
     file.remove(i)
   }
   # sort merged bam file
-  merged_bam_sorted <- Rsamtools::sortBam(merged_bam, destination, byQname = T)
+  merged_bam_sorted <- Rsamtools::sortBam(merged_bam, destination)
   # clean up
   file.remove(merged_bam)
   # return merged and sorted bam
