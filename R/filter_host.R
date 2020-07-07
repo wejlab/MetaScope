@@ -125,7 +125,7 @@ filter_host <- function(reads_bam, libs, lib_dir=NULL,
     # throw away BAM, vcf file
     file.remove(lib_file)
     file.remove(paste(lib_file, ".indel.vcf", sep = ""))
-    # keep summary file for now
+    file.remove(paste(lib_file, ".summary", sep = ""))
   }
   
   # helper function to sort headers and filter BAM file
