@@ -11,10 +11,12 @@
 #' @param out_file The name of the .csv output file. Defaults to the bam_file
 #' basename plus ".metascope_id.csv".
 #' @param EMconv The convergence parameter of the EM algorithm. Default set at
-#' \code{0.001}.
+#' \code{1/10000}.
 #' @param EMmaxIts The maximum number of EM iterations, regardless of whether
 #' the EMconv is below the threshhold. Default set at \code{50}.
 #' If set at \code{0}, the algorithm skips the EM step and summarizes the .bam file 'as is'
+#' @param cores The number of cores to be used for the EM estimation. 
+#' Choose 1 for no parallelization. Default set at \code{8}.
 #' 
 #' @return
 #' This function returns a .csv file with annotated read counts to genomes with
@@ -37,7 +39,7 @@
 
 metascope_id <- function(bam_file, 
                          out_file = paste(tools::file_path_sans_ext(bam_file),
-                                          ".metascope_id.csv", sep = ""),
+                                          ".metascope_id.csv", sep = "", cores=8),
                          EMconv = 1/10000, EMmaxIts = 25) {
   ## read in .bam file
   message("Reading .bam file: ", bam_file)
@@ -87,8 +89,8 @@ metascope_id <- function(bam_file,
   
   # Functions for updating gamma and pi
   pi_fun <- function(x, gammas, rname , tax_count, total_unique){ ( tax_count[x]+sum(gammas[rname == x])) /( total_unique + sum(gammas) ) }
-  gamma_fun <- function(x, qname_inds, pis){  pis[qname_inds == x]/sum(pis[qname_inds == x]) }
-
+  gamma_fun <- function(x, qname_inds, pis){ps<-pis[qname_inds == x];  ps/sum(ps) }
+  
   ## EM algorithm for reducing abiguity in the alignments
   gammas <- rep(1, nrow(tax_query_mulitmap))
   pi_old <- 1 / max(tax_query_mulitmap$rname_tax_inds)
@@ -96,10 +98,15 @@ metascope_id <- function(bam_file,
   conv <- max(abs(pi_new - pi_old) )
   it <- 0
 
+  multicoreParam <- BiocParallel::MulticoreParam(workers = cores)
+  
   message("Starting EM iterations")
   while (conv > EMconv & it < EMmaxIts) {
     ## Expectation Step: Estimate the expected value for each multi-mapped read to each genome
-    gammas <- unlist(sapply(unique(tax_query_mulitmap$qname_inds), gamma_fun, tax_query_mulitmap$qname_inds, pi_new[tax_query_mulitmap$rname_tax_inds]))
+    pi_vec <- pi_new[tax_query_mulitmap$rname_tax_inds]
+    gammas <- unlist(BiocParallel::bplapply(unique(tax_query_mulitmap$qname_inds), 
+                                            gamma_fun, tax_query_mulitmap$qname_inds, 
+                                            pi_vec, BPPARAM = multicoreParam))
 
     ## Maimization step: proportion of reads to each genome 
     pi_new <- sapply(1:max(tax_query$rname_tax_inds), pi_fun, gammas, tax_query_mulitmap$rname_tax_inds, tax_count, total_unique)
