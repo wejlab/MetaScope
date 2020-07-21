@@ -6,7 +6,7 @@
 \usage{
 metascope_id(
   bam_file,
-  out_file = paste(tools::file_path_sans_ext(bam_file), ".MetaScopeID.csv", sep = ""),
+  out_file = paste(tools::file_path_sans_ext(bam_file), ".metascope_id.csv", sep = ""),
   EMconv = 1/10000,
   EMmaxIts = 25
 )
@@ -16,7 +16,7 @@ metascope_id(
 needs removal of ambiguity.}
 
 \item{out_file}{The name of the .csv output file. Defaults to the bam_file
-basename plus ".MetaScopeID.csv".}
+basename plus ".metascope_id.csv".}
 
 \item{EMconv}{The convergence parameter of the EM algorithm. Default set at
 \code{0.001}.}
