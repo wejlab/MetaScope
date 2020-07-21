@@ -31,14 +31,14 @@
 #' viral_map <- align_target(readPath, "viral", "virus_example")
 #'
 #' #### Apply MetaScope ID:
-#' MetaScope_id(viral_map)
+#' metascope_id(viral_map)
 #'
 #' @export
 
-MetaScope_id <- function(bam_file, 
+metascope_id <- function(bam_file, 
                          out_file = paste(tools::file_path_sans_ext(bam_file),
                                           ".MetaScopeID.csv", sep = ""),
-                         EMconv = 0.001, EMmaxIts = 50) {
+                         EMconv = 1/10000, EMmaxIts = 25) {
   ## read in .bam file
   message("Reading .bam file: ", bam_file)
   reads <- Rsamtools::scanBam(bam_file, 
@@ -59,7 +59,7 @@ MetaScope_id <- function(bam_file,
   unique_taxids <- unique(taxids)
   taxid_inds <- match(taxids, unique_taxids)
   genome_names <- sapply(tax_id_all, function(x) attr(x, "name"))
-  unique_genome_names <- genome_names[taxid_inds]
+  unique_genome_names <- genome_names[!duplicated(taxid_inds)]
   message("\tFound ", length(unique_taxids), " unique NCBI taxonomy IDs")
 
   ## make an aligment matrix (rows: reads, cols: unique taxids)
@@ -67,54 +67,70 @@ MetaScope_id <- function(bam_file,
   qname_inds <- match(mapped_qname, read_names)
   rname_inds <- match(mapped_rname, accessions)
   rname_tax_inds <- taxid_inds[rname_inds]
-  gammas <- matrix(0, nrow = length(read_names), ncol = length(unique_taxids))
-  # Make this faster or more memory efficient?
-  for (i in 1:length(qname_inds)) {
-    gammas[qname_inds[i], rname_tax_inds[i]] <- 1
-  }
+  
+  #order based on read names
+  rname_tax_inds <- rname_tax_inds[order(qname_inds)]
+  qname_inds <- sort(qname_inds) 
+  tax_query <- data.frame( rname_tax_inds , qname_inds )
+  
+  #keep only one alignment to each taxid
+  tax_query <- tax_query %>% distinct(rname_tax_inds, qname_inds, .keep_all = TRUE)
+  
+  #split unique and multimapped reads
+  tax_query <- tax_query %>% group_by(qname_inds) %>% mutate(duplicate.flag = n() > 1)
+  tax_query_unique <- tax_query %>% filter(!duplicate.flag)
+  tax_query_mulitmap <- tax_query %>% filter(duplicate.flag)
+  
+  #summarize results for uniquely mapped reads
+  tax_count <- sapply(1:max(tax_query$rname_tax_inds),function(i){sum(tax_query_unique$rname_tax_inds==i)})
+  total_unique <- sum(tax_count)
+  
+  # Functions for updating gamma and pi
+  pi_fun <- function(x, gammas, rname , tax_count, total_unique){ ( tax_count[x]+sum(gammas[rname == x])) /( total_unique + sum(gammas) ) }
+  gamma_fun <- function(x, qname_inds, pis){  pis[qname_inds == x]/sum(pis[qname_inds == x]) }
 
   ## EM algorithm for reducing abiguity in the alignments
-  gammas_new <- gammas
-  pi_old <- 1 / nrow(gammas)
-  pi_new <- apply(gammas_new, 2, mean)
-  conv <- max(abs(pi_new - pi_old) / pi_old)
+  gammas <- rep(1, nrow(tax_query_mulitmap))
+  pi_old <- 1 / max(tax_query_mulitmap$rname_tax_inds)
+  pi_new <- sapply(1:max(tax_query$rname_tax_inds), pi_fun, gammas, tax_query_mulitmap$rname_tax_inds, tax_count, total_unique)
+  conv <- max(abs(pi_new - pi_old) )
   it <- 0
 
   message("Starting EM iterations")
   while (conv > EMconv & it < EMmaxIts) {
-    ## Expectation Step: Estimate the expected value for each read to each
-    ## genome
-    weighted_gamma <- gammas_new * matrix(pi_new, nrow(gammas), length(pi_new),
-                                          byrow = T)
-    weighted_gamma_sums <- rowSums(weighted_gamma)
-    gammas_new <- weighted_gamma/weighted_gamma_sums
+    ## Expectation Step: Estimate the expected value for each multi-mapped read to each genome
+    gammas <- unlist(sapply(unique(tax_query_mulitmap$qname_inds), gamma_fun, tax_query_mulitmap$qname_inds, pi_new[tax_query_mulitmap$rname_tax_inds]))
 
-    ## Maimization step: proportion of reads to each genome, 
-    ## ??Estimate thetas??
-    pi_new <- apply(gammas_new, 2, mean)
-
+    ## Maimization step: proportion of reads to each genome 
+    pi_new <- sapply(1:max(tax_query$rname_tax_inds), pi_fun, gammas, tax_query_mulitmap$rname_tax_inds, tax_count, total_unique)
+    
     ## Check convergence
     it <- it + 1
-    conv <- max(abs(pi_new - pi_old) / pi_old, na.rm = TRUE)
+    conv <- max(abs(pi_new - pi_old), na.rm = TRUE)
     pi_old <- pi_new
   }
-  message("\tDONE!")
+  message("\tDONE! Converged in ", it, " interations.")
 
   ## Collect results
-  best_hit <- table(unlist(apply(gammas_new, 1,
-                                 function(x) which(x == max(x)))))
-  hits_ind <- as.numeric(names(best_hit))
-  final_taxids <- unique_taxids[hits_ind]
-  final_genomes <- unique_genome_names[hits_ind]
-  proportion <- best_hit / sum(best_hit)
-  EMreads <- round(colSums(gammas_new)[hits_ind], 1)
-  EMprop <- colSums(gammas_new)[hits_ind] / sum(gammas_new)
-  results <- cbind(TaxonomyID = final_taxids, Genome = final_genomes,
-                   read_count = best_hit, Proportion = proportion,
-                   EMreads = EMreads,
+  gamma_count <- rep(0,length(tax_count)); for(i in unique(tax_query_mulitmap$rname_tax_inds)){gamma_count[i]=sum(gammas[tax_query_mulitmap$rname_tax_inds==i])}
+  
+  max_fun <- function(i, gam, qname){max_gam <- max(gam[qname ==i]); 1*(gam[qname ==i]==max_gam)/sum(gam[qname ==i]==max_gam)}
+  gamma_max <- unlist(sapply(unique(tax_query_mulitmap$qname_inds), max_fun, gammas, tax_query_mulitmap$qname_inds))
+  gamma_max_count <- rep(0,length(tax_count)); for(i in unique(tax_query_mulitmap$rname_tax_inds)){gamma_max_count[i]=sum(gamma_max[tax_query_mulitmap$rname_tax_inds==i])}
+    
+  best_hits <- round(tax_count + gamma_max_count, 1)
+  proportion <- best_hits / sum(best_hits)
+  
+  EM_hits <- round(tax_count + gamma_count, 1)
+  EMprop <- EM_hits / sum(EM_hits)
+  
+  results <- cbind(TaxonomyID = unique_taxids, Genome = unique_genome_names,
+                   read_count = best_hits, Proportion = proportion,
+                   EMreads = EM_hits,
                    EMProportion = EMprop)
-  results <- results[order(best_hit, decreasing = TRUE), ]
-  message("Found reads for ", length(best_hit), " genomes")
+  results <- results[order(best_hits, decreasing = TRUE), ]
+  
+   message("Found reads for ", length(best_hits), " genomes")
 
   ## Write to file
   write.csv(results, file = out_file, row.names = F)
