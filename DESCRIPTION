@@ -19,7 +19,7 @@ Imports:
     Rsamtools,
     taxize,
     BiocParallel,
-    tidyverse
+    dplyr
 Suggests:
     BiocStyle,
     knitr,
