@@ -18,7 +18,8 @@ Imports:
     Rsubread,
     Rsamtools,
     taxize,
-    BiocParallel
+    BiocParallel,
+    tidyverse
 Suggests:
     BiocStyle,
     knitr,
