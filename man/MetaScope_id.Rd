@@ -6,7 +6,8 @@
 \usage{
 metascope_id(
   bam_file,
-  out_file = paste(tools::file_path_sans_ext(bam_file), ".metascope_id.csv", sep = ""),
+  out_file = paste(tools::file_path_sans_ext(bam_file), ".metascope_id.csv", sep = "",
+    cores = 8),
   EMconv = 1/10000,
   EMmaxIts = 25
 )
@@ -19,11 +20,14 @@ needs removal of ambiguity.}
 basename plus ".metascope_id.csv".}
 
 \item{EMconv}{The convergence parameter of the EM algorithm. Default set at
-\code{0.001}.}
+\code{1/10000}.}
 
 \item{EMmaxIts}{The maximum number of EM iterations, regardless of whether
 the EMconv is below the threshhold. Default set at \code{50}.
 If set at \code{0}, the algorithm skips the EM step and summarizes the .bam file 'as is'}
+
+\item{cores}{The number of cores to be used for the EM estimation. 
+Choose 1 for no parallelization. Default set at \code{8}.}
 }
 \value{
 This function returns a .csv file with annotated read counts to genomes with
