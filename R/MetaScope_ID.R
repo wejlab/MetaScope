@@ -115,6 +115,7 @@ metascope_id <- function(bam_file,
     it <- it + 1
     conv <- max(abs(pi_new - pi_old), na.rm = TRUE)
     pi_old <- pi_new
+    print(c(it,conv))
   }
   message("\tDONE! Converged in ", it, " interations.")
 
