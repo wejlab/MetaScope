@@ -39,8 +39,8 @@
 
 metascope_id <- function(bam_file, 
                          out_file = paste(tools::file_path_sans_ext(bam_file),
-                                          ".metascope_id.csv", sep = "", cores=8),
-                         EMconv = 1/10000, EMmaxIts = 25) {
+                                          ".metascope_id.csv", sep = "",
+                         EMconv = 1/10000, EMmaxIts = 25, cores=8) {
   ## read in .bam file
   message("Reading .bam file: ", bam_file)
   reads <- Rsamtools::scanBam(bam_file, 
