@@ -3,7 +3,7 @@
 #' This function will automatically download RefSeq genome libraries in a
 #' .fasta format from the specified kingdom. The function will first
 #' download the summary report at:
-#' ftp://ftp.ncbi.nlm.nih.gov/genomes/**kingdom**/overview.txt,
+#' ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/**kingdom**/assembly_summary.txt,
 #' and then use this file to download genomes and combine them in a single
 #' compressed or uncompressed .fasta file.
 #' @param kingdom Select the kingdom taxonomy to download.
