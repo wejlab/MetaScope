@@ -40,7 +40,13 @@ The name of a filtered, sorted .bam file written to the user's
 current working directory.
 }
 \description{
-
+After a sample is aligned to a target library with \code{align_target()},
+we may use \code{filter_host()} to remove unwelcome host contamination using
+filter reference libraries. This function takes as input the name
+of the .bam file produced via \code{align_target()}, and produces a
+sorted .bam file with any reads that match the filter libraries removed.
+This resulting .bam file may be used upstream for further analysis.
+It is not intended for use by users.
 }
 \examples{
 # How to get previous BAM file??? Rerun code? Or include it?
