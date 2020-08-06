@@ -19,7 +19,7 @@ globalVariables(c("align_details"))
 #' current working directory.
 #' 
 
-remove_matches <- function(reads_bam, read_names, name_out){
+remove_matches <- function(reads_bam, read_names, name_out) {
   # Note: reads_BAM and filter-aligned files are already sorted by chromosome
   # index bam file
   bam_index <- Rsamtools::indexBam(reads_bam)
@@ -54,7 +54,7 @@ remove_matches <- function(reads_bam, read_names, name_out){
 #' remove mapped reads
 #'
 #' After a sample is aligned to a target library with \code{align_target()},
-#' we may use \code{filter_host()` to remove unwelcome host contamination using
+#' we may use \code{filter_host()} to remove unwelcome host contamination using
 #' filter reference libraries. This function takes as input the name
 #' of the .bam file produced via \code{align_target()}, and produces a
 #' sorted .bam file with any reads that match the filter libraries removed.

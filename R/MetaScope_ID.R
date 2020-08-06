@@ -14,9 +14,8 @@
 #' \code{1/10000}.
 #' @param EMmaxIts The maximum number of EM iterations, regardless of whether
 #' the EMconv is below the threshhold. Default set at \code{50}.
-#' If set at \code{0}, the algorithm skips the EM step and summarizes the .bam file 'as is'
-#' @param cores The number of cores to be used for the EM estimation. 
-#' Choose 1 for no parallelization. Default set at \code{8}.
+#' If set at \code{0}, the algorithm skips the EM step and summarizes the .bam
+#' file 'as is'
 #' 
 #' @return
 #' This function returns a .csv file with annotated read counts to genomes with
@@ -40,20 +39,24 @@
 metascope_id <- function(bam_file, 
                          out_file = paste(tools::file_path_sans_ext(bam_file),
                                           ".metascope_id.csv", sep = ""),
-                         EMconv = 1/10000, EMmaxIts = 25, cores=8) {
-  ## read in .bam file
+                         EMconv = 1/10000, EMmaxIts = 25) {
+  ## Read in .bam file
+  set.seed(99)
+  now <- Sys.time()
   message("Reading .bam file: ", bam_file)
   reads <- Rsamtools::scanBam(bam_file, 
                               param = Rsamtools::ScanBamParam(what = c("qname",
-                                                                       "rname")))
+                                                                       "rname",
+                                                                       "cigar")))
   unmapped <- is.na(reads[[1]]$rname)
   mapped_qname <- reads[[1]]$qname[!unmapped]
   mapped_rname <- reads[[1]]$rname[!unmapped]
+  mapped_cigar <- reads[[1]]$cigar[!unmapped]
   read_names <- unique(mapped_qname)
   accessions <- unique(mapped_rname)
   message("\tFound ", length(read_names), " reads aligned to ",
           length(accessions), " NCBI accessions")
-
+  
   ## convert accessions to taxids and get genome names
   message("Obtaining taxonomy and genome names")
   suppressMessages(tax_id_all <- taxize::genbank2uid(id = accessions))
@@ -63,7 +66,7 @@ metascope_id <- function(bam_file,
   genome_names <- sapply(tax_id_all, function(x) attr(x, "name"))
   unique_genome_names <- genome_names[!duplicated(taxid_inds)]
   message("\tFound ", length(unique_taxids), " unique NCBI taxonomy IDs")
-
+  
   ## make an aligment matrix (rows: reads, cols: unique taxids)
   message("Setting up the EM algorithm")
   qname_inds <- match(mapped_qname, read_names)
@@ -72,76 +75,61 @@ metascope_id <- function(bam_file,
   
   #order based on read names
   rname_tax_inds <- rname_tax_inds[order(qname_inds)]
-  qname_inds <- sort(qname_inds) 
-  tax_query <- data.frame( rname_tax_inds , qname_inds )
+  qname_inds <- sort(qname_inds)
   
-  #keep only one alignment to each taxid
-  tax_query <- tax_query %>% distinct(rname_tax_inds, qname_inds, .keep_all = TRUE)
+  ## EM algorithm for reducing ambiguity in the alignments
+  gammas <- mltools::sparsify(data.table::data.table(
+    matrix(0, nrow = length(read_names),
+           ncol = length(unique_taxids))))
+  inp_mat <- as.matrix(cbind(qname_inds, rname_tax_inds))
+  gammas[inp_mat] <- 1
   
-  #split unique and multimapped reads
-  tax_query <- tax_query %>% group_by(qname_inds) %>% mutate(duplicate.flag = n() > 1)
-  tax_query_unique <- tax_query %>% filter(!duplicate.flag)
-  tax_query_mulitmap <- tax_query %>% filter(duplicate.flag)
-  
-  #summarize results for uniquely mapped reads
-  tax_count <- sapply(1:max(tax_query$rname_tax_inds),function(i){sum(tax_query_unique$rname_tax_inds==i)})
-  total_unique <- sum(tax_count)
-  
-  # Functions for updating gamma and pi
-  pi_fun <- function(x, gammas, rname , tax_count, total_unique){ ( tax_count[x]+sum(gammas[rname == x])) /( total_unique + sum(gammas) ) }
-  gamma_fun <- function(x, qname_inds, pis){ps<-pis[qname_inds == x];  ps/sum(ps) }
-  
-  ## EM algorithm for reducing abiguity in the alignments
-  gammas <- rep(1, nrow(tax_query_mulitmap))
-  pi_old <- 1 / max(tax_query_mulitmap$rname_tax_inds)
-  pi_new <- sapply(1:max(tax_query$rname_tax_inds), pi_fun, gammas, tax_query_mulitmap$rname_tax_inds, tax_count, total_unique)
-  conv <- max(abs(pi_new - pi_old) )
+  pi_old <- 1 / nrow(gammas)
+  pi_new <- colMeans(as.matrix(gammas))
+  conv <- max(abs(pi_new - pi_old) / pi_old)
   it <- 0
-
-  multicoreParam <- BiocParallel::MulticoreParam(workers = cores)
   
   message("Starting EM iterations")
   while (conv > EMconv & it < EMmaxIts) {
-    ## Expectation Step: Estimate the expected value for each multi-mapped read to each genome
-    pi_vec <- pi_new[tax_query_mulitmap$rname_tax_inds]
-    gammas <- unlist(BiocParallel::bplapply(unique(tax_query_mulitmap$qname_inds), 
-                                            gamma_fun, tax_query_mulitmap$qname_inds, 
-                                            pi_vec, BPPARAM = multicoreParam))
-
-    ## Maimization step: proportion of reads to each genome 
-    pi_new <- sapply(1:max(tax_query$rname_tax_inds), pi_fun, gammas, tax_query_mulitmap$rname_tax_inds, tax_count, total_unique)
+    # Expectation Step: Estimate expected value for each read to each genome
+    pi_mat <- mltools::sparsify(data.table::data.table(diag(pi_new)))
+    weighted_gamma <- gammas %*% pi_mat
+    weighted_gamma_sums <- rowSums(as.matrix(weighted_gamma))
+    gammas_new <- weighted_gamma/weighted_gamma_sums
     
-    ## Check convergence
+    # Maximization step: proportion of reads to each genome
+    pi_new <- colMeans(as.matrix(gammas_new))
+    
+    # Check convergence
     it <- it + 1
     conv <- max(abs(pi_new - pi_old), na.rm = TRUE)
     pi_old <- pi_new
-    print(c(it,conv))
+    print(c(it, conv))
   }
   message("\tDONE! Converged in ", it, " interations.")
-
+  
   ## Collect results
-  gamma_count <- rep(0,length(tax_count)); for(i in unique(tax_query_mulitmap$rname_tax_inds)){gamma_count[i]=sum(gammas[tax_query_mulitmap$rname_tax_inds==i])}
+  best_hit <- table(unlist(apply(gammas_new, 1,
+                                 function(x) which(x == max(x)))))
+  hits_ind <- as.numeric(names(best_hit))
   
-  max_fun <- function(i, gam, qname){max_gam <- max(gam[qname ==i]); 1*(gam[qname ==i]==max_gam)/sum(gam[qname ==i]==max_gam)}
-  gamma_max <- unlist(sapply(unique(tax_query_mulitmap$qname_inds), max_fun, gammas, tax_query_mulitmap$qname_inds))
-  gamma_max_count <- rep(0,length(tax_count)); for(i in unique(tax_query_mulitmap$rname_tax_inds)){gamma_max_count[i]=sum(gamma_max[tax_query_mulitmap$rname_tax_inds==i])}
-    
-  best_hits <- round(tax_count + gamma_max_count, 1)
-  proportion <- best_hits / sum(best_hits)
+  final_taxids <- unique_taxids[hits_ind]
+  final_genomes <- unique_genome_names[hits_ind]
   
-  EM_hits <- round(tax_count + gamma_count, 1)
-  EMprop <- EM_hits / sum(EM_hits)
+  proportion <- best_hit / sum(best_hit)
+  gammasums <- colSums(as.matrix(gammas_new))
+  EMreads <- round(gammasums[hits_ind], 1)
+  EMprop <- gammasums[hits_ind] / sum(gammas_new)
   
-  results <- cbind(TaxonomyID = unique_taxids, Genome = unique_genome_names,
-                   read_count = best_hits, Proportion = proportion,
-                   EMreads = EM_hits,
+  results <- cbind(TaxonomyID = final_taxids, Genome = final_genomes,
+                   read_count = best_hit, Proportion = proportion,
+                   EMreads = EMreads,
                    EMProportion = EMprop)
-  results <- results[order(best_hits, decreasing = TRUE), ]
+  results <- results[order(best_hit, decreasing = TRUE), ]
+  message("Found reads for ", length(best_hit), " genomes")
   
-   message("Found reads for ", length(best_hits), " genomes")
-
   ## Write to file
-  write.csv(results, file = out_file, row.names = F)
+  write.csv(results, file = out_file, row.names = FALSE)
   message("Results written to ", out_file)
 
   return(list(out_file, results))
