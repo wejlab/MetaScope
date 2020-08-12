@@ -19,7 +19,9 @@ Imports:
     Rsamtools,
     taxize,
     BiocParallel,
-    dplyr
+    dplyr,
+    Matrix,
+    qlcMatrix
 Suggests:
     BiocStyle,
     knitr,
