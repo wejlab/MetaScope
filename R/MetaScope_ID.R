@@ -40,7 +40,6 @@ metascope_id <- function(bam_file,
                          out_file = paste(tools::file_path_sans_ext(bam_file),
                                           ".metascope_id.csv", sep = ""),
                          EMconv = 1/10000, EMmaxIts = 25) {
-  ## Read in .bam file
   set.seed(99)
   now <- Sys.time()
   message("Reading .bam file: ", bam_file)
@@ -77,54 +76,58 @@ metascope_id <- function(bam_file,
   rname_tax_inds <- rname_tax_inds[order(qname_inds)]
   qname_inds <- sort(qname_inds)
   
-  ## EM algorithm for reducing ambiguity in the alignments
-  gammas <- mltools::sparsify(data.table::data.table(
-    matrix(0, nrow = length(read_names),
-           ncol = length(unique_taxids))))
-  inp_mat <- as.matrix(cbind(qname_inds, rname_tax_inds))
-  gammas[inp_mat] <- 1
   
-  pi_old <- 1 / nrow(gammas)
-  pi_new <- colMeans(as.matrix(gammas))
+  input_distinct <- distinct(tibble(cbind(qname_inds, rname_tax_inds)))
+  qname_inds_2 <- input_distinct$`cbind(qname_inds, rname_tax_inds)`[, 1]
+  rname_tax_inds_2 <- input_distinct$`cbind(qname_inds, rname_tax_inds)`[, 2]
+  gammas <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2,
+                                 x = 1) #align_scores_cigar)
+  
+  pi_old <- rep(1 / nrow(gammas), ncol(gammas))
+  pi_new <-  Matrix::colMeans(gammas)
   conv <- max(abs(pi_new - pi_old) / pi_old)
   it <- 0
   
   message("Starting EM iterations")
   while (conv > EMconv & it < EMmaxIts) {
     # Expectation Step: Estimate expected value for each read to each genome
-    pi_mat <- mltools::sparsify(data.table::data.table(diag(pi_new)))
-    weighted_gamma <- gammas %*% pi_mat
-    weighted_gamma_sums <- rowSums(as.matrix(weighted_gamma))
+    pi_mat <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2,
+                                   x = pi_new[rname_tax_inds_2])
+    weighted_gamma <- gammas * pi_mat
+    weighted_gamma_sums <- Matrix::rowSums(weighted_gamma)
     gammas_new <- weighted_gamma/weighted_gamma_sums
     
     # Maximization step: proportion of reads to each genome
-    pi_new <- colMeans(as.matrix(gammas_new))
+    pi_new <- Matrix::colMeans(gammas_new)
     
     # Check convergence
     it <- it + 1
-    conv <- max(abs(pi_new - pi_old), na.rm = TRUE)
+    conv <- max(abs(pi_new - pi_old) / pi_old, na.rm = TRUE)
     pi_old <- pi_new
     print(c(it, conv))
   }
   message("\tDONE! Converged in ", it, " interations.")
   
   ## Collect results
-  best_hit <- table(unlist(apply(gammas_new, 1,
-                                 function(x) which(x == max(x)))))
+  hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which
+  best_hit <- Matrix::colSums(hit_which)
+  names(best_hit) <- seq_along(best_hit)
+  best_hit <- best_hit[best_hit != 0]
+  
   hits_ind <- as.numeric(names(best_hit))
   
   final_taxids <- unique_taxids[hits_ind]
   final_genomes <- unique_genome_names[hits_ind]
   
   proportion <- best_hit / sum(best_hit)
-  gammasums <- colSums(as.matrix(gammas_new))
+  gammasums <- Matrix::colSums(gammas_new)
   EMreads <- round(gammasums[hits_ind], 1)
   EMprop <- gammasums[hits_ind] / sum(gammas_new)
   
-  results <- cbind(TaxonomyID = final_taxids, Genome = final_genomes,
-                   read_count = best_hit, Proportion = proportion,
-                   EMreads = EMreads,
-                   EMProportion = EMprop)
+  aubs <- results <- cbind(TaxonomyID = final_taxids, Genome = final_genomes,
+                           read_count = best_hit, Proportion = proportion,
+                           EMreads = EMreads,
+                           EMProportion = EMprop)
   results <- results[order(best_hit, decreasing = TRUE), ]
   message("Found reads for ", length(best_hit), " genomes")
   
