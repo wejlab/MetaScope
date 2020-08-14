@@ -22,8 +22,16 @@ editor_options:
 ---
 
  
-## Working Directory
+## Data
+
 When utilizing the MetaScope package, keep in mind that many (if not all) functions output the name of a .bam file or other file(s) that are written automatically to the user's working directory. As such, it is vital that the user selects a working directory that can store all intermediate and final files prior to beginning any of the MetaScope workflows.
+
+This vignette analyses raw sequencing data obtained from the NCBI Sequence Read Archive (SRA), a public repository of high throughput sequencing data. The sample used for all workflow examples, except the demultiplexing workflow, is from a diverse bacterial and archaeal synthetic community assembled from pure genomic DNAs, made available under accession number [SRX200715](https://www.ncbi.nlm.nih.gov/sra/SRX200715[accn]) from Oak Ridge National Laboratories. Throughout the examples presented here, we assume that we are interested in the viral material present in the sample, and that we wish to exclude any reads mapping to archael genomes. For the sake of example, we do not run the code in this vignette as the functions are mostly used for writing files to an external directory, with supplemental updates in the terminal output. However, the vignette code can be run outside of the vignette by referencing the FASTQ file path with the following line of code:
+```{R}
+readPath <- system.file("extdata", "SRR606366.fastq", package = "MetaScope")
+
+readPath
+```
  
 ## Reference Genome Library
 
@@ -33,50 +41,79 @@ The MetaScope genome library workflow is designed to assist with collection of s
 Typically, the targets of the analysis are microbes (that is, viruses, bacteria, and fungi), and we wish to filter out or discard any reads from the host in addition to artificially added sequences, such as PhiX174. Following identification of the targets and filters, we use a reference genome library to realign the vast number of sample reads back to the respective regions of origin in various species.
 
 
-The `download_refseq()` function automatically extracts custom reference genome libraries in a FASTA file for microbial or host genomes. The user must first indicate a kingdom for which to download the genomes, such as 'archaea' or 'viral'. They may then specify whether they wish to download only the RefSeq reference genomes, or both the reference and representative genomes. The compress option then allows users to specify whether to compress the output FASTA file; this is done by default.
+The `download_refseq()` function automatically extracts custom reference genome libraries in a FASTA file for microbial or host genomes. The user must first indicate a kingdom for which to download the genomes, such as 'bacteria' or 'viral'. They may then specify whether they wish to download only the RefSeq reference genomes, or both the reference and representative genomes. The compress option then allows users to specify whether to compress the output FASTA file; this is done by default.
 
 
-In the following code, we us download only the viral reference genomes from the NCBI database, in an uncompressed FASTA format.
+In the following code, we download only the viral reference genomes from the NCBI database, in an uncompressed FASTA format.
 
 ```{R ref lib, eval = FALSE}
+## Code block not run
+
 download_refseq('viral', compress = FALSE)
 ```
 
-We will also download appropriate material from the NCBI database to create a filter library for bacterial genomes.
+
+We will also download appropriate material from the NCBI database to create a filter library for archaeal genomes.
 
 ```{R ref lib bacterial, eval = FALSE}
-download_refseq('bacterial', compress = FALSE)
+## Code block not run
+
+# Representative MUST be set to TRUE for the archaea library
+download_refseq('archaea', compress = FALSE, representative = TRUE)
 ```
 
 ## Demultiplex
 Sequence runs on NGS instruments are typically carried out with multiple samples pooled together. An index tag (also called a barcode) consisting of a unique sequence of between 6 and 12bp is added to each sample so that the sequence reads from different samples can be identified. For 16s experiments or sequencing conducted using an Illumina machine, the process of demultiplexing (dividing your sequence reads into separate files for each index tag/sample) and generating the fastq data files required for downstream analysis can be done using the MetaScope demultiplexing workflow. This consists of the `demultiplex()` function, which takes as arguments a matrix of sample names/barcodes, a FASTQ file of barcodes by sequence header, and a FASTQ file of reads corresponding to the barcodes. Based on the barcodes given, the function extracts all reads for the indexed barcode and writes all the reads from that barcode to separate FASTQ files. 
 
+```{R demultiplex, eval = FALSE}
+## Code block not run
+
+# Get barcode, index, and read data locations
+barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
+indexPath <- system.file("extdata", "virus_example_index.fastq",
+                         package = "MetaScope")
+readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+
+# Get barcode, index, and read data locations
+demult <- demultiplex(barcodePath, indexPath, readPath, rcBarcodes = FALSE,
+                      hammingDist = 2)
+```
+
 ## Alignment with Reference Libraries
 
-After acquiring the target and filtering genome libraries, we may then take the sequencing reads from our sample and map them first to a target library, and then to the filter library. MetaScope's mapping module utilizes the Subread aligner  (Liao 2013) which maps reads to a reference genome via an efficient and simple seed-and-vote strategy. Essentially, the algorithm creates a large number of short equi-spaced seeds from each read, which we call subreads, that are extracted from each read. All seeds are then allowed the seeds to vote on an optical genome location. Overlapping subreads are used when read length is less than 160 bp, and more conventional alignment procedures (such as dynamic processing) are used to fill in detailed mismatch and indel information between the subreads that make up the winning voting block.
+
+After acquiring the target and filtering genome libraries, we may then take the sequencing reads from our sample and map them first to a target library, and then to the filter library. MetaScope's mapping module utilizes the Subread aligner (Liao 2013) which maps reads to a reference genome via an efficient and simple seed-and-vote strategy. Essentially, the algorithm creates a large number of short equi-spaced seeds from each read, which we call subreads, that are extracted from each read. All seeds are then allowed the seeds to vote on an optical genome location. Overlapping subreads are used when read length is less than 160 bp, and more conventional alignment procedures (such as dynamic processing) are used to fill in detailed mismatch and indel information between the subreads that make up the winning voting block.
 
 
 The MetaScope mapping workflow incorporates three functions - `mk_subread_index()`, `align_target()`, and `filter_r()`. First, we use `mk_subread_index()`, a wrapper for `Rsubread::buildindex()`, to generate one or more Subread indexes from a FASTA file. To build an index, 16 bp sequences are extracted from the reference genome in every three bases, that is, there is a 2 bp gap between each pair of neighboring 16 bp sequences. Correspondingly, each read has to be scanned three times for the mapping, that is, three sets of subreads are extracted, which start from the first, second and third base of the read, respectively. A hash table is then used for a reference genome to enable fast access to the chromosomal locations of subreads extracted from each read. The index-building function provides the option of breaking the index into multiple parts so as to reduce the memory footprint (only one part is present in the memory at any time). 
 
+
 ```{R make indexes, eval = FALSE}
-mk_subread_index('viral.fasta')
-mk_subread_index('bacterial.fasta')
+## Code block not run
+
+mk_subread_index('bacteria.fasta')
+
+
+mk_subread_index('archaea.fasta')
 ```
 
-Following index creation, we will use the Subread aligner to map the reads to the target genome with `align_target()`. The function primarily takes as an input the location of the FASTQ file to align, which should be a text string. In practice, `align_target()` maps reads to each target library separately, removes the unmapped reads from each file, and finally merges and sorts by chromosome the BAM files from each library into a single output file. The BAM file is written automatically to the user's working directory; the output of the function is the name of the written file.
+Following index creation, we will use the Subread aligner to map the reads to the target genome with `align_target()`. The function primarily takes as an input the location of the FASTQ file to align, which should be a text string. In practice, `align_target()` maps reads to each target library separately, removes the unmapped reads from each file, and finally merges and sorts by chromosome the BAM files from each library into a single output file. The BAM file is written automatically to the user's working directory; the output of the function is the name of the written file. Alignment options for the underlying `Rsubread_align()` are by default sourced from the `align_details` list object; users may easily supplement their own options by supplying a new list object with list elements titled in the same manner.
 
 ```{R alignment align, eval = FALSE}
-readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
-viral_map <- align_target(readPath, libs = "viral",
-                          project_name = "virus_example")
+## Code block not run
+
+bacteria_map <- align_target(readPath, libs = "bacteria",
+                          project_name = "bacteria_example")
 ```
 
 The last step in the mapping workflow is to filter the previously outputted BAM file according to the reference genome for the filter/host species. Although we have already filtered out any unmapped reads, which may belong to one or more host species or otherwise, there may still remain some sort of unwelcome contamination in the data from the filter species, which we wish to remove. To do this, we employ `filter_r()`, which takes as input the location of the BAM file created from `align_target()`, and produces a sorted BAM file with any reads that match the filter libraries removed. We will then use this final BAM file downstream for further analysis.
 
 ```{R alignment filter, eval = FALSE}
-readPath2 <- system.file("extdata", "virus_example.bam",
-                         package = "MetaScope")
-final_map <- filter_host(readPath2, libs = "bacterial")
+## Code block not run
+
+readPath2 <- system.file("extdata", "bacteria_example.bam", package = "MetaScope")
+final_map <- filter_host(readPath2, libs = "archaea")
+# Produces file bacteria_example.filtered.bam
 ```
 
 ## Genome Identification
