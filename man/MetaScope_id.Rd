@@ -38,6 +38,8 @@ library/.bam files use NCBI accession names for reference names (rnames in
 .bam file).
 }
 \examples{
+# Code not run
+\dontrun{
 ## Get a reference genome library
 download_refseq('viral', compress = FALSE)
 
@@ -49,5 +51,6 @@ viral_map <- align_target(readPath, "viral", "virus_example")
 
 #### Apply MetaScope ID:
 metascope_id(viral_map)
+}
 
 }

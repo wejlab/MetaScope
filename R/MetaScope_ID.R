@@ -1,3 +1,58 @@
+#' Count the number of base lengths in a CIGAR string for a given operation
+#' 
+#' The ‘CIGAR’ (Compact Idiosyncratic Gapped Alignment Report) string is how
+#' the SAM/BAM format represents spliced alignments. This function will accept
+#' a CIGAR string for a single read and a single character indicating the
+#' operation to be parsed in the string. An operation is a type of column that
+#' appears in the alignment, e.g. a match or gap. The integer following the
+#' operator specifies a number of consecutive operations. The `count_matches()`
+#' will identify all occurrences of the operator in the string input, add them,
+#' and return an integer number representing the total number of operations
+#' for the read that was summarized by the input CIGAR string.
+#' 
+#' This function is best used on a vector of CIGAR strings using an apply
+#' function (see examples).
+#' 
+#' @param x Character. A CIGAR string for a read to be parsed. Examples of
+#' possible operators include "M", "D", "I", "S", "H", "=", "P", and "X".
+#' @param char A single letter representing the operation to total for the
+#' given string.
+#' 
+#' @return an integer number representing the total number of alignment
+#' operations for the read that was summarized by the input CIGAR string.
+#' 
+#' @export
+#' 
+#' @examples 
+#' # A single cigar string: 3M + 3M + 5M
+#' cigar1 <- "3M1I3M1D5M"
+#' count_matches(cigar1, char = "M")
+#' 
+#' # Parse with operator "P": 2P
+#' cigar2 <- "4M1I2P9M"
+#' count_matches(cigar2, char = "P")
+#' 
+#' # Apply to multiple strings: 1I + 1I + 5I
+#' cigar3 <- c("3M1I3M1D5M", "4M1I1P9M", "76M13M5I")
+#' sapply(cigar3, count_matches, char = "I")
+#'
+
+count_matches <- function(x, char = "M") {
+  if (length(char) != 1) {
+    stop("Please provide a single character operator with which to parse.")
+  } else if (length(x) != 1) {
+    stop("Please provide a single CIGAR string to be parsed.")
+  }
+  pattern <- paste("\\d+", char , sep = "")
+  ind <- gregexpr(pattern, x)[[1]]
+  start <- as.numeric(ind)
+  end <- start + attr(ind, "match.length") - 2
+  out <- sum(as.numeric(apply(cbind(start, end), 1,
+                              function(y) substr(x, start = y[1],
+                                                 stop = y[2]))))
+  return(data.table::fifelse(is.na(out[1]), yes = 0, no = out[1]))
+}
+
 #' MetaScope ID
 #'
 #' This function will read in a .bam file, annotate the taxonomy and genome
@@ -21,7 +76,11 @@
 #' This function returns a .csv file with annotated read counts to genomes with
 #' mapped reads. The function iself returns the output .csv file name.
 #'
+#' @export
+#'
 #' @examples
+#' # Code not run
+#' \dontrun{
 #' ## Get a reference genome library
 #' download_refseq('viral', compress = FALSE)
 #'
@@ -33,8 +92,8 @@
 #'
 #' #### Apply MetaScope ID:
 #' metascope_id(viral_map)
+#' }
 #'
-#' @export
 
 metascope_id <- function(bam_file, 
                          out_file = paste(tools::file_path_sans_ext(bam_file),
@@ -76,12 +135,23 @@ metascope_id <- function(bam_file,
   rname_tax_inds <- rname_tax_inds[order(qname_inds)]
   qname_inds <- sort(qname_inds)
   
+  # Obtain alignment scores based on # of matches
+  num_match <- unlist(sapply(mapped_cigar, count_matches, USE.NAMES = FALSE))
+  num_insert <- unlist(sapply(mapped_cigar, count_matches, USE.NAMES = FALSE,
+                              char = "I"))
+  num_delete <- unlist(sapply(mapped_cigar, count_matches, USE.NAMES = FALSE,
+                              char = "D"))
+  prob_out <- sapply(seq_along(num_match), 
+                     function(x) stats::dmultinom(c(num_match[x],
+                                                    num_insert[x],
+                                                    num_delete[x]),
+                                                  prob = c(0.025, 0.025, 0.025)))
   
   input_distinct <- distinct(tibble(cbind(qname_inds, rname_tax_inds)))
   qname_inds_2 <- input_distinct$`cbind(qname_inds, rname_tax_inds)`[, 1]
   rname_tax_inds_2 <- input_distinct$`cbind(qname_inds, rname_tax_inds)`[, 2]
   gammas <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2,
-                                 x = 1) #align_scores_cigar)
+                                 x = align_scores_cigar)
   
   pi_old <- rep(1 / nrow(gammas), ncol(gammas))
   pi_new <-  Matrix::colMeans(gammas)
