@@ -23,6 +23,8 @@ different reference libraries (e.g. a split bacterial library).
 It is not intended for use by users.
 }
 \examples{
+# Code not run
+\dontrun{
 download_refseq('viral', compress = FALSE)
 mk_subread_index('viral.fasta', split = .0005)
 
@@ -35,4 +37,6 @@ output_file = "virus_example2.bam")
 
 bam_files <- c('virus_example1.bam','virus_example2.bam')
 com_head <- combined_header(bam_files)
+}
+
 }

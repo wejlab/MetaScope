@@ -36,6 +36,7 @@
 #' e.g. './demultiplex_fastq/SampleName1_GGAATTATCGGT.fastq.gz' 
 #'
 #' @examples
+#'
 #' ## Load example barcode, index, and read data into R session:
 #' barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
 #' bcFile <- read.table(barcodePath, sep = "\t", header = T)
@@ -48,11 +49,13 @@
 #'                         package = "MetaScope")
 #' reads <- Biostrings::readQualityScaledDNAStringSet(readPath)
 #' 
+#' # Code not run
+#' \dontrun{
 #' ## Extract reads from the first barcode
 #' results <- extractReads(1, bcFile[, 2], bcFile[, 1], inds, reads,
 #'                         rcBarcodes = FALSE, location = ".")
 #' results
-#'
+#' 
 #' ## Extract reads from multiple barcodes
 #' more_results <- lapply(1:6, extractReads, bcFile[, 2], bcFile[, 1], inds,
 #'                        reads, rcBarcodes = FALSE, location = ".")
@@ -64,6 +67,8 @@
 #'                                            rcBarcodes = FALSE, 
 #'                                            location = ".", 
 #'                                            BPPARAM = multicoreParam)
+#' # End of code not run                                           
+#' }                                            
 #' @export
 #'
 extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads, 
@@ -132,17 +137,20 @@ extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads,
 #' e.g. './demultiplex_fastq/SampleName1_GGAATTATCGGT.fastq.gz'
 #'
 #' @examples
+#'
 #' ## Get barcode, index, and read data locations
 #' barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
 #' indexPath <- system.file("extdata", "virus_example_index.fastq",
 #'                          package = "MetaScope")
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #'                          package = "MetaScope")
-#'
+#' \dontrun{
+#' # Code not run
 #' ## Get barcode, index, and read data locations
 #' demult <- demultiplex(barcodePath, indexPath, readPath, rcBarcodes = FALSE,
 #'                       hammingDist = 2)
 #' demult
+#' }
 #'
 #' @export
 #' 

@@ -47,6 +47,8 @@ passed to `filter_host()` to remove reads that also map to filter library
 genomes.
 }
 \examples{
+# Code not run
+\dontrun{
 ## Get a reference genome library
 download_refseq('viral', compress = FALSE)
 
@@ -63,5 +65,6 @@ targLibs <- c("viral_1", "viral_2")
 readPath <- system.file("extdata", "virus_example.fastq",
 package = "MetaScope")
 viral_map <- align_target(readPath, targLibs, project_name = "virus_example")
+}
 
 }

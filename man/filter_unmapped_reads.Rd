@@ -21,10 +21,14 @@ This function will to remove all unmapped reads or lines in a .bam file
 combining multiple .bam files from different microbial libraries may lead
 to some reads that mapped to one library and have unmapped entries from
 another library. This will remove any unmapped entries and leave all
-reference mapped lines in the .bam file. 
-It is not intended for use by users.
+reference mapped lines in the .bam file.
+}
+\details{
+It is not intended for use by package users.
 }
 \examples{
+# Code not run
+\dontrun{
 download_refseq('viral', compress = FALSE)
 mk_subread_index('viral.fasta')
 readPath <- system.file("extdata", "virus_example.fastq",
@@ -32,5 +36,6 @@ package = "MetaScope")
 Rsubread::align(index = "viral", readfile1 = readPath,
 output_file = "virus_example.bam")
 filtered <- filter_unmapped_reads("virus_example.bam")
+}
 
 }

@@ -4,6 +4,7 @@
 #' generate one or more Subread indexes from a .fasta file. If the library is
 #' too large (default >4GB) it will automatically be split into multiple
 #' indexes, with _1, _2, etc at the end of the ref_lib basename.
+#'
 #' @param ref_lib The name/location of the reference library file, in
 #' (uncompressed) .fasta format
 #' @param split The maximum allowed size of the genome file (in GB). If the
@@ -11,11 +12,16 @@
 #' multiple parts
 #' @param mem The maximum amount of memory (in MB) that can be used by the
 #' index generation process (used by the Rsubread::buildindex function)
+#'
 #' @return Returns one or more Subread indexes for the supplied reference
 #' .fasta file. If multiple indexes are created, the libraries will be
 #' named the ref_lib basename plus _1, _2, etc.
 #'
+#' @export
+#'
 #' @examples
+#' # Code not run
+#' \dontrun{
 #' ## Download all RefSeq reference viral genomes and make an index
 #' download_refseq('viral', compress = FALSE)
 #' mk_subread_index('viral.fasta')
@@ -23,8 +29,7 @@
 #' ## Download all RefSeq reference viral genomes and make more than one index
 #' download_refseq('viral', compress = FALSE)
 #' mk_subread_index('viral.fasta', split = .0005)
-#'
-#' @export
+#' }
 #' 
 
 mk_subread_index <- function(ref_lib, split = 4, mem = 8000) {

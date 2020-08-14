@@ -1,11 +1,12 @@
 globalVariables(c("align_details"))
 #' Helper function to remove reads matched to filter libraries
-#' 
+#'
 #' Within the \code{filter_host()} function, we align our sequencing sample to all
 #' filter libraries of interest. The \code{remove_matches()} function allows
 #' for removal of any target reads that are also aligned to filter libraries.
-#' It is not intended for use by users.
-#' 
+#'
+#' This function is not intended for use by users.
+#'
 #' @param reads_bam The name of a merged, sorted .bam file that has previously
 #' been aligned to a reference library. Likely, the output from running an
 #' instance of \code{align_target()}.
@@ -14,10 +15,25 @@ globalVariables(c("align_details"))
 #' element should be a vector of read names.
 #' @param name_out The name of the .bam file that to which the filtered alignments
 #' will be written.
-#' 
+#'
 #' @return The name of a filtered, sorted .bam file written to the user's
 #' current working directory.
 #' 
+#' @examples
+#' # Code not run
+#' \dontrun{
+#' readPath <- system.file("extdata", "bacteria_example.bam",
+#'                         package = "MetaScope")
+#'
+#' ## Assume that the first 100 query names aligned to first filter library
+#' ## And another 100 aligned to second filter library
+#' qnames <- Rsamtools::scanBam(readPath)[[1]]$qname
+#' read_names <- list(qnames[1:100], qnames[400:500])
+#' out <- "bacteria_example.filtered.bam"
+#' 
+#' remove_matches(readPath, read_names, out)
+#' }
+#'
 
 remove_matches <- function(reads_bam, read_names, name_out) {
   # Note: reads_BAM and filter-aligned files are already sorted by chromosome
@@ -74,24 +90,22 @@ remove_matches <- function(reads_bam, read_names, name_out) {
 #' @export
 #' 
 #' @examples
-#' # How to get previous BAM file??? Rerun code? Or include it?
-#' # Create an index for filter libraries
-#' # filter
-#' 
-#' #' ## Get reference and filter genome libraries
-#' download_refseq('viral', compress = FALSE)
-#' download_refseq('bacterial', compress = FALSE)
+#' # Code not run
+#' \dontrun{
+#' ## Assuming a BAM file has been created previously with align_target()
 #'
-#' ## Make and align to a single reference genome library
-#' mk_subread_index('viral.fasta')
-#' readPath <- system.file("extdata", "virus_example.fastq",
+#' ## Download and index the filter genome library
+#' download_refseq('archaea', compress = FALSE, representative = TRUE)
+#' mk_subread_index('archaea.fasta')
+#'
+#' ## Create object with file location of previously aligned BAM file
+#' readPath <- system.file("extdata", "bacteria_example.bam",
 #'                          package = "MetaScope")
-#' viral_map <- align_target(readPath, "viral", project_name = "virus_example")
 #'
-#' # Filter with separate reference genome library
-#' mk_subread_index('bacterial.fasta')
-#' filter_host(viral_map, libs = "bacterial")
-#' 
+#' ## Filter with host reference genome library
+#' filter_host(readPath, libs = 'archaea')
+#' }
+#'
 
 filter_host <- function(reads_bam, libs, lib_dir=NULL,
                      output = paste(tools::file_path_sans_ext(reads_bam),

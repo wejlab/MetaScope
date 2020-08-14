@@ -62,6 +62,7 @@ extracts all reads for the indexed barcode and writes all the reads from
 that barcode to a separate .fastq file.
 }
 \examples{
+
 ## Load example barcode, index, and read data into R session:
 barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
 bcFile <- read.table(barcodePath, sep = "\t", header = T)
@@ -74,6 +75,8 @@ readPath <- system.file("extdata", "virus_example.fastq",
                         package = "MetaScope")
 reads <- Biostrings::readQualityScaledDNAStringSet(readPath)
 
+# Code not run
+\dontrun{
 ## Extract reads from the first barcode
 results <- extractReads(1, bcFile[, 2], bcFile[, 1], inds, reads,
                         rcBarcodes = FALSE, location = ".")
@@ -90,4 +93,6 @@ parallel_results <- BiocParallel::bplapply(1:6, extractReads, bcFile[, 2],
                                            rcBarcodes = FALSE, 
                                            location = ".", 
                                            BPPARAM = multicoreParam)
+# End of code not run                                           
+}                                            
 }

@@ -7,7 +7,8 @@ globalVariables(c("align_details"))
 #' to some reads that mapped to one library and have unmapped entries from
 #' another library. This will remove any unmapped entries and leave all
 #' reference mapped lines in the .bam file. 
-#' It is not intended for use by users.
+#' 
+#' It is not intended for use by package users.
 #'
 #' @param bamfile Location for the .bam file to filter & remove all unmapped
 #' reads
@@ -18,6 +19,8 @@ globalVariables(c("align_details"))
 #' output .bam file name.
 #'
 #' @examples
+#' # Code not run
+#' \dontrun{
 #' download_refseq('viral', compress = FALSE)
 #' mk_subread_index('viral.fasta')
 #' readPath <- system.file("extdata", "virus_example.fastq",
@@ -25,6 +28,7 @@ globalVariables(c("align_details"))
 #' Rsubread::align(index = "viral", readfile1 = readPath,
 #' output_file = "virus_example.bam")
 #' filtered <- filter_unmapped_reads("virus_example.bam")
+#' }
 #'
 
 filter_unmapped_reads <- function(bamfile) {
@@ -65,6 +69,8 @@ filter_unmapped_reads <- function(bamfile) {
 #' This function will return a combined header from all the supplied .bam files.
 #' 
 #' @examples
+#' # Code not run
+#' \dontrun{
 #' download_refseq('viral', compress = FALSE)
 #' mk_subread_index('viral.fasta', split = .0005)
 #'
@@ -77,6 +83,8 @@ filter_unmapped_reads <- function(bamfile) {
 #'
 #' bam_files <- c('virus_example1.bam','virus_example2.bam')
 #' com_head <- combined_header(bam_files)
+#' }
+#' 
 
 combined_header <- function(bam_files, header_file = "header_tmp.sam") {
   print(paste("Making a combined header file:", header_file))
@@ -127,6 +135,8 @@ combined_header <- function(bam_files, header_file = "header_tmp.sam") {
 #' The function also outputs the new .bam filename.
 #' 
 #' @examples
+#' # code not run
+#' \dontrun{
 #' download_refseq('viral', compress = FALSE)
 #' mk_subread_index('viral.fasta', split = .0005)
 #' readPath <- system.file("extdata", "virus_example.fastq",
@@ -143,8 +153,9 @@ combined_header <- function(bam_files, header_file = "header_tmp.sam") {
 #'
 #' ## Note that the following would be an equivalent command if samtools is
 #' installed
-#' #system("samtools reheader header_tmp.sam virus_example2.bam > virus_example2h.bam")
-#' 
+#' system("samtools reheader header_tmp.sam virus_example2.bam > virus_example2h.bam")
+#' }
+#'
 bam_reheader_R <- function(head, old_bam,
                            new_bam = paste(tools::file_path_sans_ext(old_bam), 
                                                           "h.bam", sep = "")) {
@@ -194,6 +205,8 @@ bam_reheader_R <- function(head, old_bam,
 #' The function also outputs the new .bam filename.
 #'
 #' @examples
+#' # Code not run
+#' \dontrun{
 #' download_refseq('viral', compress = FALSE)
 #' mk_subread_index('viral.fasta', split = .0005)
 #'
@@ -210,6 +223,7 @@ bam_reheader_R <- function(head, old_bam,
 #' bam_reheader_R(com_head, 'virus_example1.bam')
 #' bam_files <- c('virus_example1h.bam','virus_example2h.bam')
 #' merged_all <- merge_bam_files(bam_files, 'virus_example_merged')
+#' }
 #'
 
 merge_bam_files <- function(bam_files, destination,
@@ -275,7 +289,11 @@ merge_bam_files <- function(bam_files, destination,
 #' working directory.
 #' The function also outputs the new .bam filename.
 #'
+#' @export
+#'
 #' @examples
+#' # Code not run
+#' \dontrun{
 #' ## Get a reference genome library
 #' download_refseq('viral', compress = FALSE)
 #'
@@ -292,8 +310,7 @@ merge_bam_files <- function(bam_files, destination,
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
 #' viral_map <- align_target(readPath, targLibs, project_name = "virus_example")
-#' 
-#' @export
+#' }
 #'
 align_target <- function(reads, libs,
                          lib_dir=NULL,

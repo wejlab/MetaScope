@@ -59,16 +59,19 @@ the indexed barcode and writes all the reads from that barcode to separate
 .fastq files.
 }
 \examples{
+
 ## Get barcode, index, and read data locations
 barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
 indexPath <- system.file("extdata", "virus_example_index.fastq",
                          package = "MetaScope")
 readPath <- system.file("extdata", "virus_example.fastq",
                          package = "MetaScope")
-
+\dontrun{
+# Code not run
 ## Get barcode, index, and read data locations
 demult <- demultiplex(barcodePath, indexPath, readPath, rcBarcodes = FALSE,
                       hammingDist = 2)
 demult
+}
 
 }

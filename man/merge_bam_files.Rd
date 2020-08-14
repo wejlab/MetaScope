@@ -31,6 +31,8 @@ then merges and sorts the .bam files. This is similar to the
 headers. It is not intended for use by users.
 }
 \examples{
+# Code not run
+\dontrun{
 download_refseq('viral', compress = FALSE)
 mk_subread_index('viral.fasta', split = .0005)
 
@@ -47,5 +49,6 @@ bam_reheader_R(com_head, 'virus_example1.bam')
 bam_reheader_R(com_head, 'virus_example1.bam')
 bam_files <- c('virus_example1h.bam','virus_example2h.bam')
 merged_all <- merge_bam_files(bam_files, 'virus_example_merged')
+}
 
 }

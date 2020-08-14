@@ -49,22 +49,20 @@ This resulting .bam file may be used upstream for further analysis.
 It is not intended for use by users.
 }
 \examples{
-# How to get previous BAM file??? Rerun code? Or include it?
-# Create an index for filter libraries
-# filter
+# Code not run
+\dontrun{
+## Assuming a BAM file has been created previously with align_target()
 
-#' ## Get reference and filter genome libraries
-download_refseq('viral', compress = FALSE)
-download_refseq('bacterial', compress = FALSE)
+## Download and index the filter genome library
+download_refseq('archaea', compress = FALSE, representative = TRUE)
+mk_subread_index('archaea.fasta')
 
-## Make and align to a single reference genome library
-mk_subread_index('viral.fasta')
-readPath <- system.file("extdata", "virus_example.fastq",
+## Create object with file location of previously aligned BAM file
+readPath <- system.file("extdata", "bacteria_example.bam",
                          package = "MetaScope")
-viral_map <- align_target(readPath, "viral", project_name = "virus_example")
 
-# Filter with separate reference genome library
-mk_subread_index('bacterial.fasta')
-filter_host(viral_map, libs = "bacterial")
+## Filter with host reference genome library
+filter_host(readPath, libs = 'archaea')
+}
 
 }

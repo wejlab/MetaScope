@@ -6,6 +6,7 @@
 #' ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/**kingdom**/assembly_summary.txt,
 #' and then use this file to download genomes and combine them in a single
 #' compressed or uncompressed .fasta file.
+#'
 #' @param kingdom Select the kingdom taxonomy to download.
 #' Options are \code{'archaea'}, \code{'bacteria'}, \code{'fungi'},
 #' \code{'invertebrate'}, \code{'plant'}, \code{'protozoa'},
@@ -19,23 +20,27 @@
 #' @param compress Compress the output .fasta file? Defaults to \code{TRUE}.
 #' @param patho_out Create duplicate outpute files compatible with PathoScope?
 #' Defaults to \code{FALSE}.
+#'
 #' @return Returns a .fasta or .fasta.gz file of the desired RefSeq genomes.
 #' This file is named after the kindom selectd and saved to the current
 #' directory (e.g. 'bacteria.fasta.gz'). Currently, this function also returns
 #' a .fasta file formatted for PathoScope as well
 #' (e.g. bacteria.pathoscope.fasta.gz') if \code{path_out = TRUE}.
 #'
+#' @export
+#'
 #' @examples
+#' # Code not run
+#' \dontrun{
 #' ## Download all RefSeq reference bacterial genomes
 #' download_refseq('bacteria')
 #'
 #' ## Download all RefSeq representative viral genomes
-#' download_refseq( 'viral', representative = TRUE )
+#' download_refseq('viral', representative = TRUE)
 #'
 #' ## Download all RefSeq viral genomes
-#' download_refseq( 'viral', reference = FALSE )
-#'
-#' @export
+#' download_refseq('viral', reference = FALSE)
+#' }
 #' 
 
 download_refseq <- function(kingdom, reference = TRUE,

@@ -29,6 +29,8 @@ too large (default >4GB) it will automatically be split into multiple
 indexes, with _1, _2, etc at the end of the ref_lib basename.
 }
 \examples{
+# Code not run
+\dontrun{
 ## Download all RefSeq reference viral genomes and make an index
 download_refseq('viral', compress = FALSE)
 mk_subread_index('viral.fasta')
@@ -36,5 +38,6 @@ mk_subread_index('viral.fasta')
 ## Download all RefSeq reference viral genomes and make more than one index
 download_refseq('viral', compress = FALSE)
 mk_subread_index('viral.fasta', split = .0005)
+}
 
 }
