@@ -2,7 +2,11 @@ Package: MetaScope
 Type: Package
 Title: This package contains tools and functions for preprocessing microbiome data.
 Version: 0.0.99
-Author: W. Evan Johnson, Aubrey Odom
+Authors@R:
+  c(person(given = "W. Evan", family = "Johnson", role = c("aut", "cre"),
+           email = "wej@bu.edu"),
+    person(given = "Aubrey R.", family = "Odom", role = c("aut"),
+           email = "aodom@bu.edu"))
 Maintainer: W. Evan Johnson <wej@bu.edu>
 Description: This package contains the tools and methods for preprocessing microbiome data.
     It contains tools for library generation, demultiplexing, alignment, and microbe identification.
@@ -25,10 +29,13 @@ Imports:
 Suggests:
     BiocStyle,
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat
 biocViews:
     MicrobiomeData,
     ReproducibleResearch,
     SequencingData
 VignetteBuilder: knitr
 RoxygenNote: 7.1.1
+BugReports: https://github.com/compbiomed/MetaScope/issues
+Language: en-US
