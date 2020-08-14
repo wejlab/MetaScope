@@ -99,23 +99,20 @@ metascope_id <- function(bam_file,
                          out_file = paste(tools::file_path_sans_ext(bam_file),
                                           ".metascope_id.csv", sep = ""),
                          EMconv = 1/10000, EMmaxIts = 25) {
-  set.seed(99)
-  now <- Sys.time()
   message("Reading .bam file: ", bam_file)
-  reads <- Rsamtools::scanBam(bam_file, 
-                              param = Rsamtools::ScanBamParam(what = c("qname",
-                                                                       "rname",
-                                                                       "cigar")))
+  params <- Rsamtools::ScanBamParam(what = c("qname", "rname", "cigar", "qwidth"))
+  reads <- Rsamtools::scanBam(bam_file, param = params)
   unmapped <- is.na(reads[[1]]$rname)
   mapped_qname <- reads[[1]]$qname[!unmapped]
   mapped_rname <- reads[[1]]$rname[!unmapped]
   mapped_cigar <- reads[[1]]$cigar[!unmapped]
+  mapped_qwidth <- reads[[1]]$qwidth[!unmapped]
   read_names <- unique(mapped_qname)
   accessions <- unique(mapped_rname)
   message("\tFound ", length(read_names), " reads aligned to ",
           length(accessions), " NCBI accessions")
   
-  ## convert accessions to taxids and get genome names
+  # Convert accessions to taxids and get genome names
   message("Obtaining taxonomy and genome names")
   suppressMessages(tax_id_all <- taxize::genbank2uid(id = accessions))
   taxids <- sapply(tax_id_all, function(x) x[1])
@@ -125,14 +122,18 @@ metascope_id <- function(bam_file,
   unique_genome_names <- genome_names[!duplicated(taxid_inds)]
   message("\tFound ", length(unique_taxids), " unique NCBI taxonomy IDs")
   
-  ## make an aligment matrix (rows: reads, cols: unique taxids)
+  # Make an aligment matrix (rows: reads, cols: unique taxids)
   message("Setting up the EM algorithm")
   qname_inds <- match(mapped_qname, read_names)
   rname_inds <- match(mapped_rname, accessions)
   rname_tax_inds <- taxid_inds[rname_inds]
+  cigar_strings <- mapped_cigar[rname_inds]
+  qwidths <- mapped_qwidth[rname_inds]
   
-  #order based on read names
+  # Order based on read names
   rname_tax_inds <- rname_tax_inds[order(qname_inds)]
+  cigar_strings <- cigar_strings[order(qname_inds)]
+  qwidths <- qwidths[order(qname_inds)]
   qname_inds <- sort(qname_inds)
   
   # Obtain alignment scores based on # of matches
@@ -141,17 +142,23 @@ metascope_id <- function(bam_file,
                               char = "I"))
   num_delete <- unlist(sapply(mapped_cigar, count_matches, USE.NAMES = FALSE,
                               char = "D"))
+  probs <- c(mean(num_match/qwidths), mean(num_insert/qwidths),
+             mean(num_delete/qwidths))
   prob_out <- sapply(seq_along(num_match), 
                      function(x) stats::dmultinom(c(num_match[x],
                                                     num_insert[x],
                                                     num_delete[x]),
-                                                  prob = c(0.025, 0.025, 0.025)))
+                                                  prob = probs))
+  align_scores_cigar <- exp(prob_out)
   
-  input_distinct <- distinct(tibble(cbind(qname_inds, rname_tax_inds)))
-  qname_inds_2 <- input_distinct$`cbind(qname_inds, rname_tax_inds)`[, 1]
-  rname_tax_inds_2 <- input_distinct$`cbind(qname_inds, rname_tax_inds)`[, 2]
+  combined <- dplyr::bind_cols("qname" = qname_inds, "rname" = rname_tax_inds,
+                               "scores" = align_scores_cigar)
+  input_distinct <- dplyr::distinct(combined, qname, rname, .keep_all = TRUE)
+  qname_inds_2 <- input_distinct$qname
+  rname_tax_inds_2 <- input_distinct$rname
+  scores_2 <- input_distinct$scores
   gammas <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2,
-                                 x = align_scores_cigar)
+                                 x = scores_2)
   
   pi_old <- rep(1 / nrow(gammas), ncol(gammas))
   pi_new <-  Matrix::colMeans(gammas)
@@ -178,7 +185,7 @@ metascope_id <- function(bam_file,
   }
   message("\tDONE! Converged in ", it, " interations.")
   
-  ## Collect results
+  # Collect results
   hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which
   best_hit <- Matrix::colSums(hit_which)
   names(best_hit) <- seq_along(best_hit)
@@ -201,9 +208,7 @@ metascope_id <- function(bam_file,
   results <- results[order(best_hit, decreasing = TRUE), ]
   message("Found reads for ", length(best_hit), " genomes")
   
-  ## Write to file
+  # Write to file
   write.csv(results, file = out_file, row.names = FALSE)
   message("Results written to ", out_file)
-
-  return(list(out_file, results))
 }
