@@ -11,11 +11,10 @@ source(file.path("R", "demultiplex.R"),  local = TRUE)
 source(file.path("R", "align_target.R"),  local = TRUE)
 source(file.path("R", "download_refseq.R"),  local = TRUE)
 
-
 ui <- navbarPage(
   title = paste("Animalcules Preprocess", sep = ""),
-  id="Animalcules Preprocess",
-  fluid=TRUE,
+  id = "Animalcules Preprocess",
+  fluid = TRUE,
   theme = "bootstrap.min.css",
   source(file.path("inst","shiny","ui", "UI_demultiplex.R"),  local = TRUE)$value,
   source(file.path("inst","shiny","ui", "UI_ref_seq"),  local = TRUE)$value,
