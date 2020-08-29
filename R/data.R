@@ -20,3 +20,11 @@
 "align_details"
 
 
+#' Taxonomy table
+#' 
+#' @keywords datasets
+#' 
+#' @examples
+#' data("taxonomy_table")
+#' 
+"taxonomy_table"

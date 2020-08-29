@@ -1,65 +1,61 @@
-#' Generate the taxonomy table
-#' 
-#' This code will generate the taxnonmy table for all species or strains with
-#' available ncbi genomes. Each column is a taxonomic rank; each row is a taxonomic
-#' classification for an unique species or strain.
-#' 
-#' 
-require(taxize)
-# download the updated refseq table from ncbi
-refseq_link <- "ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
-refseq_table <- read.table(refseq_link, header = T, sep = "\t",
-                           comment.char = "",
-                           quote = "", skip = 1)
-# refseq_table contains all species/strains with available genome
-# create an empty output table
-taxonomy.table <- data.frame(superkingdom=character(),
-                            kingdom=character(),
-                            phylum=character(),
-                            class=character(),
-                            order=character(),
-                            family=character(),
-                            genus=character(),
-                            species=character(),
-                            strain=character(),
-                            stringsAsFactors = F)
 
-# filter all the unique taxid from refseq_table
-tax_id <- unique(refseq_table$taxid)
-for(i in tax_id){
-  if(counter%%100 == 0){
-    print(paste("Got classification for ",counter," out of ",length(tax_id), ' species',sep=""))
-  }
-  t <- classification(i,db='ncbi')[[1]]
-  if(!identical(t$rank,character(0))){
-    # convert 'no rank' to 'strain'
-    if(t$rank[nrow(t)]=='no rank' & t$rank[nrow(t)-1]=='species'){
-      t$rank[nrow(t)] <- 'strain'
+#' Generate the taxonomy table
+#'
+#' This code will generate the taxnonmy table for all species or strains with
+#' available NCBI genomes. Each column is a taxonomic rank or indication of a
+#' strain; each row is a taxonomic classification for an unique species or
+#' strain.
+#'
+#' @return table of taxonomic relationships for all species or strains with
+#' NCBI genomes.
+#'
+#' @examples
+#' # Code not run
+#' \dontrun{
+#' generate_taxonomy_table()
+#' }
+#' 
+
+generate_taxonomy_table <- function() {
+  # Download the updated refseq table from NCBI
+    ## This table contains all species/strains with available genome
+  refseq_link <- "ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
+  refseq_table <- read.table(refseq_link, header = T, sep = "\t",
+                             comment.char = "",
+                             quote = "", skip = 1)
+  tax_id <- unique(refseq_table$taxid)
+  n <- length(tax_id)
+  taxonomy_table <- data.frame(matrix(NA, ncol = 9, nrow = length(tax_id)))
+  taxon_ranks <- colnames(taxonomy_table) <- c("superkingdom", "kingdom",
+                                               "phylum", "class", "order",
+                                               "family", "genus", "species",
+                                               "strain")
+  for (i in seq_len(n)) {
+    if (i%%100 == 0) {
+      print(paste("Obtained classification for ", i, " of ", n, ' species',
+                  sep = ""))
     }
-    t <- t[which(t$rank %in% taxon_ranks),]
-    # a new table with the same columns
-    new_table <- data.frame(superkingdom=character(),
-                            kingdom=character(),
-                            phylum=character(),
-                            class=character(),
-                            order=character(),
-                            family=character(),
-                            genus=character(),
-                            species=character(),
-                            strain=character(),
-                            stringsAsFactors = F)
-    new_row <- vector()
-    # find the corresponding column positions for all the parent taxons for the species/strain
-    for (j in c(1:length(colnames(new_table)))){
-      rankname <- colnames(new_table)[j]
-      if (rankname %in% t$rank){
-        new_row <- c(new_row,t$name[t$rank==rankname])
-      } else {new_row <- c(new_row,NA)}
+    suppressMessages(t <- taxize::classification(this_id, db = 'ncbi')[[1]])
+    t_numrow <- nrow(t) 
+
+    if (!identical(t$rank,character(0))) {
+      ## Convert 'no rank' to 'strain'
+      if (t$rank[t_numrow] == 'no rank' & t$rank[t_numrow - 1] == 'species') {
+        t$rank[t_numrow] <- 'strain'
+      }
+      t <- t[which(t$rank %in% taxon_ranks), ]
+
+      ## Find corresponding column positions for all parent taxons for given
+      ## species/strain
+      taxonomy_table[counter, ] <- sapply(taxon_ranks,
+                                          function(rn) ifelse(
+                                            rn %in% t$rank,
+                                            yes = subset(t$name, t$rank == rn),
+                                            no = NA))
     }
-    # add this row to the new table
-    new_table[1,] <- new_row
-    #append the new table to the taxonomy table
-    taxonomy.table <- rbind(taxonomy.table,new_table)
   }
-  counter <- counter + 1
+  taxonomy_table<- taxonomy_table[!apply(taxonomy_table, 1,
+                                         function(x) all(is.na(x))), ]
+  new <- taxonomy_table
+  save(taxonomy_table, file = "data/taxonomy_table.rda")
 }
