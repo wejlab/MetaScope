@@ -31,6 +31,7 @@ generate_taxonomy_table <- function() {
                                                "family", "genus", "species",
                                                "strain")
   for (i in seq_len(n)) {
+    this_id <- tax_id[i]
     if (i%%100 == 0) {
       print(paste("Obtained classification for ", i, " of ", n, ' species',
                   sep = ""))
@@ -47,11 +48,11 @@ generate_taxonomy_table <- function() {
 
       ## Find corresponding column positions for all parent taxons for given
       ## species/strain
-      taxonomy_table[counter, ] <- sapply(taxon_ranks,
-                                          function(rn) ifelse(
-                                            rn %in% t$rank,
-                                            yes = subset(t$name, t$rank == rn),
-                                            no = NA))
+      taxonomy_table[i, ] <- sapply(taxon_ranks,
+                                    function(rn) ifelse(
+                                      rn %in% t$rank,
+                                      yes = subset(t$name, t$rank == rn),
+                                      no = NA))
     }
   }
   taxonomy_table<- taxonomy_table[!apply(taxonomy_table, 1,
