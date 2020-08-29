@@ -5,7 +5,7 @@
 \title{Download RefSeq genome libraries}
 \usage{
 download_refseq(
-  kingdom,
+  taxon,
   reference = TRUE,
   representative = FALSE,
   compress = TRUE,
@@ -13,18 +13,18 @@ download_refseq(
 )
 }
 \arguments{
-\item{kingdom}{Select the kingdom taxonomy to download.
-Options are \code{'archaea'}, \code{'bacteria'}, \code{'fungi'},
-\code{'invertebrate'}, \code{'plant'}, \code{'protozoa'},
-\code{'vertebrate_mammalian'}, \code{'vertebrate_other'}, or \code{'viral'}.}
+\item{taxon}{Select one taxon to download. The taxon name should be a
+recognized NCBI scientific name, with no grammatical or capitalization
+inconsistencies. All available taxonomies are visible by accessing the
+\code{taxonomy_table} object included in the package.}
 
 \item{reference}{Download only RefSeq reference genomes?
 Defaults to \code{TRUE}.
 Automatically set to \code{TRUE} if \code{representative = TRUE}.}
 
 \item{representative}{Download only RefSeq representative genomes?
-Defaults to \code{FALSE}.
-If \code{TRUE}, reference is automatically set at \code{TRUE}.}
+Defaults to \code{FALSE}. If \code{TRUE}, reference is automatically
+set at \code{TRUE}.}
 
 \item{compress}{Compress the output .fasta file? Defaults to \code{TRUE}.}
 
@@ -40,23 +40,30 @@ a .fasta file formatted for PathoScope as well
 }
 \description{
 This function will automatically download RefSeq genome libraries in a
-.fasta format from the specified kingdom. The function will first
+.fasta format from the specified taxon. The function will first
 download the summary report at:
 ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/**kingdom**/assembly_summary.txt,
-and then use this file to download genomes and combine them in a single
+and then use this file to download the genome(s) and combine them in a single
 compressed or uncompressed .fasta file.
 }
 \examples{
 # Code not run
 \dontrun{
-## Download all RefSeq reference bacterial genomes
-download_refseq('bacteria')
+## Download all RefSeq reference bacterial superkingdom genomes
+download_refseq('bacteria', reference = TRUE, representative = FALSE)
 
 ## Download all RefSeq representative viral genomes
 download_refseq('viral', representative = TRUE)
 
 ## Download all RefSeq viral genomes
 download_refseq('viral', reference = FALSE)
+
+## Download all primate reference genomes, uncompressed
+download_refseq('Primates', reference = TRUE,
+                representative = FALSE, compress = FALSE)
+
+## Download Rickettsia genus genome
+download_refseq('Rickettsia', representative = TRUE, compress = FALSE)
 }
 
 }
