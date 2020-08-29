@@ -136,20 +136,21 @@ metascope_id <- function(bam_file,
   qwidths <- qwidths[order(qname_inds)]
   qname_inds <- sort(qname_inds)
   
-  # Obtain alignment scores based on # of matches
-  num_match <- unlist(sapply(mapped_cigar, count_matches, USE.NAMES = FALSE))
-  num_insert <- unlist(sapply(mapped_cigar, count_matches, USE.NAMES = FALSE,
-                              char = "I"))
-  num_delete <- unlist(sapply(mapped_cigar, count_matches, USE.NAMES = FALSE,
-                              char = "D"))
-  probs <- c(mean(num_match/qwidths), mean(num_insert/qwidths),
-             mean(num_delete/qwidths))
-  prob_out <- sapply(seq_along(num_match), 
-                     function(x) stats::dmultinom(c(num_match[x],
-                                                    num_insert[x],
-                                                    num_delete[x]),
-                                                  prob = probs))
-  align_scores_cigar <- exp(prob_out)
+ # # Obtain alignment scores based on # of matches
+ # num_match <- unlist(sapply(mapped_cigar, count_matches, USE.NAMES = FALSE))
+ # num_insert <- unlist(sapply(mapped_cigar, count_matches, USE.NAMES = FALSE,
+ #                             char = "I"))
+ # num_delete <- unlist(sapply(mapped_cigar, count_matches, USE.NAMES = FALSE,
+ #                             char = "D"))
+ # probs <- c(mean(num_match/qwidths), mean(num_insert/qwidths),
+ #            mean(num_delete/qwidths))
+ # prob_out <- sapply(seq_along(num_match), 
+ #                    function(x) stats::dmultinom(c(num_match[x],
+ #                                                   num_insert[x],
+ #                                                   num_delete[x]),
+ #                                                 prob = probs))
+ # align_scores_cigar <- exp(prob_out)
+  align_scores_cigar <- 1
   
   combined <- dplyr::bind_cols("qname" = qname_inds, "rname" = rname_tax_inds,
                                "scores" = align_scores_cigar)
