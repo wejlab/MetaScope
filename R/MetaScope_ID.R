@@ -212,4 +212,5 @@ metascope_id <- function(bam_file,
   # Write to file
   write.csv(results, file = out_file, row.names = FALSE)
   message("Results written to ", out_file)
+  return(results)
 }
