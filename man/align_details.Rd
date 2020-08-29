@@ -19,7 +19,7 @@ be given by a user-created object containing the same information.
 }
 \details{
 The default options included in \code{align_details} are \code{type = "dna"},
-\code{nthreads = 8}, \code{maxMismatches = 5}, \code{nsubreads = 10},
+\code{nthreads = 8}, \code{maxMismatches = 3}, \code{nsubreads = 10},
 \code{phredOffset = 33}, \code{unique = FALSE}, and
 \code{nBestLocations = 16}. Full descriptions of these parameters can be
 read by acessing \code{?Rsubread::align}.
