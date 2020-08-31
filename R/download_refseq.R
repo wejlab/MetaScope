@@ -197,4 +197,5 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
 
     message("DONE! Downloaded ", i, " genomes to ", combined_fasta)
   }
+  return(combined_fasta)
 }
