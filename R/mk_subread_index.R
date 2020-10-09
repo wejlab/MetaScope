@@ -83,6 +83,6 @@ mk_subread_index <- function(ref_lib, split = 4, mem = 8000) {
     Rsubread::buildindex(basename = tools::file_path_sans_ext(ref_lib),
                          reference = ref_lib, memory = mem)
   }
-  return(paste(tools::file_path_sans_ext(lib), "_", seq_len(split_libs),
+  return(paste(tools::file_path_sans_ext(ref_lib), "_", seq_len(split_libs),
                sep = ""))
 }
