@@ -76,6 +76,12 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
 
   message(paste(taxon,"is a", rank_input, "under the", parent_kingdom, parent_rank))
   parent_kingdom <- tolower(parent_kingdom)
+  
+  # If parent kingdom is viruses, change it to be viral
+  if ("viruses" %in% parent_kingdom){
+    parent_kingdom <- "viral"
+  }
+
 
   # Download the assembly summary refseq table from NCBI
   ## which includes genome download link
