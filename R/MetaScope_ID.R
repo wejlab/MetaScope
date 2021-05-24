@@ -53,6 +53,17 @@ count_matches <- function(x, char = "M") {
   return(data.table::fifelse(is.na(out[1]), yes = 0, no = out[1]))
 }
 
+#Returns 1 if the read is non-unique and 0 if the read is unique
+unique_identifier <- function(x)
+{
+  if(x == 1){
+    return(0)
+  }
+  else{
+    return(1)
+  }
+}
+
 #' MetaScope ID
 #'
 #' This function will read in a .bam file, annotate the taxonomy and genome
@@ -100,13 +111,30 @@ metascope_id <- function(bam_file,
                                           ".metascope_id.csv", sep = ""),
                          EMconv = 1/10000, EMmaxIts = 25) {
   message("Reading .bam file: ", bam_file)
-  params <- Rsamtools::ScanBamParam(what = c("qname", "rname", "cigar", "qwidth"))
+  
+  #Change the tag to AS for PathoScope or NM for MetaScope
+  params <- Rsamtools::ScanBamParam(what = c("qname", "rname", "cigar", "qwidth"), tag = c("AS"))
   reads <- Rsamtools::scanBam(bam_file, param = params)
   unmapped <- is.na(reads[[1]]$rname)
   mapped_qname <- reads[[1]]$qname[!unmapped]
   mapped_rname <- reads[[1]]$rname[!unmapped]
+  
+  #Uncomment this mapped_rname if using pathoscope bowtie alignment
+  #mapped_rname <- gsub(".*accession\\|","",reads[[1]]$rname[!unmapped])
+  
   mapped_cigar <- reads[[1]]$cigar[!unmapped]
   mapped_qwidth <- reads[[1]]$qwidth[!unmapped]
+  
+  #Added this 
+  
+  #PathoScope Bowtie aligner 
+  mapped_edit <- reads[[1]][["tag"]][["AS"]][!unmapped]
+  
+  #MetaScope Rsubread aligner 
+  #mapped_edit <- reads[[1]][["tag"]][["NM"]][!unmapped]
+  
+  #
+  
   read_names <- unique(mapped_qname)
   accessions <- unique(mapped_rname)
   message("\tFound ", length(read_names), " reads aligned to ",
@@ -127,42 +155,59 @@ metascope_id <- function(bam_file,
   qname_inds <- match(mapped_qname, read_names)
   rname_inds <- match(mapped_rname, accessions)
   rname_tax_inds <- taxid_inds[rname_inds]
-  cigar_strings <- mapped_cigar[rname_inds]
+  #Don't uncomment below line 
+  #cigar_strings <- mapped_cigar[rname_inds]
   qwidths <- mapped_qwidth[rname_inds]
   
   # Order based on read names
   rname_tax_inds <- rname_tax_inds[order(qname_inds)]
   cigar_strings <- cigar_strings[order(qname_inds)]
+  
+  #Added this
+  edit_scores <- mapped_edit[order(qname_inds)]
+  #
+  
   qwidths <- qwidths[order(qname_inds)]
   qname_inds <- sort(qname_inds)
   
  # # Obtain alignment scores based on # of matches
- # num_match <- unlist(sapply(mapped_cigar, count_matches, USE.NAMES = FALSE))
- # num_insert <- unlist(sapply(mapped_cigar, count_matches, USE.NAMES = FALSE,
- #                             char = "I"))
- # num_delete <- unlist(sapply(mapped_cigar, count_matches, USE.NAMES = FALSE,
- #                             char = "D"))
- # probs <- c(mean(num_match/qwidths), mean(num_insert/qwidths),
- #            mean(num_delete/qwidths))
- # prob_out <- sapply(seq_along(num_match), 
- #                    function(x) stats::dmultinom(c(num_match[x],
- #                                                   num_insert[x],
- #                                                   num_delete[x]),
- #                                                 prob = probs))
- # align_scores_cigar <- exp(prob_out)
-  align_scores_cigar <- 1
+ 
+  # Added this (in this case edit score is edit score from Rsubread)
+  #num_match <- unlist(sapply(cigar_strings, count_matches, USE.NAMES = FALSE))
+  #alignment_score <- num_match - edit_scores
+  #relative_alignment_score <- alignment_score - min(alignment_score)
+  #exp_alignment_score <- 2^relative_alignment_score
+  #
+  
+  # Added this (in this case edit score is alignment score of bowtie)
+  relative_alignment_score <- edit_scores - min(edit_scores)
+  exp_alignment_score <- 2^relative_alignment_score
+  #
+  
   
   combined <- dplyr::bind_cols("qname" = qname_inds, "rname" = rname_tax_inds,
-                               "scores" = align_scores_cigar)
+                               "scores" = exp_alignment_score)
+  
   input_distinct <- dplyr::distinct(combined, qname, rname, .keep_all = TRUE)
   qname_inds_2 <- input_distinct$qname
   rname_tax_inds_2 <- input_distinct$rname
-  scores_2 <- input_distinct$scores
+  
+  #Added this (normalizes the score for each read)
+  by_read <- dplyr::group_by(input_distinct, qname)
+  scores_2 <- dplyr::summarize(by_read, scores_2 = scores/(sum(scores)))$scores_2
+  y_ind_2 <- dplyr::summarize(by_read, multimapping_2 = unique_identifier(dplyr::n()))$multimapping_2
+  #
+  
   gammas <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2,
                                  x = scores_2)
   
   pi_old <- rep(1 / nrow(gammas), ncol(gammas))
   pi_new <-  Matrix::colMeans(gammas)
+  
+  #Added this
+  theta_new <- Matrix::colMeans(gammas)
+  #
+  
   conv <- max(abs(pi_new - pi_old) / pi_old)
   it <- 0
   
@@ -171,12 +216,25 @@ metascope_id <- function(bam_file,
     # Expectation Step: Estimate expected value for each read to each genome
     pi_mat <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2,
                                    x = pi_new[rname_tax_inds_2])
-    weighted_gamma <- gammas * pi_mat
+    
+    #Added this
+    theta_mat <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2,
+                                      x = theta_new[rname_tax_inds_2])
+    #
+    
+    #Changed this
+    weighted_gamma <- gammas * pi_mat * theta_mat
+    #
+    
     weighted_gamma_sums <- Matrix::rowSums(weighted_gamma)
     gammas_new <- weighted_gamma/weighted_gamma_sums
     
     # Maximization step: proportion of reads to each genome
     pi_new <- Matrix::colMeans(gammas_new)
+    
+    #Added this
+    theta_new <- (Matrix::colSums(y_ind_2*gammas_new)+1) / (nrow(gammas_new)+1)
+    #
     
     # Check convergence
     it <- it + 1
