@@ -53,7 +53,20 @@ count_matches <- function(x, char = "M") {
   return(data.table::fifelse(is.na(out[1]), yes = 0, no = out[1]))
 }
 
-#Returns 1 if the read is non-unique and 0 if the read is unique
+#' Determines if a read is multi-mapping 
+#' 
+#' A read should be multi-mapping if it appears more than once in a bam file. 
+#' The function accepts the read group size which will either be 1 if the read
+#' is mapped uniquely or >1 if the read is multi-mapping. The function will 
+#' return 0 if the read is unique and 1 if the read is multi-mapping. 
+#' The function is intended to be used to create the uniqueness indicator 
+#' (y_ind_2) which is used for calculating theta.
+#' 
+#' @param x Integer. An integer representing the group size of a specific read.
+#' @return either 0 (unique) or 1 (multi-mapping)
+#' 
+#' 
+
 unique_identifier <- function(x)
 {
   if(x == 1){
