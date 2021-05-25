@@ -25,7 +25,10 @@ Imports:
     BiocParallel,
     dplyr,
     Matrix,
-    qlcMatrix
+    qlcMatrix,
+    Rbowtie2
+Remotes:
+    rvarki/Rbowtie2
 Suggests:
     BiocStyle,
     knitr,
