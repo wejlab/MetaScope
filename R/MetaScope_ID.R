@@ -65,7 +65,7 @@ count_matches <- function(x, char = "M") {
 #' @param x Integer. An integer representing the group size of a specific read.
 #' @return either 0 (unique) or 1 (multi-mapping)
 #' 
-#' 
+#' @export
 
 unique_identifier <- function(x)
 {
