@@ -26,7 +26,8 @@ Imports:
     dplyr,
     Matrix,
     qlcMatrix,
-    Rbowtie2
+    Rbowtie2,
+    magrittr
 Remotes:
     rvarki/Rbowtie2
 Suggests:

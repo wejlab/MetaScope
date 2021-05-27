@@ -18,12 +18,14 @@ multiple parts}
 index generation process (used by the Rsubread::buildindex function)}
 }
 \value{
-Returns one or more Subread indexes for the supplied reference
+Creates one or more Subread indexes for the supplied reference
 .fasta file. If multiple indexes are created, the libraries will be
-named the ref_lib basename plus _1, _2, etc.
+named the ref_lib basename plus _1, _2, etc. The function returns the
+names of the folders holding these files.
 }
 \description{
-This function is a wrapper for the Rsubread::buildindex function. It will
+This function is a wrapper for the \code{Rsubread::buildindex} function.
+It will
 generate one or more Subread indexes from a .fasta file. If the library is
 too large (default >4GB) it will automatically be split into multiple
 indexes, with _1, _2, etc at the end of the ref_lib basename.
