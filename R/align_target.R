@@ -355,21 +355,29 @@ align_target <- function(reads, libs,
 
 #' Align microbiome reads to set of indexed Bowtie2 libraries
 #' 
-#' @param read1 Location of the .fastq file to align.
-#' @param read2 Optional. Location of the .fastq file to align.
-#' @param index_dir Directory location that contains the bowtie2 indexes.
-#' @param index_basename Basename of the bowtie2 indexes.
-#' @param sam_dir Directory location where the output file should be created.
-#' @param sam_basename Basename of the output file.
-#' @param threads The number of threads that should be utilized
-#' @param overwrite Whether existing files should be overwritten
+#' @param read1 \code{Character} scalar. Location of the .fastq file to align.
+#' @param read2 \code{Character} scalar. Optional. Location of the .fastq file to align.
+#' @param index_dir \code{Character} scalar. Directory that contains the bowtie2 indexes.
+#' @param index_basename \code{Character} scalar. Basename of the bowtie2 indexes (without trailing .*.bt2 or .*.bt2l).
+#' @param align_dir \code{Character} scalar. Directory where the output alignment file should be created.
+#' @param align_basename \code{Character} scalar. Basename of the output alignment file file. Default is the basename of the read1.
+#' @param align_format \code{Character} scalar. The format of the alignment file. Default is "sam" but can also pass "bam". 
+#' @param threads \code{Integer}. The number of threads that should be utilized. Default is 4 threads. 
+#' @param overwrite \code{Logical}. Whether existing files should be overwritten Default is FALSE.
+#' 
+#' @return Returns the filepath to the directory where the output alignment file is stored. 
 #' 
 #' @export
 
-align_target_bowtie <- function(read1, read2 = NULL,
-                                index_dir, index_basename,indexFormat = 's',
-                                sam_dir, sam_basename = basename(read1),
-                                threads = 4, overwrite = FALSE){
+align_target_bowtie <- function(read1, 
+                                read2 = NULL,
+                                index_dir,
+                                index_basename,
+                                align_dir, 
+                                align_basename = tools::file_path_sans_ext(basename(read1)), 
+                                align_format = "sam",
+                                threads = 4,
+                                overwrite = FALSE){
   
   
   bowtie_options <- "--very-sensitive-local -k 100 --score-min L,20,1.0"
@@ -378,28 +386,31 @@ align_target_bowtie <- function(read1, read2 = NULL,
   if (is.null(read2)){
     
     Rbowtie2::bowtie2(bt2Index = file.path(index_dir, index_basename), 
-                      samOutput = file.path(sam_dir, paste(sam_basename,".sam",sep = "")), 
-                      seq1=read1,
-                      indexFormat = indexFormat,
-                      overwrite=overwrite, 
+                      outputPath = file.path(align_dir, align_basename),
+                      outputType = align_format,
+                      seq1 = read1,
+                      overwrite = overwrite, 
                       paste(bowtie_options,"--threads",threads)
                       )
-                     
+    
+    
+    return(paste0(align_basename,".",align_format," is located at ",tools::file_path_as_absolute(align_dir)))
 
   }
   else{
     
-    Rbowtie2::bowtie2(bt2Index = file.path(index_dir, index_basename),
-                      samOutput = file.path(sam_dir, paste(sam_basename,".sam",sep = "")),
-                      seq1=read1, 
-                      seq2 = read2, 
-                      indexFormat = indexFormat,
-                      overwrite=overwrite,
+    Rbowtie2::bowtie2(bt2Index = file.path(index_dir, index_basename), 
+                      outputPath = file.path(align_dir, align_basename),
+                      outputType = align_format,
+                      seq1 = read1,
+                      seq2 = read2,
+                      overwrite = overwrite, 
                       paste(bowtie_options,"--threads",threads)
-                      )
-   
+    )
+    
+    return(paste0(align_basename,".",align_format," is located at ",tools::file_path_as_absolute(align_dir)))
+    
   }
-  
 }
 
 
