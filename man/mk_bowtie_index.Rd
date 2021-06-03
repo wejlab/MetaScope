@@ -13,25 +13,26 @@ mk_bowtie_index(
 )
 }
 \arguments{
-\item{ref_dir}{The name/location of the directory that contains the reference
+\item{ref_dir}{\code{Character} scalar. The name/location of the directory that contains the reference
 libraries in uncompressed fasta format}
 
-\item{index_dir}{The name/location of the directory where the index files 
+\item{index_dir}{\code{Character} scalar. The name/location of the directory where the index files 
 should be created}
 
-\item{index_name}{The basename of the index files. Default is the name of 
-the last directory specified in index_dir}
+\item{index_name}{\code{Character} scalar. The basename of the index files to be created. Default is the
+basename of the index_dir}
 
-\item{threads}{The number of threads to be used. Default is 4.}
+\item{threads}{\code{Integer}. The number of threads to be used. Default is 4.}
 
-\item{overwrite}{Whether existing files should be overwritten. Default is false.}
+\item{overwrite}{\code{Logical}. Whether existing files should be overwritten. Default is FALSE.}
 }
 \value{
-Creates multiple large Bowtie2 indexes (.bt2l) for the supplied 
-reference .fasta files. Returns the file path of the folder holding these
+Creates multiple Bowtie2 indexes (.bt2 or .bt2l) of the supplied 
+reference .fasta files. Returns the file path of the folder containing these
 files.
 }
 \description{
 This function is a wrapper for the \code{Rbowtie2::bowtie2_build} function.
-It will create large Bowtie2 indexes (.bt2l) from a reference fasta files.
+It will create either small (.bt2) or large Bowtie2 indexes (.bt2l) of the 
+given reference fasta files depending on their combined file size.
 }

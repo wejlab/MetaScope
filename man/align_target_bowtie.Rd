@@ -9,29 +9,34 @@ align_target_bowtie(
   read2 = NULL,
   index_dir,
   index_basename,
-  indexFormat = "s",
-  sam_dir,
-  sam_basename = basename(read1),
+  align_dir,
+  align_basename = tools::file_path_sans_ext(basename(read1)),
+  align_format = "sam",
   threads = 4,
   overwrite = FALSE
 )
 }
 \arguments{
-\item{read1}{Location of the .fastq file to align.}
+\item{read1}{\code{Character} scalar. Location of the .fastq file to align.}
 
-\item{read2}{Optional. Location of the .fastq file to align.}
+\item{read2}{\code{Character} scalar. Optional. Location of the .fastq file to align.}
 
-\item{index_dir}{Directory location that contains the bowtie2 indexes.}
+\item{index_dir}{\code{Character} scalar. Directory that contains the bowtie2 indexes.}
 
-\item{index_basename}{Basename of the bowtie2 indexes.}
+\item{index_basename}{\code{Character} scalar. Basename of the bowtie2 indexes (without trailing .*.bt2 or .*.bt2l).}
 
-\item{sam_dir}{Directory location where the output file should be created.}
+\item{align_dir}{\code{Character} scalar. Directory where the output alignment file should be created.}
 
-\item{sam_basename}{Basename of the output file.}
+\item{align_basename}{\code{Character} scalar. Basename of the output alignment file file. Default is the basename of the read1.}
 
-\item{threads}{The number of threads that should be utilized}
+\item{align_format}{\code{Character} scalar. The format of the alignment file. Default is "sam" but can also pass "bam".}
 
-\item{overwrite}{Whether existing files should be overwritten}
+\item{threads}{\code{Integer}. The number of threads that should be utilized. Default is 4 threads.}
+
+\item{overwrite}{\code{Logical}. Whether existing files should be overwritten Default is FALSE.}
+}
+\value{
+Returns the filepath to the directory where the output alignment file is stored.
 }
 \description{
 Align microbiome reads to set of indexed Bowtie2 libraries
