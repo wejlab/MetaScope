@@ -25,12 +25,12 @@
 #' # Code not run
 #' \dontrun{
 #' ## Download all RefSeq reference viral genomes and make an index
-#' download_refseq('viral', compress = FALSE)
-#' mk_subread_index('viral.fasta')
+#' download_refseq('viruses', compress = FALSE)
+#' mk_subread_index('Viruses.fasta')
 #'
 #' ## Download all RefSeq reference viral genomes and make more than one index
-#' download_refseq('viral', compress = FALSE)
-#' mk_subread_index('viral.fasta', split = .0005)
+#' download_refseq('viruses', compress = FALSE)
+#' mk_subread_index('Viruses.fasta', split = .0005)
 #' }
 #' 
 

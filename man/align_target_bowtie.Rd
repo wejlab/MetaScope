@@ -10,16 +10,16 @@ align_target_bowtie(
   index_dir,
   index_basename,
   align_dir,
-  align_basename = tools::file_path_sans_ext(basename(read1)),
-  align_format = "sam",
-  threads = 4,
+  align_basename,
+  align_format = "bam",
+  ...,
   overwrite = FALSE
 )
 }
 \arguments{
 \item{read1}{\code{Character} scalar. Location of the .fastq file to align.}
 
-\item{read2}{\code{Character} scalar. Optional. Location of the .fastq file to align.}
+\item{read2}{\code{Character} scalar. Optional. Location of the mate pair .fastq file to align.}
 
 \item{index_dir}{\code{Character} scalar. Directory that contains the bowtie2 indexes.}
 
@@ -27,11 +27,13 @@ align_target_bowtie(
 
 \item{align_dir}{\code{Character} scalar. Directory where the output alignment file should be created.}
 
-\item{align_basename}{\code{Character} scalar. Basename of the output alignment file file. Default is the basename of the read1.}
+\item{align_basename}{\code{Character} scalar. Basename of the output alignment file file.}
 
-\item{align_format}{\code{Character} scalar. The format of the alignment file. Default is "sam" but can also pass "bam".}
+\item{align_format}{\code{Character} scalar. The format of the alignment file. Default is "bam" but can also pass "sam".}
 
-\item{threads}{\code{Integer}. The number of threads that should be utilized. Default is 4 threads.}
+\item{...}{\code{Character} scalar. Optional. Parameters should be passed as one string. To see all available parameters
+use Rbowtie2::bowtie2_usage(). Default parameters are the default PathoScope 2.0 options. If optional parameters are given
+then user is responsible for entering all the options they want passed to Bowtie2.}
 
 \item{overwrite}{\code{Logical}. Whether existing files should be overwritten Default is FALSE.}
 }
@@ -40,4 +42,39 @@ Returns the filepath to the directory where the output alignment file is stored.
 }
 \description{
 Align microbiome reads to set of indexed Bowtie2 libraries
+}
+\examples{
+# Code not run
+\dontrun{
+
+## Create alignment bam file produced by Bowtie2
+
+# Create a temporary directory to store reference fasta files
+ref_temp <- tempfile()
+dir.create(ref_temp)
+
+# Create a temporary directory to store the index files 
+index_temp <- tempfile()
+dir.create(index_temp)
+
+# Create a temporary directory to store the index files 
+align_temp <- tempfile()
+dir.create(align_temp)
+
+# Download all the RefSeq reference viral genomes to current directory
+download_refseq('viruses', compress = FALSE)
+
+# Move downloaded fasta file to temporary directory 
+file.rename(from = file.path(".", "Viruses.fasta"), to = file.path(ref_temp, "Viruses.fasta"))
+
+# Create bowtie index files in Temp_Index directory
+mk_bowtie_index(ref_dir = ref_temp, index_dir = index_temp, index_name = "virus", overwrite=FALSE)
+
+# Get path to example reads
+readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+
+# Create alignment file 
+align_target_bowtie(read1 = readPath, index_dir = index_temp, index_basename = "virus", align_dir = align_temp, align_basename = "example", align_format = "bam", overwrite = TRUE)
+
+}
 }
