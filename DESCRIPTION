@@ -27,7 +27,8 @@ Imports:
     Matrix,
     qlcMatrix,
     Rbowtie2,
-    magrittr
+    magrittr,
+    stringr
 Remotes:
     rvarki/Rbowtie2
 Suggests:
