@@ -36,10 +36,10 @@
 #' download_refseq('bacteria', reference = TRUE, representative = FALSE)
 #'
 #' ## Download all RefSeq representative viral genomes
-#' download_refseq('viral', representative = TRUE)
+#' download_refseq('viruses', representative = TRUE)
 #'
 #' ## Download all RefSeq viral genomes
-#' download_refseq('viral', reference = FALSE)
+#' download_refseq('viruses', reference = FALSE)
 #'
 #' ## Download all primate reference genomes, uncompressed
 #' download_refseq('Primates', reference = TRUE,
