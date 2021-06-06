@@ -52,6 +52,9 @@
 
 download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
                             compress = TRUE, patho_out = FALSE){
+  
+  # Converts first letter to uppercase and the other letters to lowercase
+  taxon <- stringr::str_to_title(taxon)
 
   # Get the rank of the input taxon
   tryCatch({suppressMessages(classification.table <- taxize::classification(
@@ -129,7 +132,7 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
   }
   total_genomes <- nrow(species_table)
   if (total_genomes == 0){
-    message("No available genome for ", taxon, " - try setting both `representative`
+    stop("No available genome for ", taxon, " - try setting both `representative`
             and `reference` to TRUE")
   } else{
     message(paste("Downloading", total_genomes, taxon, "genome(s) from RefSeq"))
