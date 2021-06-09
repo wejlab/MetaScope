@@ -29,11 +29,11 @@ It is not intended for use by package users.
 \examples{
 # Code not run
 \dontrun{
-download_refseq('viral', compress = FALSE)
-mk_subread_index('viral.fasta')
+download_refseq('viruses', compress = FALSE)
+mk_subread_index('Viruses.fasta')
 readPath <- system.file("extdata", "virus_example.fastq",
 package = "MetaScope")
-Rsubread::align(index = "viral", readfile1 = readPath,
+Rsubread::align(index = "Viruses", readfile1 = readPath,
 output_file = "virus_example.bam")
 filtered <- filter_unmapped_reads("virus_example.bam")
 }

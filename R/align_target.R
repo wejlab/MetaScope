@@ -21,11 +21,11 @@ globalVariables(c("align_details"))
 #' @examples
 #' # Code not run
 #' \dontrun{
-#' download_refseq('viral', compress = FALSE)
-#' mk_subread_index('viral.fasta')
+#' download_refseq('viruses', compress = FALSE)
+#' mk_subread_index('Viruses.fasta')
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
-#' Rsubread::align(index = "viral", readfile1 = readPath,
+#' Rsubread::align(index = "Viruses", readfile1 = readPath,
 #' output_file = "virus_example.bam")
 #' filtered <- filter_unmapped_reads("virus_example.bam")
 #' }
@@ -71,14 +71,14 @@ filter_unmapped_reads <- function(bamfile) {
 #' @examples
 #' # Code not run
 #' \dontrun{
-#' download_refseq('viral', compress = FALSE)
-#' mk_subread_index('viral.fasta', split = .0005)
+#' download_refseq('viruses', compress = FALSE)
+#' mk_subread_index('Viruses.fasta', split = .0005)
 #'
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
-#' Rsubread::align(index = "viral_1", readfile1 = readPath,
+#' Rsubread::align(index = "Viruses_1", readfile1 = readPath,
 #' output_file = "virus_example1.bam")
-#' Rsubread::align(index = "viral_2", readfile1 = readPath,
+#' Rsubread::align(index = "Viruses_2", readfile1 = readPath,
 #' output_file = "virus_example2.bam")
 #'
 #' bam_files <- c('virus_example1.bam','virus_example2.bam')
@@ -137,14 +137,14 @@ combined_header <- function(bam_files, header_file = "header_tmp.sam") {
 #' @examples
 #' # code not run
 #' \dontrun{
-#' download_refseq('viral', compress = FALSE)
-#' mk_subread_index('viral.fasta', split = .0005)
+#' download_refseq('viruses', compress = FALSE)
+#' mk_subread_index('Viruses.fasta', split = .0005)
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
 #'
-#' Rsubread::align(index = "viral_1", readfile1 = readPath,
+#' Rsubread::align(index = "Viruses_1", readfile1 = readPath,
 #' output_file = "virus_example1.bam")
-#' Rsubread::align(index = "viral_2", readfile1 = readPath,
+#' Rsubread::align(index = "Viruses_2", readfile1 = readPath,
 #' output_file = "virus_example2.bam")
 #'
 #' bam_files <- c('virus_example1.bam','virus_example2.bam')
@@ -207,14 +207,14 @@ bam_reheader_R <- function(head, old_bam,
 #' @examples
 #' # Code not run
 #' \dontrun{
-#' download_refseq('viral', compress = FALSE)
-#' mk_subread_index('viral.fasta', split = .0005)
+#' download_refseq('viruses', compress = FALSE)
+#' mk_subread_index('Viruses.fasta', split = .0005)
 #'
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
-#' Rsubread::align(index = "viral_1", readfile1 = readPath,
+#' Rsubread::align(index = "Viruses_1", readfile1 = readPath,
 #' output_file = "virus_example1.bam", maxMismatches = 3)
-#' Rsubread::align(index = "viral_2", readfile1 = readPath,
+#' Rsubread::align(index = "Viruses_2", readfile1 = readPath,
 #' output_file = "virus_example2.bam")
 #'
 #' bam_files <- c('virus_example1.bam','virus_example2.bam')
@@ -295,18 +295,18 @@ merge_bam_files <- function(bam_files, destination,
 #' # Code not run
 #' \dontrun{
 #' ## Get a reference genome library
-#' download_refseq('viral', compress = FALSE)
+#' download_refseq('viruses', compress = FALSE)
 #'
 #' ## Make and align to a single reference genome library
-#' mk_subread_index('viral.fasta')
+#' mk_subread_index('Viruses.fasta')
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
-#' viral_map <- align_target(readPath, "viral", project_name="virus_example")
+#' viral_map <- align_target(readPath, "Viruses", project_name="virus_example")
 #' viral_map_sam <- Rsamtools::asSam(viral_map, overwrite = TRUE)
 #'
 #' ## Make and align to a multiple reference genome libraries
-#' mk_subread_index('viral.fasta', split = 0.005)
-#' targLibs <- c("viral_1", "viral_2")
+#' mk_subread_index('Viruses.fasta', split = 0.005)
+#' targLibs <- c("Viruses_1", "Viruses_2")
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
 #' viral_map <- align_target(readPath, targLibs, project_name = "virus_example")
@@ -350,117 +350,3 @@ align_target <- function(reads, libs,
                 sep = ""))
   return(paste(project_name, ".bam", sep = ""))
 }
-
-
-
-#' Align microbiome reads to set of indexed Bowtie2 libraries
-#' 
-#' @param read1 \code{Character} scalar. Location of the .fastq file to align.
-#' @param read2 \code{Character} scalar. Optional. Location of the mate pair .fastq file to align.
-#' @param index_dir \code{Character} scalar. Directory that contains the bowtie2 indexes.
-#' @param index_basename \code{Character} scalar. Basename of the bowtie2 indexes (without trailing .*.bt2 or .*.bt2l).
-#' @param align_dir \code{Character} scalar. Directory where the output alignment file should be created.
-#' @param align_basename \code{Character} scalar. Basename of the output alignment file file. 
-#' @param align_format \code{Character} scalar. The format of the alignment file. Default is "bam" but can also pass "sam". 
-#' @param ... \code{Character} scalar. Optional. Parameters should be passed as one string. To see all available parameters
-#' use Rbowtie2::bowtie2_usage(). Default parameters are the default PathoScope 2.0 options. If optional parameters are given
-#' then user is responsible for entering all the options they want passed to Bowtie2.
-#' @param overwrite \code{Logical}. Whether existing files should be overwritten Default is FALSE.
-#' 
-#' @return Returns the filepath to the directory where the output alignment file is stored. 
-#' 
-#' @export
-#' 
-#' @examples
-#' # Code not run
-#' \dontrun{
-#' 
-#' ## Create alignment bam file produced by Bowtie2
-#' 
-#' # Create a temporary directory to store reference fasta files
-#' ref_temp <- tempfile()
-#' dir.create(ref_temp)
-#' 
-#' # Create a temporary directory to store the index files 
-#' index_temp <- tempfile()
-#' dir.create(index_temp)
-#' 
-#' # Create a temporary directory to store the index files 
-#' align_temp <- tempfile()
-#' dir.create(align_temp)
-#' 
-#' # Download all the RefSeq reference viral genomes to current directory
-#' download_refseq('viruses', compress = FALSE)
-#' 
-#' # Move downloaded fasta file to temporary directory 
-#' file.rename(from = file.path(".", "Viruses.fasta"), to = file.path(ref_temp, "Viruses.fasta"))
-#' 
-#' # Create bowtie index files in Temp_Index directory
-#' mk_bowtie_index(ref_dir = ref_temp, index_dir = index_temp, index_name = "virus", overwrite=FALSE)
-#' 
-#' # Get path to example reads
-#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
-#' 
-#' # Create alignment file 
-#' align_target_bowtie(read1 = readPath, index_dir = index_temp, index_basename = "virus", align_dir = align_temp, align_basename = "example", align_format = "bam", overwrite = TRUE)
-#' 
-#' }
-
-align_target_bowtie <- function(read1, 
-                                read2 = NULL, 
-                                index_dir,
-                                index_basename,
-                                align_dir, 
-                                align_basename, 
-                                align_format = "bam",
-                                ...,
-                                overwrite = FALSE){
-  
-  
-  # Convert paths to absolute paths
-  index_dir <- tools::file_path_as_absolute(index_dir)
-  align_dir <- tools::file_path_as_absolute(align_dir)
-  
-  # If no optional parameters are passed then use default parameters else use user parameters 
-  if (!missing(...))
-    bowtie_options <- ...
-  else
-    bowtie_options <- "--very-sensitive-local -k 100 --score-min L,20,1.0 --threads 4"
-  
-  
-  # No mate pair file specified by user
-  if (is.null(read2)){
-    
-    Rbowtie2::bowtie2(bt2Index = file.path(index_dir, index_basename), 
-                      outputPath = file.path(align_dir, align_basename),
-                      outputType = align_format,
-                      seq1 = read1,
-                      overwrite = overwrite, 
-                      bowtie_options
-                      )
-    
-    
-    return(tools::file_path_as_absolute(align_dir))
-
-  }
-  
-  # Mate pair file specified by user
-  else{
-    
-    Rbowtie2::bowtie2(bt2Index = file.path(index_dir, index_basename), 
-                      outputPath = file.path(align_dir, align_basename),
-                      outputType = align_format,
-                      seq1 = read1,
-                      seq2 = read2,
-                      overwrite = overwrite, 
-                      bowtie_options
-    )
-    
-    return(tools::file_path_as_absolute(align_dir))
-    
-  }
-}
-
-
-
-

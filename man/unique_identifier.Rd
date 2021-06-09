@@ -18,5 +18,6 @@ The function accepts the read group size which will either be 1 if the read
 is mapped uniquely or >1 if the read is multi-mapping. The function will 
 return 0 if the read is unique and 1 if the read is multi-mapping. 
 The function is intended to be used to create the uniqueness indicator 
-(y_ind_2) which is used for calculating theta.
+(y_ind_2) which is used for calculating theta. Not meant to be used outside
+of function.
 }

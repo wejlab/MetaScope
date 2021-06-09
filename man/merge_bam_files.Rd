@@ -33,14 +33,14 @@ headers. It is not intended for use by users.
 \examples{
 # Code not run
 \dontrun{
-download_refseq('viral', compress = FALSE)
-mk_subread_index('viral.fasta', split = .0005)
+download_refseq('viruses', compress = FALSE)
+mk_subread_index('Viruses.fasta', split = .0005)
 
 readPath <- system.file("extdata", "virus_example.fastq",
 package = "MetaScope")
-Rsubread::align(index = "viral_1", readfile1 = readPath,
+Rsubread::align(index = "Viruses_1", readfile1 = readPath,
 output_file = "virus_example1.bam", maxMismatches = 3)
-Rsubread::align(index = "viral_2", readfile1 = readPath,
+Rsubread::align(index = "Viruses_2", readfile1 = readPath,
 output_file = "virus_example2.bam")
 
 bam_files <- c('virus_example1.bam','virus_example2.bam')

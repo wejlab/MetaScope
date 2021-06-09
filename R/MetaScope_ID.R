@@ -60,12 +60,11 @@ count_matches <- function(x, char = "M") {
 #' is mapped uniquely or >1 if the read is multi-mapping. The function will 
 #' return 0 if the read is unique and 1 if the read is multi-mapping. 
 #' The function is intended to be used to create the uniqueness indicator 
-#' (y_ind_2) which is used for calculating theta.
+#' (y_ind_2) which is used for calculating theta. Not meant to be used outside
+#' of function.
 #' 
 #' @param x Integer. An integer representing the group size of a specific read.
 #' @return either 0 (unique) or 1 (multi-mapping)
-#' 
-#' @export
 
 unique_identifier <- function(x)
 {
@@ -100,7 +99,7 @@ unique_identifier <- function(x)
 #' 
 #' @return
 #' This function returns a .csv file with annotated read counts to genomes with
-#' mapped reads. The function iself returns the output .csv file name.
+#' mapped reads. The function itself returns the output .csv file name.
 #'
 #' @export
 #'
@@ -108,13 +107,13 @@ unique_identifier <- function(x)
 #' # Code not run
 #' \dontrun{
 #' ## Get a reference genome library
-#' download_refseq('viral', compress = FALSE)
+#' download_refseq('viruses', compress = FALSE)
 #'
 #' ## Make and align to a single a reference genome library
-#' mk_subread_index('viral.fasta')
+#' mk_subread_index('Viruses.fasta')
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
-#' viral_map <- align_target(readPath, "viral", "virus_example")
+#' viral_map <- align_target(readPath, "Viruses", project_name = "virus_example")
 #'
 #' #### Apply MetaScope ID:
 #' metascope_id(viral_map)

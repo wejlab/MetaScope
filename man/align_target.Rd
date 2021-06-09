@@ -50,18 +50,18 @@ genomes.
 # Code not run
 \dontrun{
 ## Get a reference genome library
-download_refseq('viral', compress = FALSE)
+download_refseq('viruses', compress = FALSE)
 
 ## Make and align to a single reference genome library
-mk_subread_index('viral.fasta')
+mk_subread_index('Viruses.fasta')
 readPath <- system.file("extdata", "virus_example.fastq",
 package = "MetaScope")
-viral_map <- align_target(readPath, "viral", project_name="virus_example")
+viral_map <- align_target(readPath, "Viruses", project_name="virus_example")
 viral_map_sam <- Rsamtools::asSam(viral_map, overwrite = TRUE)
 
 ## Make and align to a multiple reference genome libraries
-mk_subread_index('viral.fasta', split = 0.005)
-targLibs <- c("viral_1", "viral_2")
+mk_subread_index('Viruses.fasta', split = 0.005)
+targLibs <- c("Viruses_1", "Viruses_2")
 readPath <- system.file("extdata", "virus_example.fastq",
 package = "MetaScope")
 viral_map <- align_target(readPath, targLibs, project_name = "virus_example")
