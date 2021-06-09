@@ -1,0 +1,107 @@
+#' Align microbiome reads to set of indexed Bowtie2 libraries
+#' 
+#' @param read1 \code{Character} scalar. Location of the .fastq file to align.
+#' @param read2 \code{Character} scalar. Optional. Location of the mate pair .fastq file to align.
+#' @param index_dir \code{Character} scalar. Directory that contains the bowtie2 indexes.
+#' @param index_basename \code{Character} scalar. Basename of the bowtie2 indexes (without trailing .*.bt2 or .*.bt2l).
+#' @param align_dir \code{Character} scalar. Directory where the output alignment file should be created.
+#' @param align_basename \code{Character} scalar. Basename of the output alignment file file. 
+#' @param align_format \code{Character} scalar. The format of the alignment file. Default is "bam" but can also pass "sam". 
+#' @param ... \code{Character} scalar. Optional. Parameters should be passed as one string. To see all available parameters
+#' use Rbowtie2::bowtie2_usage(). Default parameters are the default PathoScope 2.0 options. If optional parameters are given
+#' then user is responsible for entering all the options they want passed to Bowtie2.
+#' @param overwrite \code{Logical}. Whether existing files should be overwritten Default is FALSE.
+#' 
+#' @return Returns the filepath to the directory where the output alignment file is stored. 
+#' 
+#' @export
+#' 
+#' @examples
+#' # Code not run
+#' \dontrun{
+#' 
+#' ## Create alignment bam file produced by Bowtie2
+#' 
+#' # Create a temporary directory to store reference fasta files
+#' ref_temp <- tempfile()
+#' dir.create(ref_temp)
+#' 
+#' # Create a temporary directory to store the index files 
+#' index_temp <- tempfile()
+#' dir.create(index_temp)
+#' 
+#' # Create a temporary directory to store the index files 
+#' align_temp <- tempfile()
+#' dir.create(align_temp)
+#' 
+#' # Download all the RefSeq reference viral genomes to current directory
+#' download_refseq('viruses', compress = FALSE)
+#' 
+#' # Move downloaded fasta file to temporary reference directory 
+#' file.rename(from = file.path(".", "Viruses.fasta"), to = file.path(ref_temp, "Viruses.fasta"))
+#' 
+#' # Create bowtie index files in temporary index directory
+#' mk_bowtie_index(ref_dir = ref_temp, index_dir = index_temp, index_name = "virus", overwrite=FALSE)
+#' 
+#' # Get path to example reads
+#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+#' 
+#' # Create alignment file 
+#' align_target_bowtie(read1 = readPath, index_dir = index_temp, index_basename = "virus", align_dir = align_temp, align_basename = "example", align_format = "bam", overwrite = TRUE)
+#' 
+#' }
+
+align_target_bowtie <- function(read1, 
+                                read2 = NULL, 
+                                index_dir,
+                                index_basename,
+                                align_dir, 
+                                align_basename, 
+                                align_format = "bam",
+                                ...,
+                                overwrite = FALSE){
+  
+  
+  # Convert paths to absolute paths
+  index_dir <- tools::file_path_as_absolute(index_dir)
+  align_dir <- tools::file_path_as_absolute(align_dir)
+  
+  # If no optional parameters are passed then use default parameters else use user parameters 
+  if (!missing(...))
+    bowtie_options <- ...
+  else
+    bowtie_options <- "--very-sensitive-local -k 100 --score-min L,20,1.0 --threads 4"
+  
+  
+  # No mate pair file specified by user
+  if (is.null(read2)){
+    
+    Rbowtie2::bowtie2(bt2Index = file.path(index_dir, index_basename), 
+                      outputPath = file.path(align_dir, align_basename),
+                      outputType = align_format,
+                      seq1 = read1,
+                      overwrite = overwrite, 
+                      bowtie_options
+    )
+    
+    
+    return(tools::file_path_as_absolute(align_dir))
+    
+  }
+  
+  # Mate pair file specified by user
+  else{
+    
+    Rbowtie2::bowtie2(bt2Index = file.path(index_dir, index_basename), 
+                      outputPath = file.path(align_dir, align_basename),
+                      outputType = align_format,
+                      seq1 = read1,
+                      seq2 = read2,
+                      overwrite = overwrite, 
+                      bowtie_options
+    )
+    
+    return(tools::file_path_as_absolute(align_dir))
+    
+  }
+}
