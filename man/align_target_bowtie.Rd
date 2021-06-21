@@ -74,7 +74,14 @@ mk_bowtie_index(ref_dir = ref_temp, index_dir = index_temp, index_name = "virus"
 readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
 
 # Create alignment file 
-align_target_bowtie(read1 = readPath, index_dir = index_temp, index_basename = "virus", align_dir = align_temp, align_basename = "example", align_format = "bam", overwrite = TRUE)
+align_target_bowtie(
+read1 = readPath, 
+index_dir = index_temp, 
+index_basename = "virus", 
+align_dir = align_temp, 
+align_basename = "example", 
+align_format = "bam", 
+overwrite = TRUE)
 
 }
 }

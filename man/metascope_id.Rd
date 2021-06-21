@@ -17,7 +17,7 @@ metascope_id(
 needs removal of ambiguity.}
 
 \item{aligner}{The aligner which was used to create the bam file. Default is 
-"bowtie" but can also be set to "subread"}
+"bowtie" but can also be set to "subread" or "other"}
 
 \item{out_file}{The name of the .csv output file. Defaults to the bam_file
 basename plus ".metascope_id.csv".}
@@ -32,7 +32,7 @@ file 'as is'}
 }
 \value{
 This function returns a .csv file with annotated read counts to genomes with
-mapped reads. The function iself returns the output .csv file name.
+mapped reads. The function itself returns the output .csv file name.
 }
 \description{
 This function will read in a .bam file, annotate the taxonomy and genome
@@ -45,13 +45,13 @@ library/.bam files use NCBI accession names for reference names (rnames in
 # Code not run
 \dontrun{
 ## Get a reference genome library
-download_refseq('viral', compress = FALSE)
+download_refseq('viruses', compress = FALSE)
 
 ## Make and align to a single a reference genome library
-mk_subread_index('viral.fasta')
+mk_subread_index('Viruses.fasta')
 readPath <- system.file("extdata", "virus_example.fastq",
 package = "MetaScope")
-viral_map <- align_target(readPath, "viral", "virus_example")
+viral_map <- align_target(readPath, "Viruses", project_name = "virus_example")
 
 #### Apply MetaScope ID:
 metascope_id(viral_map)
