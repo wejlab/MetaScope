@@ -47,7 +47,14 @@
 #' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
 #' 
 #' # Create alignment file 
-#' align_target_bowtie(read1 = readPath, index_dir = index_temp, index_basename = "virus", align_dir = align_temp, align_basename = "example", align_format = "bam", overwrite = TRUE)
+#' align_target_bowtie(
+#' read1 = readPath, 
+#' index_dir = index_temp, 
+#' index_basename = "virus", 
+#' align_dir = align_temp, 
+#' align_basename = "example", 
+#' align_format = "bam", 
+#' overwrite = TRUE)
 #' 
 #' }
 
@@ -81,8 +88,15 @@ align_target_bowtie <- function(read1,
                       outputType = align_format,
                       seq1 = read1,
                       overwrite = overwrite, 
-                      bowtie_options
-    )
+                      bowtie_options)
+    
+    # Sort .bam file and remove unmapped reads using filter_unmapped_reads()
+    # if format is set to "bam"
+    
+    if (align_format == "bam"){
+      bam_location <- file.path(align_dir,paste0(align_basename,".bam"))
+      filter_unmapped_reads(bam_location)
+    }
     
     
     return(tools::file_path_as_absolute(align_dir))
@@ -98,8 +112,16 @@ align_target_bowtie <- function(read1,
                       seq1 = read1,
                       seq2 = read2,
                       overwrite = overwrite, 
-                      bowtie_options
-    )
+                      bowtie_options)
+    
+    # Sort .bam file and remove unmapped reads using filter_unmapped_reads()
+    # if format is set to "bam"
+    
+    if (align_format == "bam"){
+      bam_location <- file.path(align_dir,paste0(align_basename,".bam"))
+      filter_unmapped_reads(bam_location)
+    }
+    
     
     return(tools::file_path_as_absolute(align_dir))
     
