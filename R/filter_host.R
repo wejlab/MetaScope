@@ -150,3 +150,76 @@ filter_host <- function(reads_bam, libs, lib_dir=NULL,
   
   return(output)
 }
+
+#' Align reads against one or more filter libraries and subsequently
+#' remove mapped reads
+#' 
+#' After a sample is aligned to a target library with \code{align_target_bowtie()},
+#' we may use \code{filter_host_bowtie()} to remove unwelcome host contamination using
+#' filter reference libraries. This function takes as input the name
+#' of the .bam file produced via \code{align_target_bowtie()}, and produces a
+#' sorted .bam file with any reads that match the filter libraries removed.
+#' This resulting .bam file may be used upstream for further analysis.
+#' 
+#' @param reads_bam The name of a merged, sorted .bam file that has previously
+#' been aligned to a reference library. Likely, the output from running an
+#' instance of \code{align_target_bowtie()}.
+#' @param output The desired name of the output .bam file. Default is
+#' the basename of \code{reads_bam} + \code{.filtered.bam}.
+#' @param ... The optional options to pass to the bowtie align function
+#' @param overwrite Whether existing files should be overwritten.
+#' 
+#' @export
+
+
+
+filter_host_bowtie <- function(reads, unfiltered_bam, libs, lib_dir=NULL,
+                               output = paste(tools::file_path_sans_ext(unfiltered_bam),
+                                              "filtered", "bam", sep = "."),
+                               ..., overwrite = FALSE){
+  
+  
+  # If no optional parameters are passed then use default parameters else use user parameters 
+  if (!missing(...))
+    bowtie_options <- ...
+  else
+    bowtie_options <- "--very-sensitive-local -k 100 --score-min L,20,1.0 --threads 4"
+  
+  # Initialize list of names
+  read_names <- vector(mode = "list", length(libs))
+  
+  for (i in seq_along(libs)) {
+    # Create output file name for BAM
+    lib_file <- paste(tools::file_path_sans_ext(unfiltered_bam),
+                      ".", libs[i], ".bam", sep = "")
+
+    #Align BAM to lib and generate new file
+    Rbowtie2::bowtie2(bt2Index = file.path(lib_dir,libs[i]),
+                      outputPath = tools::file_path_sans_ext(lib_file),
+                      outputType = "bam",
+                      seq1 = reads, 
+                      ... = bowtie_options,
+                      overwrite = overwrite)
+
+    # sort BAM file and remove umapped reads (package helper function)
+    filter_unmapped_reads(lib_file)
+
+    # Extract target query names from mapped BAM file
+    read_names[[i]] <- Rsamtools::scanBam(lib_file)[[1]]$qname
+
+    # Throw away BAM file
+    file.remove(lib_file)
+
+  }
+
+  # helper function to sort headers and filter BAM file
+  remove_matches(unfiltered_bam, read_names, output)
+
+  return(output)
+}
+
+
+
+
+
+
