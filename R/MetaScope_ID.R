@@ -87,7 +87,7 @@ unique_identifier <- function(x)
 #' @param bam_file The .bam file that needs to be summarized, annotated, and
 #' needs removal of ambiguity.
 #' @param aligner The aligner which was used to create the bam file. Default is 
-#' "bowtie" but can also be set to "subread"
+#' "bowtie" but can also be set to "subread" or "other"
 #' @param out_file The name of the .csv output file. Defaults to the bam_file
 #' basename plus ".metascope_id.csv".
 #' @param EMconv The convergence parameter of the EM algorithm. Default set at
@@ -126,43 +126,47 @@ metascope_id <- function(bam_file,
                                           ".metascope_id.csv", sep = ""),
                          EMconv = 1/10000, EMmaxIts = 25) {
   
-  if (aligner != "bowtie" && aligner != "subread")
-    return("Please make sure aligner is set to either 'bowtie' or 'subread'")
+  # Check to make sure valid aligner is specified
+  if (aligner != "bowtie" && aligner != "subread" && aligner != "other")
+    stop("Please make sure aligner is set to either 'bowtie', 'subread', or 'other'")
   
   message("Reading .bam file: ", bam_file)
   
-  # Change the tag to AS for PathoScope or NM for MetaScope
+  # If the aligner is set to bowtie then also extract the AS (alignment score) tag
   if (aligner == "bowtie")
     params <- Rsamtools::ScanBamParam(what = c("qname", "rname", "cigar", "qwidth"), tag = c("AS"))
+  # If the aligner is set to subread then also extract the NM (edit score) tag
   else if (aligner == "subread")
     params <- Rsamtools::ScanBamParam(what = c("qname", "rname", "cigar", "qwidth"), tag = c("NM"))
-  
+  # If the aligner is set to other then we do not extract any additional tags
+  else if (aligner == "other")
+    params <- Rsamtools::ScanBamParam(what = c("qname", "rname", "cigar", "qwidth"))
   
   reads <- Rsamtools::scanBam(bam_file, param = params)
   unmapped <- is.na(reads[[1]]$rname)
   mapped_qname <- reads[[1]]$qname[!unmapped]
   mapped_rname <- reads[[1]]$rname[!unmapped]
   
-  # Uncomment this mapped_rname if using pathoscope bowtie alignment
+  # If aligner is set to bowtie then we have to do additional processing to get accession numbers
   if (aligner == "bowtie")
-    mapped_rname <- gsub(".*accession\\|","",reads[[1]]$rname[!unmapped])
+    mapped_rname <- gsub(".*accession\\|","",mapped_rname)
   
   mapped_cigar <- reads[[1]]$cigar[!unmapped]
   mapped_qwidth <- reads[[1]]$qwidth[!unmapped]
   
-  #Added this 
-  
-  # PathoScope Bowtie aligner 
+
+  # If aligner is set to bowtie then we want to get the mapped alignment scores
   if (aligner == "bowtie")
-    mapped_edit <- reads[[1]][["tag"]][["AS"]][!unmapped]
+    mapped_alignment <- reads[[1]][["tag"]][["AS"]][!unmapped]
   
-  # MetaScope Rsubread aligner 
+  # If aligner is set to subread then we want to get the mapped edit scores
   else if (aligner == "subread")
     mapped_edit <- reads[[1]][["tag"]][["NM"]][!unmapped]
   
   
   read_names <- unique(mapped_qname)
   accessions <- unique(mapped_rname)
+  
   message("\tFound ", length(read_names), " reads aligned to ",
           length(accessions), " NCBI accessions")
   
@@ -187,33 +191,43 @@ metascope_id <- function(bam_file,
   
   # Order based on read names
   rname_tax_inds <- rname_tax_inds[order(qname_inds)]
-  
   # Modified this from original
   cigar_strings <- mapped_cigar[order(qname_inds)]
   
-  
-  # Added this
-  edit_scores <- mapped_edit[order(qname_inds)]
+  # If aligner is set to bowtie we want to order the alignment scores
+  if (aligner == "bowtie")
+    scores <- mapped_alignment[order(qname_inds)]
+  # If aligner is set to subread we want to order the edit scores
+  else if (aligner == "subread")
+    scores <- mapped_edit[order(qname_inds)]
+  # If aligner is set to other then we make no assumptions about scores
+  else if (aligner == "other")
+    scores <- 1
   
   qwidths <- qwidths[order(qname_inds)]
   qname_inds <- sort(qname_inds)
   
- # # Obtain alignment scores based on # of matches
- 
-  # Added this (in this case edit score is edit score from Rsubread)
+  
+  
+  # If aligner is subread then to get an alignment score we subtract the edit score
+  # from the number of nucleotide matches which is taken from the cigar string.
   if (aligner == "subread"){
     num_match <- unlist(sapply(cigar_strings, count_matches, USE.NAMES = FALSE))
-    alignment_score <- num_match - edit_scores
+    alignment_score <- num_match - scores
     relative_alignment_score <- alignment_score - min(alignment_score)
     exp_alignment_score <- 2^relative_alignment_score
   }
 
-  # Added this (in this case edit score is alignment score of bowtie)
+  # If aligner is bowtie then we already have an alignment score 
   else if (aligner == "bowtie"){
-    relative_alignment_score <- edit_scores - min(edit_scores)
+    relative_alignment_score <- scores - min(scores)
     exp_alignment_score <- 2^relative_alignment_score
   }
   
+  # If aligner is other then we make no assumptions about the alignment score
+  else if (aligner == "other"){
+    exp_alignment_score <- 1
+  }
   
   
   combined <- dplyr::bind_cols("qname" = qname_inds, "rname" = rname_tax_inds,
@@ -223,9 +237,12 @@ metascope_id <- function(bam_file,
   qname_inds_2 <- input_distinct$qname
   rname_tax_inds_2 <- input_distinct$rname
   
-  # Added this (normalizes the score for each read)
+  # Normalize the exponential alignment scores so that the scores 
+  # represent a probability that the read originates from that genome
   by_read <- dplyr::group_by(input_distinct, qname)
   scores_2 <- dplyr::summarize(by_read, scores_2 = scores/(sum(scores)))$scores_2
+  
+  # Uniqueness indicator vector (1 = multimapping, 0 = unique or non multimapping)
   y_ind_2 <- dplyr::summarize(by_read, multimapping_2 = unique_identifier(dplyr::n()))$multimapping_2
 
   
