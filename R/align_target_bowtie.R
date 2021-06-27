@@ -84,7 +84,7 @@ align_target_bowtie <- function(read1,
   if (is.null(read2)){
     
     Rbowtie2::bowtie2(bt2Index = file.path(index_dir, index_basename), 
-                      outputPath = file.path(align_dir, align_basename),
+                      output = file.path(align_dir, align_basename),
                       outputType = align_format,
                       seq1 = read1,
                       overwrite = overwrite, 
@@ -107,7 +107,7 @@ align_target_bowtie <- function(read1,
   else{
     
     Rbowtie2::bowtie2(bt2Index = file.path(index_dir, index_basename), 
-                      outputPath = file.path(align_dir, align_basename),
+                      output = file.path(align_dir, align_basename),
                       outputType = align_format,
                       seq1 = read1,
                       seq2 = read2,
