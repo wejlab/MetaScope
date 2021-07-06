@@ -8,31 +8,50 @@ remove mapped reads}
 filter_host_bowtie(
   reads,
   unfiltered_bam,
+  lib_dir,
   libs,
-  lib_dir = NULL,
   output = paste(tools::file_path_sans_ext(unfiltered_bam), "filtered", "bam", sep =
     "."),
-  ...,
+  bowtie2_options = NULL,
+  threads = 8,
   overwrite = FALSE
 )
 }
 \arguments{
-\item{output}{The desired name of the output .bam file. Default is
-the basename of \code{reads_bam} + \code{.filtered.bam}.}
+\item{reads}{The reads used to create the unfiltered .bam file}
 
-\item{...}{The optional options to pass to the bowtie align function}
-
-\item{overwrite}{Whether existing files should be overwritten.}
-
-\item{reads_bam}{The name of a merged, sorted .bam file that has previously
+\item{unfiltered_bam}{The name of a merged, sorted .bam file that has previously
 been aligned to a reference library. Likely, the output from running an
-instance of \code{align_target()}.}
+instance of \code{align_target_bowtie()}.}
+
+\item{lib_dir}{Path to the directory that contains the filter Bowtie2 index
+files.}
+
+\item{libs}{The basename of the filter libraries 
+(without .bt2 or .bt2l extension)}
+
+\item{output}{The desired name of the output .bam file. Default is
+the basename of \code{unfiltered_bam} + \code{.filtered.bam}.}
+
+\item{bowtie2_options}{Optional: Additional parameters that can be passed to
+the align_target_bowtie() function. To see all the available parameters
+use Rbowtie2::bowtie2_usage(). Default parameters are the parameters are the 
+default parameters that PathoScope 2.0 uses. NOTE: Users should pass all their
+parameters as one string and if optional parameters are given then the user 
+is responsible for entering all the parameters to be used by Bowtie2. NOTE:
+The only parameters that should NOT be specified here is the threads.}
+
+\item{threads}{The amount of threads available for the function.
+Default is 8 threads.}
+
+\item{overwrite}{Whether existing files should be overwritten. 
+Default is FALSE.}
 }
 \description{
 After a sample is aligned to a target library with \code{align_target_bowtie()},
 we may use \code{filter_host_bowtie()} to remove unwelcome host contamination using
-filter reference libraries. This function takes as input the name
-of the .bam file produced via \code{align_target_bowtie()}, and produces a
+filter reference libraries. This function takes as input both the reads and the
+name of the .bam file produced via \code{align_target_bowtie()}, and produces a
 sorted .bam file with any reads that match the filter libraries removed.
-This resulting .bam file may be used upstream for further analysis.
+This resulting .bam file may be used downstream for further analysis.
 }

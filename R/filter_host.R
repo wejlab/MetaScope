@@ -156,34 +156,52 @@ filter_host <- function(reads_bam, libs, lib_dir=NULL,
 #' 
 #' After a sample is aligned to a target library with \code{align_target_bowtie()},
 #' we may use \code{filter_host_bowtie()} to remove unwelcome host contamination using
-#' filter reference libraries. This function takes as input the name
-#' of the .bam file produced via \code{align_target_bowtie()}, and produces a
+#' filter reference libraries. This function takes as input both the reads and the
+#' name of the .bam file produced via \code{align_target_bowtie()}, and produces a
 #' sorted .bam file with any reads that match the filter libraries removed.
-#' This resulting .bam file may be used upstream for further analysis.
+#' This resulting .bam file may be used downstream for further analysis.
 #' 
-#' @param reads_bam The name of a merged, sorted .bam file that has previously
+#' @param unfiltered_bam The name of a merged, sorted .bam file that has previously
 #' been aligned to a reference library. Likely, the output from running an
 #' instance of \code{align_target_bowtie()}.
+#' @param reads The reads used to create the unfiltered .bam file
+#' @param lib_dir Path to the directory that contains the filter Bowtie2 index
+#' files.
+#' @param libs The basename of the filter libraries 
+#' (without .bt2 or .bt2l extension)
 #' @param output The desired name of the output .bam file. Default is
-#' the basename of \code{reads_bam} + \code{.filtered.bam}.
-#' @param ... The optional options to pass to the bowtie align function
-#' @param overwrite Whether existing files should be overwritten.
+#' the basename of \code{unfiltered_bam} + \code{.filtered.bam}.
+#' @param bowtie2_options Optional: Additional parameters that can be passed to
+#' the align_target_bowtie() function. To see all the available parameters
+#' use Rbowtie2::bowtie2_usage(). Default parameters are the parameters are the 
+#' default parameters that PathoScope 2.0 uses. NOTE: Users should pass all their
+#' parameters as one string and if optional parameters are given then the user 
+#' is responsible for entering all the parameters to be used by Bowtie2. NOTE:
+#' The only parameters that should NOT be specified here is the threads.
+#' @param threads The amount of threads available for the function.
+#' Default is 8 threads.
+#' @param overwrite Whether existing files should be overwritten. 
+#' Default is FALSE.
 #' 
 #' @export
 
 
 
-filter_host_bowtie <- function(reads, unfiltered_bam, libs, lib_dir=NULL,
+filter_host_bowtie <- function(reads, unfiltered_bam, 
+                               lib_dir, libs,
                                output = paste(tools::file_path_sans_ext(unfiltered_bam),
                                               "filtered", "bam", sep = "."),
-                               ..., overwrite = FALSE){
+                               bowtie2_options = NULL, 
+                               threads = 8,
+                               overwrite = FALSE){
   
   
   # If no optional parameters are passed then use default parameters else use user parameters 
-  if (!missing(...))
-    bowtie_options <- ...
+  if (missing(bowtie2_options))
+    bowtie2_options <- paste("--very-sensitive-local -k 100 --score-min L,20,1.0",
+                             "--threads",threads)
   else
-    bowtie_options <- "--very-sensitive-local -k 100 --score-min L,20,1.0 --threads 4"
+    bowtie2_options <- paste(bowtie2_options,"--threads",threads)
   
   # Initialize list of names
   read_names <- vector(mode = "list", length(libs))
@@ -193,12 +211,12 @@ filter_host_bowtie <- function(reads, unfiltered_bam, libs, lib_dir=NULL,
     lib_file <- paste(tools::file_path_sans_ext(unfiltered_bam),
                       ".", libs[i], ".bam", sep = "")
 
-    #Align BAM to lib and generate new file
+    # Align reads to lib and generate new filter BAM file
     Rbowtie2::bowtie2(bt2Index = file.path(lib_dir,libs[i]),
-                      outputPath = tools::file_path_sans_ext(lib_file),
+                      output = tools::file_path_sans_ext(lib_file),
                       outputType = "bam",
                       seq1 = reads, 
-                      ... = bowtie_options,
+                      ... = bowtie2_options,
                       overwrite = overwrite)
 
     # sort BAM file and remove umapped reads (package helper function)
