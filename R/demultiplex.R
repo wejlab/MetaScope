@@ -39,7 +39,7 @@
 #'
 #' ## Load example barcode, index, and read data into R session:
 #' barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
-#' bcFile <- read.table(barcodePath, sep = "\t", header = T)
+#' bcFile <- read.table(barcodePath, sep = "\t", header = TRUE)
 #' 
 #' indexPath <- system.file("extdata", "virus_example_index.fastq",
 #' package = "MetaScope")
@@ -94,7 +94,7 @@ extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads,
     message("\tFound ", sum(ind_match), " reads, writing reads to: ",
             outFileName)
     Biostrings::writeQualityScaledXStringSet(reads[c(ind_match)], outFileName,
-                                             compress = T)
+                                             compress = TRUE)
   }
   return(list(output_file = outFileName, numberOfReads = numReads,
               matchedIndexes = ind_match))
@@ -159,7 +159,7 @@ demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
                         location = "./demultiplex_fastq", cores = 1,
                         hammingDist = 0) {
   message("Reading Sample Names and Barcodes from: ", barcodeFile)
-  bcFile <- read.table(barcodeFile, sep = "\t", header = T)
+  bcFile <- read.table(barcodeFile, sep = "\t", header = TRUE)
   barcodes <- bcFile[, 2]
   samNames <- bcFile[, 1]
   message("\tFound information for ", length(barcodes), " samples/barcodes")
@@ -221,12 +221,12 @@ demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
   Biostrings::writeQualityScaledXStringSet(reads[c(ind_no_match)],
                                            paste(location,
                                                  "/orpahns.fastq.gz", sep = ""),
-                                           compress = T)
+                                           compress = TRUE)
 
   summaryMat <- cbind(bcFile[1:length(barcodes), ],
                       NumberOfReads = numReads)
   write.table(summaryMat, file = paste(location,
                                        "/summary.txt", sep = ""),
-              col.names = F, row.names = T, quote = F)
+              col.names = FALSE, row.names = TRUE, quote = FALSE)
   return(summaryMat)
 }

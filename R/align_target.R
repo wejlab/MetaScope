@@ -44,7 +44,7 @@ filter_unmapped_reads <- function(bamfile) {
                                        indexDestination = FALSE,
                                        param = Rsamtools::ScanBamParam(
                                          flag = Rsamtools::scanBamFlag(
-                                           isUnmappedQuery = F)))
+                                           isUnmappedQuery = FALSE)))
   # clean up
   file.remove(sorted_bamfile)
   file.remove(bam_index)
@@ -169,7 +169,7 @@ bam_reheader_R <- function(head, old_bam,
     writeLines(oneLine, new_sam_con)
   }
   close(head_con)
-  old_sam <- Rsamtools::asSam(old_bam, overwrite = T)
+  old_sam <- Rsamtools::asSam(old_bam, overwrite = TRUE)
   old_sam_con <- file(old_sam, open = "r")
   while ((length(oneLine <- readLines(old_sam_con, n = 1, warn = FALSE)) > 
           0)) {
@@ -180,7 +180,7 @@ bam_reheader_R <- function(head, old_bam,
   close(new_sam_con)
   close(old_sam_con)
   file.remove(old_sam)
-  new_bam <- Rsamtools::asBam(new_sam, overwrite = T)
+  new_bam <- Rsamtools::asBam(new_sam, overwrite = TRUE)
   file.remove(new_sam)
   file.remove(paste(new_bam, ".bai", sep = ""))
   return(new_bam)
@@ -244,7 +244,7 @@ merge_bam_files <- function(bam_files, destination,
   }
   merged_bam <- Rsamtools::mergeBam(bam_files_h,
                                     paste(tools::file_path_sans_ext(destination),
-                                          "_unsorted.bam", sep = ""), overwrite = T)
+                                          "_unsorted.bam", sep = ""), overwrite = TRUE)
   # clean up
   file.remove(com_head)
   for (i in bam_files_h) {

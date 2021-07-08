@@ -65,7 +65,7 @@ that barcode to a separate .fastq file.
 
 ## Load example barcode, index, and read data into R session:
 barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
-bcFile <- read.table(barcodePath, sep = "\t", header = T)
+bcFile <- read.table(barcodePath, sep = "\t", header = TRUE)
 
 indexPath <- system.file("extdata", "virus_example_index.fastq",
 package = "MetaScope")

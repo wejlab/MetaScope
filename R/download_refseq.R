@@ -58,7 +58,7 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
 
   # Get the rank of the input taxon
   tryCatch({suppressMessages(classification.table <- taxize::classification(
-    taxize::get_uid(taxon, messages = F)[[1]], db = 'ncbi')[[1]])},
+    taxize::get_uid(taxon, messages = FALSE)[[1]], db = 'ncbi')[[1]])},
     warning = function(w) {stop("Your input is not a valid taxon")}
     )
   message(paste("Finding", taxon))
@@ -93,20 +93,20 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
                             "protozoa", "viral")) {
     refseq_link <- paste("ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/", parent_kingdom,
                          "/assembly_summary.txt", sep = "")
-    refseq_table <- read.table(refseq_link, header = T, sep = "\t",
+    refseq_table <- read.table(refseq_link, header = TRUE, sep = "\t",
                                comment.char = "",
                                quote = "", skip = 1)
   } else if (parent_kingdom == "metazoa") {
     refseq_link_1 <- paste("ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/",
                            "vertebrate_mammalian",
                            "/assembly_summary.txt", sep = "")
-    refseq_table_1 <- read.table(refseq_link_1, header = T, sep = "\t",
+    refseq_table_1 <- read.table(refseq_link_1, header = TRUE, sep = "\t",
                                  comment.char = "",
                                  quote = "", skip = 1)
     refseq_link_2 <- paste("ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/",
                            "vertebrate_other",
                            "/assembly_summary.txt", sep = "")
-    refseq_table_2 <- read.table(refseq_link_2, header = T, sep = "\t",
+    refseq_table_2 <- read.table(refseq_link_2, header = TRUE, sep = "\t",
                                  comment.char = "",
                                  quote = "", skip = 1)
     refseq_table <- rbind(refseq_table_1, refseq_table_2)
@@ -178,7 +178,7 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
         ref <- Biostrings::readDNAStringSet(destination)
 
         ## Write to file
-        Biostrings::writeXStringSet(ref, combined_fasta, append = T,
+        Biostrings::writeXStringSet(ref, combined_fasta, append = TRUE,
                                     compress = compress)
 
         ## Format for pathoscope and write to file
@@ -189,7 +189,7 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
         names(ref) <- paste("ti|", species_table[i, ]$taxid, "|org|",
                             gsub(" ", "_", species_table[i, ]$organism_name),
                             "|accession|", accession, sep = "")
-        Biostrings::writeXStringSet(ref, combined_fasta_patho, append = T,
+        Biostrings::writeXStringSet(ref, combined_fasta_patho, append = TRUE,
                                     compress = compress)
 
         ## Delete intermediate download files

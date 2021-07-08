@@ -20,7 +20,7 @@ generate_taxonomy_table <- function() {
   # Download the updated refseq table from NCBI
     ## This table contains all species/strains with available genome
   refseq_link <- "ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
-  refseq_table <- read.table(refseq_link, header = T, sep = "\t",
+  refseq_table <- read.table(refseq_link, header = TRUE, sep = "\t",
                              comment.char = "",
                              quote = "", skip = 1)
   tax_id <- unique(refseq_table$taxid)
