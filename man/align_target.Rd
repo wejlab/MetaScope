@@ -48,7 +48,7 @@ genomes.
 }
 \examples{
 # Code not run
-\dontrun{
+\donttest{
 ## Get a reference genome library
 download_refseq('viruses', compress = FALSE)
 

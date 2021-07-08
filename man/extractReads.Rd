@@ -76,7 +76,7 @@ readPath <- system.file("extdata", "virus_example.fastq",
 reads <- Biostrings::readQualityScaledDNAStringSet(readPath)
 
 # Code not run
-\dontrun{
+\donttest{
 ## Extract reads from the first barcode
 results <- extractReads(1, bcFile[, 2], bcFile[, 1], inds, reads,
                         rcBarcodes = FALSE, location = ".")

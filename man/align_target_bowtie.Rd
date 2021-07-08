@@ -60,7 +60,7 @@ Align microbiome reads to set of indexed Bowtie2 libraries
 }
 \examples{
 # Code not run
-\dontrun{
+\donttest{
 
 ## Create alignment bam file produced by Bowtie2
 

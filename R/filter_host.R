@@ -21,7 +21,7 @@ globalVariables(c("align_details"))
 #' 
 #' @examples
 #' # Code not run
-#' \dontrun{
+#' \donttest{
 #' readPath <- system.file("extdata", "bacteria_example.bam",
 #'                         package = "MetaScope")
 #'
@@ -91,7 +91,7 @@ remove_matches <- function(reads_bam, read_names, name_out) {
 #' 
 #' @examples
 #' # Code not run
-#' \dontrun{
+#' \donttest{
 #' ## Assuming a BAM file has been created previously with align_target()
 #'
 #' ## Download and index the filter genome library

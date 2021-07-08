@@ -32,7 +32,7 @@ headers. It is not intended for use by users.
 }
 \examples{
 # Code not run
-\dontrun{
+\donttest{
 download_refseq('viruses', compress = FALSE)
 mk_subread_index('Viruses.fasta', split = .0005)
 

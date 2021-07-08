@@ -11,7 +11,7 @@
 #'
 #' @examples
 #' # Code not run
-#' \dontrun{
+#' \donttest{
 #' generate_taxonomy_table()
 #' }
 #' 

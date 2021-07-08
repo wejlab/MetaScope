@@ -66,7 +66,7 @@ indexPath <- system.file("extdata", "virus_example_index.fastq",
                          package = "MetaScope")
 readPath <- system.file("extdata", "virus_example.fastq",
                          package = "MetaScope")
-\dontrun{
+\donttest{
 # Code not run
 ## Get barcode, index, and read data locations
 demult <- demultiplex(barcodePath, indexPath, readPath, rcBarcodes = FALSE,

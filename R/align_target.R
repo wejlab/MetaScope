@@ -20,7 +20,7 @@ globalVariables(c("align_details"))
 #'
 #' @examples
 #' # Code not run
-#' \dontrun{
+#' \donttest{
 #' download_refseq('viruses', compress = FALSE)
 #' mk_subread_index('Viruses.fasta')
 #' readPath <- system.file("extdata", "virus_example.fastq",
@@ -70,7 +70,7 @@ filter_unmapped_reads <- function(bamfile) {
 #' 
 #' @examples
 #' # Code not run
-#' \dontrun{
+#' \donttest{
 #' download_refseq('viruses', compress = FALSE)
 #' mk_subread_index('Viruses.fasta', split = .0005)
 #'
@@ -136,7 +136,7 @@ combined_header <- function(bam_files, header_file = "header_tmp.sam") {
 #' 
 #' @examples
 #' # code not run
-#' \dontrun{
+#' \donttest{
 #' download_refseq('viruses', compress = FALSE)
 #' mk_subread_index('Viruses.fasta', split = .0005)
 #' readPath <- system.file("extdata", "virus_example.fastq",
@@ -206,7 +206,7 @@ bam_reheader_R <- function(head, old_bam,
 #'
 #' @examples
 #' # Code not run
-#' \dontrun{
+#' \donttest{
 #' download_refseq('viruses', compress = FALSE)
 #' mk_subread_index('Viruses.fasta', split = .0005)
 #'
@@ -293,7 +293,7 @@ merge_bam_files <- function(bam_files, destination,
 #'
 #' @examples
 #' # Code not run
-#' \dontrun{
+#' \donttest{
 #' ## Get a reference genome library
 #' download_refseq('viruses', compress = FALSE)
 #'

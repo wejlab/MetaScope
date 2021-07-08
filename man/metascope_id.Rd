@@ -43,7 +43,7 @@ library/.bam files use NCBI accession names for reference names (rnames in
 }
 \examples{
 # Code not run
-\dontrun{
+\donttest{
 ## Get a reference genome library
 download_refseq('viruses', compress = FALSE)
 

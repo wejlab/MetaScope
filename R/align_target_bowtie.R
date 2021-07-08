@@ -7,7 +7,7 @@
 #' (without trailing .bt2 or .bt2l extensions).
 #' @param align_dir Path to the directory where the output alignment file 
 #' should be created.
-#' @param align_file The basename of the output alignment file file 
+#' @param align_file The basename of the output alignment file 
 #' (without trailing .sam or .bam extensions). 
 #' @param align_format The format of the alignment file. Default is "bam" 
 #' but can also pass "sam" to the function. NOTE: To create the bam file, first
@@ -31,7 +31,7 @@
 #' 
 #' @examples
 #' # Code not run
-#' \dontrun{
+#' \donttest{
 #' 
 #' ## Create alignment bam file produced by Bowtie2
 #' 

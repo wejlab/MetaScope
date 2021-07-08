@@ -31,7 +31,7 @@ function in samtools. It is not intended for use by users.
 }
 \examples{
 # code not run
-\dontrun{
+\donttest{
 download_refseq('viruses', compress = FALSE)
 mk_subread_index('Viruses.fasta', split = .0005)
 readPath <- system.file("extdata", "virus_example.fastq",

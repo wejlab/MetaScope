@@ -32,7 +32,7 @@ This function is not intended for use by users.
 }
 \examples{
 # Code not run
-\dontrun{
+\donttest{
 readPath <- system.file("extdata", "bacteria_example.bam",
                         package = "MetaScope")
 

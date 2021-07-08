@@ -28,7 +28,7 @@ It is not intended for use by package users.
 }
 \examples{
 # Code not run
-\dontrun{
+\donttest{
 download_refseq('viruses', compress = FALSE)
 mk_subread_index('Viruses.fasta')
 readPath <- system.file("extdata", "virus_example.fastq",

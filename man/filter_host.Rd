@@ -50,7 +50,7 @@ It is not intended for use by users.
 }
 \examples{
 # Code not run
-\dontrun{
+\donttest{
 ## Assuming a BAM file has been created previously with align_target()
 
 ## Download and index the filter genome library

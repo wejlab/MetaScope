@@ -48,7 +48,7 @@ compressed or uncompressed .fasta file.
 }
 \examples{
 # Code not run
-\dontrun{
+\donttest{
 ## Download all RefSeq reference bacterial superkingdom genomes
 download_refseq('bacteria', reference = TRUE, representative = FALSE)
 

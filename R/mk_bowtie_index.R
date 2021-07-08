@@ -31,7 +31,7 @@
 #' 
 #' @examples  
 #' # Code not run
-#' \dontrun{
+#' \donttest{
 #' ## Download all RefSeq reference viral genomes and make an index
 #' 
 #' # Create a temporary directory to store reference fasta files
