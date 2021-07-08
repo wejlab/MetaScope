@@ -14,7 +14,7 @@ License: Artistic-2.0
 Encoding: UTF-8
 LazyData: true
 Depends:
-    R (>= 4.0.0)
+    R (>= 4.1)
 Imports:
     Biostrings,
     tools,
@@ -26,7 +26,6 @@ Imports:
     Matrix,
     qlcMatrix,
     Rbowtie2,
-    magrittr,
     stringr
 Remotes:
     rvarki/Rbowtie2
