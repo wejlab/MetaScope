@@ -11,7 +11,6 @@ align_target_bowtie(
   libs,
   align_dir,
   align_file,
-  align_format = "bam",
   bowtie2_options = NULL,
   threads = 8,
   overwrite = FALSE
@@ -30,12 +29,8 @@ align_target_bowtie(
 \item{align_dir}{Path to the directory where the output alignment file 
 should be created.}
 
-\item{align_file}{The basename of the output alignment file file 
-(without trailing .sam or .bam extensions).}
-
-\item{align_format}{The format of the alignment file. Default is "bam" 
-but can also pass "sam" to the function. NOTE: To create the bam file, first
-the sam file must be created but afterwards the sam file will be deleted.}
+\item{align_file}{The basename of the output alignment file 
+(without trailing .bam extension).}
 
 \item{bowtie2_options}{Optional: Additional parameters that can be passed to
 the align_target_bowtie() function. To see all the available parameters
@@ -93,6 +88,6 @@ readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
 # Create alignment file 
 align_target_bowtie(read1 = readPath, lib_dir = lib_temp, 
 libs = "virus", align_dir = align_temp, align_file = "example", 
-align_format = "bam", overwrite = TRUE)
+overwrite = TRUE)
 }
 }
