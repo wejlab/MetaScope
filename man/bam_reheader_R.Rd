@@ -48,7 +48,7 @@ bam_reheader_R(com_head, 'virus_example2.bam')
 
 ## Note that the following would be an equivalent command if samtools is
 installed
-system("samtools reheader header_tmp.sam virus_example2.bam > virus_example2h.bam")
+system2("samtools reheader header_tmp.sam virus_example2.bam > virus_example2h.bam")
 }
 
 }
