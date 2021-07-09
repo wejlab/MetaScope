@@ -61,7 +61,7 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
     taxize::get_uid(taxon, messages = FALSE)[[1]], db = 'ncbi')[[1]])},
     warning = function(w) {stop("Your input is not a valid taxon")}
     )
-  message(paste("Finding", taxon))
+  message("Finding ", taxon)
   rank_input <- classification.table$rank[nrow(classification.table)]
 
   # Get the NCBI scientific names of children species or strains
@@ -77,7 +77,7 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
     parent_rank <- "Superkingdom"
   }
 
-  message(paste(taxon,"is a", rank_input, "under the", parent_kingdom, parent_rank))
+  message(taxon," is a ", rank_input, " under the ", parent_kingdom," ",parent_rank)
   parent_kingdom <- tolower(parent_kingdom)
   
   # If parent kingdom is viruses, change it to be viral
@@ -88,7 +88,7 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
 
   # Download the assembly summary refseq table from NCBI
   ## which includes genome download link
-  message(paste("Loading the refseq table for", parent_kingdom))
+  message("Loading the refseq table for ", parent_kingdom)
   if (parent_kingdom %in% c("archaea", "bacteria", "fungi", "invertebrate", "plant",
                             "protozoa", "viral")) {
     refseq_link <- paste("ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/", parent_kingdom,
@@ -135,7 +135,7 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
     stop("No available genome for ", taxon, " - try setting both `representative`
             and `reference` to TRUE")
   } else{
-    message(paste("Downloading", total_genomes, taxon, "genome(s) from RefSeq"))
+    message("Downloading ",total_genomes," ",taxon," genome(s) from RefSeq")
 
     ## Delete existing genome files and combined fasta--make these user-defined
 

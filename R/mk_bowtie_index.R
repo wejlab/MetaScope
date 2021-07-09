@@ -74,7 +74,7 @@ mk_bowtie_index <- function(ref_dir, lib_dir, lib_name, bowtie2_build_options,
                           )
   
   
-  message(paste0("Successfully built the Bowtie2 indexes"))
+  message("Successfully built the Bowtie2 indexes")
   
   return(tools::file_path_as_absolute(lib_dir))
 }

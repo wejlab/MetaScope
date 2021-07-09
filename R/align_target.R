@@ -153,7 +153,7 @@ combined_header <- function(bam_files, header_file = "header_tmp.sam") {
 #'
 #' ## Note that the following would be an equivalent command if samtools is
 #' installed
-#' system("samtools reheader header_tmp.sam virus_example2.bam > virus_example2h.bam")
+#' system2("samtools reheader header_tmp.sam virus_example2.bam > virus_example2h.bam")
 #' }
 #'
 bam_reheader_R <- function(head, old_bam,
@@ -346,7 +346,7 @@ align_target <- function(reads, libs,
     file.remove(paste(bam_files, ".summary", sep = ""))
   }
 
-  message(paste("DONE! Alignments written to ", project_name, ".bam",
-                sep = ""))
+  message("DONE! Alignments written to ", project_name, ".bam")
+  
   return(paste(project_name, ".bam", sep = ""))
 }
