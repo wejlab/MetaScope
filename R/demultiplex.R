@@ -180,7 +180,7 @@ demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
   # Loop over barcodes
   numReads <- NULL
   ind_no_match <- numeric(length(reads))
-  for (i in 1:length(barcodes)) {
+  for (i in seq_along(barcodes)) {
     extracted <- extractReads(i, barcodes, samNames, inds, reads,
                               rcBarcodes = rcBarcodes,
                               location = location, hDist = hammingDist)
@@ -224,7 +224,7 @@ demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
                                                  "/orpahns.fastq.gz", sep = ""),
                                            compress = TRUE)
 
-  summaryMat <- cbind(bcFile[1:length(barcodes), ],
+  summaryMat <- cbind(bcFile[seq_along(barcodes), ],
                       NumberOfReads = numReads)
   write.table(summaryMat, file = paste(location,
                                        "/summary.txt", sep = ""),
