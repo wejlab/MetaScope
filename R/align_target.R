@@ -232,7 +232,7 @@ merge_bam_files <- function(bam_files, destination,
   com_head <- combined_header(bam_files, header_file = head_file)
   print("Merging and sorting .bam files")
   bam_files_h <- sam_files_h <- NULL
-  for (i in 1:length(bam_files)) {
+  for (i in seq_along(bam_files)) {
     new_bam_h <- bam_reheader_R(com_head, bam_files[i])
     bam_files_h <- c(bam_files_h, new_bam_h)
     file.remove(bam_files[i])
@@ -305,7 +305,7 @@ merge_bam_files <- function(bam_files, destination,
 #' viral_map_sam <- Rsamtools::asSam(viral_map, overwrite = TRUE)
 #'
 #' ## Make and align to a multiple reference genome libraries
-#' mk_subread_index('Viruses.fasta', split = 0.005)
+#' mk_subread_index('Viruses.fasta', split = 0.0005)
 #' targLibs <- c("Viruses_1", "Viruses_2")
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #' package = "MetaScope")
