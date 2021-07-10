@@ -47,10 +47,10 @@ mk_subread_index <- function(ref_lib, split = 4, mem = 8000) {
     ## Making connections to the .fasta library and generating the new split
     ## .fasta files
     con <- file(ref_lib, open = "r")
-    out_cons <- paste("outcon_", 1:split_libs, sep = "")
-    out_files <- paste(tools::file_path_sans_ext(ref_lib), "_", 1:split_libs,
+    out_cons <- paste("outcon_", seq_len(split_libs), sep = "")
+    out_files <- paste(tools::file_path_sans_ext(ref_lib), "_", seq_len(split_libs),
                        ".", tools::file_ext(ref_lib), sep = "")
-    for (i in 1:split_libs) {
+    for (i in seq_len(split_libs)) {
       assign(out_cons[i], file(out_files[i], open = "w"))
     }
 
