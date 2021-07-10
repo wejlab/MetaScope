@@ -12,7 +12,6 @@ Description: This package contains the tools and methods for preprocessing micro
     Is is essentially an R translation of PathoScope 2.0, or MetaScope.
 License: Artistic-2.0
 Encoding: UTF-8
-LazyData: true
 Depends:
     R (>= 4.1)
 Imports:
@@ -25,7 +24,6 @@ Imports:
     dplyr,
     Matrix,
     qlcMatrix,
-    Rbowtie2,
     stringr
 Remotes:
     rvarki/Rbowtie2
