@@ -213,11 +213,12 @@ demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
   }
 
   # Track reads without matches, and write them to an 'orphan' file
-  message(paste("Found ", sum(ind_no_match),
-                " reads without a matching barcode (",
-                100 * round(mean(ind_no_match), 4),
-                "%), writing reads to: ", location,
-                "/orpahns.fastq.gz", sep = ""))
+  message("Found ", sum(ind_no_match),
+          " reads without a matching barcode (",
+          100 * round(mean(ind_no_match), 4),
+          "%), writing reads to: ", location,
+          "/orpahns.fastq.gz")
+  
   Biostrings::writeQualityScaledXStringSet(reads[c(ind_no_match)],
                                            paste(location,
                                                  "/orpahns.fastq.gz", sep = ""),

@@ -159,9 +159,9 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
     for (i in 1:nrow(species_table)) {
       tryCatch({
         if (i%%10 == 0) {
-          message(paste("Number of Genomes Downloaded: ", i, "/",
-                        total_genomes, " (", round(100 * i/total_genomes, 2),
-                        "%)", sep = ""))
+          message("Number of Genomes Downloaded: ", i, "/",
+                  total_genomes, " (", round(100 * i/total_genomes, 2),
+                  "%)")
         }
 
         ## Download the genome

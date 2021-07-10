@@ -146,7 +146,7 @@ filter_host <- function(reads_bam, libs, lib_dir=NULL,
   remove_matches(reads_bam, read_names, output)
   
   # output final filtered BAM file
-  message(paste("DONE! Alignments written to", output, sep = " "))
+  message("DONE! Alignments written to ", output)
   
   return(output)
 }
@@ -275,6 +275,9 @@ filter_host_bowtie <- function(reads, unfiltered_bam,
 
   # helper function to sort headers and filter BAM file
   remove_matches(unfiltered_bam, read_names, output)
+  
+  # output final filtered BAM file
+  message("DONE! Alignments written to ", output)
 
   return(output)
 }
