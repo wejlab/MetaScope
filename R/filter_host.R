@@ -183,9 +183,52 @@ filter_host <- function(reads_bam, libs, lib_dir=NULL,
 #' @param overwrite Whether existing files should be overwritten. 
 #' Default is FALSE.
 #' 
+#' @return The name of a filtered, sorted .bam file written to the user's
+#' current working directory.
+#' 
 #' @export
-
-
+#' 
+#' @examples
+#' # Code not run
+#' \donttest{
+#' # Create a temporary directory to store the filter fasta file
+#' ref_temp <- tempfile()
+#' dir.create(ref_temp)
+#' 
+#' # Create a temporary directory to store the filter index files
+#' lib_temp <- tempfile()
+#' dir.create(lib_temp)
+#' 
+#' # Create a temporary directory to store the filtered alignment bam file
+#' align_temp <- tempfile()
+#' dir.create(align_temp)
+#' 
+#' # Download all the RefSeq reference archaea genomes to current directory
+#' download_refseq("archaea", representative = TRUE, compress = TRUE)
+#' 
+#' # Move downloaded fasta file from current directory to temporary ref directory
+#' file.rename(from = file.path(".", "Archaea.fasta.gz"),
+#' to = file.path(ref_temp, "Archaea.fasta.gz"))
+#' 
+#' # Create bowtie archaea index files in temporary index directory
+#' mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "archaea",
+#' overwrite=FALSE)
+#' 
+#' # Get path to example reads
+#' readPath <- system.file("extdata", "SRR606366.fastq", package = "MetaScope")
+#' 
+#' # Get path to corresponding unfiltered bacteria aligned bam file
+#' bamPath <- system.file("extdata", "bacteria_example.bam", package = "MetaScope")
+#' 
+#' # Specify where the archaea filtered bam file should be written
+#' outputPath <- file.path(align_temp, "bacteria_example.filtered.bam")
+#' 
+#' # Filter the bam file of reads that match to an archaeal genome
+#' filter_host_bowtie(reads = readPath, unfiltered_bam = bamPath, 
+#' lib_dir = lib_temp, libs = "archaea", output = outputPath)
+#' 
+#' } 
+#' 
 
 filter_host_bowtie <- function(reads, unfiltered_bam, 
                                lib_dir, libs,

@@ -47,6 +47,10 @@ Default is 8 threads.}
 \item{overwrite}{Whether existing files should be overwritten. 
 Default is FALSE.}
 }
+\value{
+The name of a filtered, sorted .bam file written to the user's
+current working directory.
+}
 \description{
 After a sample is aligned to a target library with \code{align_target_bowtie()},
 we may use \code{filter_host_bowtie()} to remove unwelcome host contamination using
@@ -54,4 +58,46 @@ filter reference libraries. This function takes as input both the reads and the
 name of the .bam file produced via \code{align_target_bowtie()}, and produces a
 sorted .bam file with any reads that match the filter libraries removed.
 This resulting .bam file may be used downstream for further analysis.
+}
+\examples{
+# Code not run
+\donttest{
+# Create a temporary directory to store the filter fasta file
+ref_temp <- tempfile()
+dir.create(ref_temp)
+
+# Create a temporary directory to store the filter index files
+lib_temp <- tempfile()
+dir.create(lib_temp)
+
+# Create a temporary directory to store the filtered alignment bam file
+align_temp <- tempfile()
+dir.create(align_temp)
+
+# Download all the RefSeq reference archaea genomes to current directory
+download_refseq("archaea", representative = TRUE, compress = TRUE)
+
+# Move downloaded fasta file from current directory to temporary ref directory
+file.rename(from = file.path(".", "Archaea.fasta.gz"),
+to = file.path(ref_temp, "Archaea.fasta.gz"))
+
+# Create bowtie archaea index files in temporary index directory
+mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "archaea",
+overwrite=FALSE)
+
+# Get path to example reads
+readPath <- system.file("extdata", "SRR606366.fastq", package = "MetaScope")
+
+# Get path to corresponding unfiltered bacteria aligned bam file
+bamPath <- system.file("extdata", "bacteria_example.bam", package = "MetaScope")
+
+# Specify where the archaea filtered bam file should be written
+outputPath <- file.path(align_temp, "bacteria_example.filtered.bam")
+
+# Filter the bam file of reads that match to an archaeal genome
+filter_host_bowtie(reads = readPath, unfiltered_bam = bamPath, 
+lib_dir = lib_temp, libs = "archaea", output = outputPath)
+
+} 
+
 }
