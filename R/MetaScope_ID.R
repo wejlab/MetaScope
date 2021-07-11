@@ -116,7 +116,7 @@ unique_identifier <- function(x)
 #' viral_map <- align_target(readPath, "Viruses", project_name = "virus_example")
 #'
 #' #### Apply MetaScope ID:
-#' metascope_id(viral_map)
+#' metascope_id(viral_map, aligner="subread")
 #' }
 #'
 
@@ -173,10 +173,10 @@ metascope_id <- function(bam_file,
   # Convert accessions to taxids and get genome names
   message("Obtaining taxonomy and genome names")
   suppressMessages(tax_id_all <- taxize::genbank2uid(id = accessions))
-  taxids <- sapply(tax_id_all, function(x) x[1])
+  taxids <- vapply(tax_id_all, function(x) x[1], character(1))
   unique_taxids <- unique(taxids)
   taxid_inds <- match(taxids, unique_taxids)
-  genome_names <- sapply(tax_id_all, function(x) attr(x, "name"))
+  genome_names <- vapply(tax_id_all, function(x) attr(x, "name"), character(1))
   unique_genome_names <- genome_names[!duplicated(taxid_inds)]
   message("\tFound ", length(unique_taxids), " unique NCBI taxonomy IDs")
   
@@ -212,7 +212,7 @@ metascope_id <- function(bam_file,
   # If aligner is subread then to get an alignment score we subtract the edit score
   # from the number of nucleotide matches which is taken from the cigar string.
   if (aligner == "subread"){
-    num_match <- unlist(sapply(cigar_strings, count_matches, USE.NAMES = FALSE))
+    num_match <- unlist(vapply(cigar_strings, count_matches, USE.NAMES = FALSE, double(1)))
     alignment_score <- num_match - scores
     relative_alignment_score <- alignment_score - min(alignment_score)
     exp_alignment_score <- 2^relative_alignment_score
