@@ -8,6 +8,8 @@
 #' corresponding to the barcodes. Based on the barcode index given, it
 #' extracts all reads for the indexed barcode and writes all the reads from
 #' that barcode to a separate .fastq file. 
+
+#' @import BiocParallel
 #' @param barcodeIndex Which barcode (integer number or index) in the barcodes
 #' or sample name to use for read extraction 
 #' @param barcodes A list of all barcodes in the sequencing dataset. Correlates
