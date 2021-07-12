@@ -36,33 +36,28 @@ globalVariables(c("align_details"))
 #'
 
 remove_matches <- function(reads_bam, read_names, name_out) {
-  # Note: reads_BAM and filter-aligned files are already sorted by chromosome
-  # index bam file
-  bam_index <- Rsamtools::indexBam(reads_bam)
-
-  # obtain vector of target query names from .bam file
-  target_reads <- Rsamtools::scanBam(reads_bam)[[1]]$qname
-
-  # some aligned reads may be duplicated; remove these, and unlist filter names
-  filter_reads <- unique(unlist(read_names))
-
-  # define logical vector of which reads to keep, based on query names (qnames)
-  filter_which <- !(target_reads %in% filter_reads)
-  
-  # create BamFile instance to set yieldSize
-  bf <- Rsamtools::BamFile(reads_bam, yieldSize = length(filter_which))
-  
-  filtered_bam <- Rsamtools::filterBam(bf, destination = name_out,
-                                       index = bam_index,
-                                       indexDestination = FALSE,
-                                       filter = filter_which,
-                                       param = Rsamtools::ScanBamParam(
-                                         what = "qname"))
-
-  # clean up
-  file.remove(bam_index)
-
-  return(reads_bam)
+    # Note: reads_BAM and filter-aligned files are already sorted by chromosome
+    # index bam file
+    bam_index <- Rsamtools::indexBam(reads_bam)
+    
+    # obtain vector of target query names from .bam file
+    target_reads <- Rsamtools::scanBam(reads_bam)[[1]]$qname
+    
+    # some aligned reads may be duplicated; remove these, and unlist filter names
+    filter_reads <- unique(unlist(read_names))
+    
+    # define logical vector of which reads to keep, based on query names (qnames)
+    filter_which <- !(target_reads %in% filter_reads)
+    
+    # create BamFile instance to set yieldSize
+    bf <- Rsamtools::BamFile(reads_bam, yieldSize = length(filter_which))
+    
+    filtered_bam <- Rsamtools::filterBam(bf, destination = name_out, index = bam_index, indexDestination = FALSE, filter = filter_which, param = Rsamtools::ScanBamParam(what = "qname"))
+    
+    # clean up
+    file.remove(bam_index)
+    
+    return(reads_bam)
 }
 
 
@@ -107,48 +102,44 @@ remove_matches <- function(reads_bam, read_names, name_out) {
 #' }
 #'
 
-filter_host <- function(reads_bam, libs, lib_dir=NULL,
-                     output = paste(tools::file_path_sans_ext(reads_bam),
-                                    "filtered", "bam", sep = "."),
-                     settings = align_details) {
-  # Initialize list of names
-  read_names <- vector(mode = "list", length(libs))
-  
-  for (i in seq_along(libs)) {
-    # Create output file name for BAM
-    lib_file <- paste(tools::file_path_sans_ext(reads_bam),
-                      ".", libs[i], ".bam", sep = "")
-    # Align BAM to the lib & generate new file
-    Rsubread::align(index = paste(lib_dir,libs[i],sep=""), 
-                    readfile1 = reads_bam,
-                    input_format = "bam",
-                    output_file = lib_file,
-                    type = settings[["type"]],
-                    nthreads = settings[["nthreads"]],
-                    maxMismatches = settings[["maxMismatches"]],
-                    nsubreads = settings[["nsubreads"]],
-                    phredOffset = settings[["phredOffset"]],
-                    unique = settings[["unique"]],
-                    nBestLocations = settings[["nBestLocations"]])
-    # sort BAM file and remove umapped reads (package helper function)
-    filter_unmapped_reads(lib_file)
+filter_host <- function(reads_bam, libs, lib_dir=NULL, output = paste(tools::file_path_sans_ext(reads_bam), "filtered", "bam", sep = "."), settings = align_details) {
+    # Initialize list of names
+    read_names <- vector(mode = "list", length(libs))
     
-    # Extract target query names from mapped BAM file
-    read_names[[i]] <- Rsamtools::scanBam(lib_file)[[1]]$qname
+    for (i in seq_along(libs)) {
+        # Create output file name for BAM
+        lib_file <- paste(tools::file_path_sans_ext(reads_bam), ".", libs[i], ".bam", sep = "")
+        # Align BAM to the lib & generate new file
+        Rsubread::align(index = paste(lib_dir,libs[i],sep=""), 
+                        readfile1 = reads_bam,
+                        input_format = "bam",
+                        output_file = lib_file,
+                        type = settings[["type"]],
+                        nthreads = settings[["nthreads"]],
+                        maxMismatches = settings[["maxMismatches"]],
+                        nsubreads = settings[["nsubreads"]],
+                        phredOffset = settings[["phredOffset"]],
+                        unique = settings[["unique"]],
+                        nBestLocations = settings[["nBestLocations"]])
+        # sort BAM file and remove umapped reads (package helper function)
+        filter_unmapped_reads(lib_file)
+        
+        # Extract target query names from mapped BAM file
+        read_names[[i]] <- Rsamtools::scanBam(lib_file)[[1]]$qname
+        
+        # throw away BAM, vcf file
+        file.remove(lib_file)
+        file.remove(paste(lib_file, ".indel.vcf", sep = ""))
+        file.remove(paste(lib_file, ".summary", sep = ""))
+    }
     
-    # throw away BAM, vcf file
-    file.remove(lib_file)
-    file.remove(paste(lib_file, ".indel.vcf", sep = ""))
-    file.remove(paste(lib_file, ".summary", sep = ""))
-  }
-  
-  # helper function to sort headers and filter BAM file
-  remove_matches(reads_bam, read_names, output)
-  
-  # output final filtered BAM file
-  message("DONE! Alignments written to ", output)
-  
-  return(output)
+    # helper function to sort headers and filter BAM file
+    remove_matches(reads_bam, read_names, output)
+    
+    # output final filtered BAM file
+    message("DONE! Alignments written to ", output)
+    
+    return(output)
 }
 
 #' Align reads against one or more filter libraries and subsequently
@@ -230,56 +221,42 @@ filter_host <- function(reads_bam, libs, lib_dir=NULL,
 #' } 
 #' 
 
-filter_host_bowtie <- function(reads, unfiltered_bam, 
-                               lib_dir, libs,
-                               output = paste(tools::file_path_sans_ext(unfiltered_bam),
-                                              "filtered", "bam", sep = "."),
-                               bowtie2_options = NULL, 
-                               threads = 8,
-                               overwrite = FALSE){
-  
-  
-  # If no optional parameters are passed then use default parameters else use user parameters 
-  if (missing(bowtie2_options))
-    bowtie2_options <- paste("--very-sensitive-local -k 100 --score-min L,20,1.0",
-                             "--threads",threads)
-  else
-    bowtie2_options <- paste(bowtie2_options,"--threads",threads)
-  
-  # Initialize list of names
-  read_names <- vector(mode = "list", length(libs))
-  
-  for (i in seq_along(libs)) {
-    # Create output file name for BAM
-    lib_file <- paste(tools::file_path_sans_ext(unfiltered_bam),
-                      ".", libs[i], ".bam", sep = "")
-
-    # Align reads to lib and generate new filter BAM file
-    Rbowtie2::bowtie2(bt2Index = file.path(lib_dir,libs[i]),
-                      output = tools::file_path_sans_ext(lib_file),
-                      outputType = "bam",
-                      seq1 = reads, 
-                      ... = bowtie2_options,
-                      overwrite = overwrite)
-
-    # sort BAM file and remove umapped reads (package helper function)
-    filter_unmapped_reads(lib_file)
-
-    # Extract target query names from mapped BAM file
-    read_names[[i]] <- Rsamtools::scanBam(lib_file)[[1]]$qname
-
-    # Throw away BAM file
-    file.remove(lib_file)
-
-  }
-
-  # helper function to sort headers and filter BAM file
-  remove_matches(unfiltered_bam, read_names, output)
-  
-  # output final filtered BAM file
-  message("DONE! Alignments written to ", output)
-
-  return(output)
+filter_host_bowtie <- function(reads, unfiltered_bam, lib_dir, libs, output = paste(tools::file_path_sans_ext(unfiltered_bam), "filtered", "bam", sep = "."), bowtie2_options = NULL, threads = 8, overwrite = FALSE){
+    
+    # If no optional parameters are passed then use default parameters else use user parameters 
+    if (missing(bowtie2_options))
+        bowtie2_options <- paste("--very-sensitive-local -k 100 --score-min L,20,1.0", "--threads",threads)
+    else
+        bowtie2_options <- paste(bowtie2_options,"--threads",threads)
+    
+    # Initialize list of names
+    read_names <- vector(mode = "list", length(libs))
+    
+    for (i in seq_along(libs)) {
+        # Create output file name for BAM
+        lib_file <- paste(tools::file_path_sans_ext(unfiltered_bam),".", libs[i], ".bam", sep = "")
+        
+        # Align reads to lib and generate new filter BAM file
+        Rbowtie2::bowtie2(bt2Index = file.path(lib_dir,libs[i]), output = tools::file_path_sans_ext(lib_file), outputType = "bam", seq1 = reads, ... = bowtie2_options, overwrite = overwrite)
+        
+        # sort BAM file and remove umapped reads (package helper function)
+        filter_unmapped_reads(lib_file)
+        
+        # Extract target query names from mapped BAM file
+        read_names[[i]] <- Rsamtools::scanBam(lib_file)[[1]]$qname
+        
+        # Throw away BAM file
+        file.remove(lib_file)
+        
+    }
+    
+    # helper function to sort headers and filter BAM file
+    remove_matches(unfiltered_bam, read_names, output)
+    
+    # output final filtered BAM file
+    message("DONE! Alignments written to ", output)
+    
+    return(output)
 }
 
 

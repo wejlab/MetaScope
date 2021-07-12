@@ -73,33 +73,29 @@
 #' }                                            
 #' @export
 #'
-extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads, 
-                         location = "./demultiplex_fastq", rcBarcodes = TRUE,
-                         hDist = 0) {
-  barcode <- barcodes[barcodeIndex]
-  sampleName <- sampleNames[barcodeIndex]
-  message("Finding reads for barcode: ", barcode)
-  if (rcBarcodes) {
-    rci <- as.character(Biostrings::reverseComplement(
-      Biostrings::DNAString(barcode)))
-  } else {
-    rci <- barcode
-  }
-  # ind_match <- as.character(index) == rci
-  ind_match <- adist(as.character(index), rci) <= hDist
-  numReads <- sum(ind_match)
-  outFileName <- paste(location, "/", sampleName, "_", barcode, ".fastq.gz",
-                       sep = "")
-  if (numReads == 0) {
-    message("\tFound 0 reads for this barcode, no file will be written")
-  } else {
-    message("\tFound ", sum(ind_match), " reads, writing reads to: ",
-            outFileName)
-    Biostrings::writeQualityScaledXStringSet(reads[c(ind_match)], outFileName,
-                                             compress = TRUE)
-  }
-  return(list(output_file = outFileName, numberOfReads = numReads,
-              matchedIndexes = ind_match))
+extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads, location = "./demultiplex_fastq", rcBarcodes = TRUE, hDist = 0) {
+    barcode <- barcodes[barcodeIndex]
+    sampleName <- sampleNames[barcodeIndex]
+    message("Finding reads for barcode: ", barcode)
+    if (rcBarcodes) {
+        rci <- as.character(Biostrings::reverseComplement(
+            Biostrings::DNAString(barcode)))
+    } else {
+        rci <- barcode
+    }
+    # ind_match <- as.character(index) == rci
+    ind_match <- adist(as.character(index), rci) <= hDist
+    numReads <- sum(ind_match)
+    outFileName <- paste(location, "/", sampleName, "_", barcode, ".fastq.gz", sep = "")
+    if (numReads == 0) {
+        message("\tFound 0 reads for this barcode, no file will be written")
+    } else {
+        message("\tFound ", sum(ind_match), " reads, writing reads to: ",
+                outFileName)
+        Biostrings::writeQualityScaledXStringSet(reads[c(ind_match)], outFileName, compress = TRUE)
+    }
+    return(list(output_file = outFileName, numberOfReads = numReads,
+                matchedIndexes = ind_match))
 }
 
 #' Demultiplexing sequencing reads
@@ -160,76 +156,69 @@ extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads,
 demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
                         location = "./demultiplex_fastq", cores = 1,
                         hammingDist = 0) {
-  message("Reading Sample Names and Barcodes from: ", barcodeFile)
-  bcFile <- read.table(barcodeFile, sep = "\t", header = TRUE)
-  barcodes <- bcFile[, 2]
-  samNames <- bcFile[, 1]
-  message("\tFound information for ", length(barcodes), " samples/barcodes")
-
-  message("Reading Index File: ", indexFile)
-  inds <- Biostrings::readDNAStringSet(indexFile, format = "fastq")
-  message("\tFound indexes for ", length(inds), " reads")
-
-  message("Reading Sequence File: ", readFile)
-  reads <- Biostrings::readQualityScaledDNAStringSet(readFile)
-  message("\tFound ", length(reads), " reads")
-
-  ## make output directory if nessary
-  if (!dir.exists(location)) {
-    dir.create(location)
-  }
-
-  # Loop over barcodes
-  numReads <- NULL
-  ind_no_match <- numeric(length(reads))
-  for (i in seq_along(barcodes)) {
-    extracted <- extractReads(i, barcodes, samNames, inds, reads,
-                              rcBarcodes = rcBarcodes,
-                              location = location, hDist = hammingDist)
-    numReads <- c(numReads, extracted$numberOfReads)
-    ind_no_match <- ind_no_match + extracted$matchedIndexes
-  }
-  message(sum(ind_no_match > 1))
-  ind_no_match <- (ind_no_match == 0)
-
-  # sapply over barcodes and writing to file -- for multi-threading if
-  # (cores == 1){ extracted <- lapply(1:length(barcodes), extractReads,
-  # barcodes, samNames, inds, reads, hammingDist) }else{ message('Using
-  # ',cores,' cores') multicoreParam <- MulticoreParam(workers = cores)
-  # extracted <- bplapply(1:length(barcodes),extractReads, barcodes,
-  # samNames, inds, reads, BPPARAM = multicoreParam) } numReads <-
-  # sapply(extracted, function(x) x$numberOfReads) ind_no_match <- (
-  # rowSums(sapply(extracted, function(x) x$matchedIndexes)) == 0 )
-
-  # number of reads for each barcode
-  if (any(numReads == 0)) {
-    message("Did not find any reads for the following barcodes: ",
-            paste(barcodes[numReads == 0], collapse = " "))
-    message("Did not find any reads for the following samples: ",
-            paste(samNames[numReads == 0], collapse = " "))
-    write(paste("Did not find any reads for the following barcodes:",
-                paste(barcodes[numReads == 0], collapse = " "), "\n",
-                "Did not find any reads for the following samples: ",
-                paste(samNames[numReads == 0], collapse = " ")),
-          file = "demultiplex_fastq/unmapped_barcodes_samples.txt")
-  }
-
-  # Track reads without matches, and write them to an 'orphan' file
-  message("Found ", sum(ind_no_match),
-          " reads without a matching barcode (",
-          100 * round(mean(ind_no_match), 4),
-          "%), writing reads to: ", location,
-          "/orpahns.fastq.gz")
-  
-  Biostrings::writeQualityScaledXStringSet(reads[c(ind_no_match)],
-                                           paste(location,
-                                                 "/orpahns.fastq.gz", sep = ""),
-                                           compress = TRUE)
-
-  summaryMat <- cbind(bcFile[seq_along(barcodes), ],
-                      NumberOfReads = numReads)
-  write.table(summaryMat, file = paste(location,
-                                       "/summary.txt", sep = ""),
-              col.names = FALSE, row.names = TRUE, quote = FALSE)
-  return(summaryMat)
+    message("Reading Sample Names and Barcodes from: ", barcodeFile)
+    bcFile <- read.table(barcodeFile, sep = "\t", header = TRUE)
+    barcodes <- bcFile[, 2]
+    samNames <- bcFile[, 1]
+    message("\tFound information for ", length(barcodes), " samples/barcodes")
+    
+    message("Reading Index File: ", indexFile)
+    inds <- Biostrings::readDNAStringSet(indexFile, format = "fastq")
+    message("\tFound indexes for ", length(inds), " reads")
+    
+    message("Reading Sequence File: ", readFile)
+    reads <- Biostrings::readQualityScaledDNAStringSet(readFile)
+    message("\tFound ", length(reads), " reads")
+    
+    ## make output directory if nessary
+    if (!dir.exists(location)) {
+        dir.create(location)
+    }
+    
+    # Loop over barcodes
+    numReads <- NULL
+    ind_no_match <- numeric(length(reads))
+    for (i in seq_along(barcodes)) {
+        extracted <- extractReads(i, barcodes, samNames, inds, reads, rcBarcodes = rcBarcodes, location = location, hDist = hammingDist)
+        numReads <- c(numReads, extracted$numberOfReads)
+        ind_no_match <- ind_no_match + extracted$matchedIndexes
+    }
+    message(sum(ind_no_match > 1))
+    ind_no_match <- (ind_no_match == 0)
+    
+    # sapply over barcodes and writing to file -- for multi-threading if
+    # (cores == 1){ extracted <- lapply(1:length(barcodes), extractReads,
+    # barcodes, samNames, inds, reads, hammingDist) }else{ message('Using
+    # ',cores,' cores') multicoreParam <- MulticoreParam(workers = cores)
+    # extracted <- bplapply(1:length(barcodes),extractReads, barcodes,
+    # samNames, inds, reads, BPPARAM = multicoreParam) } numReads <-
+    # sapply(extracted, function(x) x$numberOfReads) ind_no_match <- (
+    # rowSums(sapply(extracted, function(x) x$matchedIndexes)) == 0 )
+    
+    # number of reads for each barcode
+    if (any(numReads == 0)) {
+        message("Did not find any reads for the following barcodes: ", 
+                paste(barcodes[numReads == 0], collapse = " "))
+        message("Did not find any reads for the following samples: ", 
+                paste(samNames[numReads == 0], collapse = " "))
+        write(paste("Did not find any reads for the following barcodes:", 
+                    paste(barcodes[numReads == 0], collapse = " "), "\n",
+                    "Did not find any reads for the following samples: ", 
+                    paste(samNames[numReads == 0], collapse = " ")), file = "demultiplex_fastq/unmapped_barcodes_samples.txt")
+    }
+    
+    # Track reads without matches, and write them to an 'orphan' file
+    message("Found ", sum(ind_no_match),
+            " reads without a matching barcode (",
+            100 * round(mean(ind_no_match), 4),
+            "%), writing reads to: ", location,
+            "/orpahns.fastq.gz")
+    
+    Biostrings::writeQualityScaledXStringSet(reads[c(ind_no_match)],paste(location,"/orpahns.fastq.gz", sep = ""),compress = TRUE)
+    
+    summaryMat <- cbind(bcFile[seq_along(barcodes), ],
+                        NumberOfReads = numReads)
+    write.table(summaryMat, file = paste(location,"/summary.txt", sep = ""),
+                col.names = FALSE, row.names = TRUE, quote = FALSE)
+    return(summaryMat)
 }

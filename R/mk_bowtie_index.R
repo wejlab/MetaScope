@@ -53,28 +53,28 @@
 
 mk_bowtie_index <- function(ref_dir, lib_dir, lib_name, bowtie2_build_options, 
                             threads = 8, overwrite=FALSE){
-  
-  # If user does not specify their own build options, then use the default options
-  if (missing(bowtie2_build_options))
-    bowtie2_build_options <- paste("--threads",threads)
-  else
-    bowtie2_build_options <- paste(bowtie2_build_options,"--threads",threads)
-  
-  
-  ref_dir <- dir(ref_dir, full.names = TRUE)
-  
-  # Convert user specified path to absolute path for debugging purposes 
-  lib_dir <- tools::file_path_as_absolute(lib_dir)
-  
-  # Call the bowtie2_build function from Rbowtie2
-  Rbowtie2::bowtie2_build(references = ref_dir, 
-                          bt2Index = file.path(lib_dir, lib_name),
-                          ... = bowtie2_build_options,
-                          overwrite = overwrite
-                          )
-  
-  
-  message("Successfully built the Bowtie2 indexes")
-  
-  return(tools::file_path_as_absolute(lib_dir))
+    
+    # If user does not specify their own build options, then use the default options
+    if (missing(bowtie2_build_options))
+        bowtie2_build_options <- paste("--threads",threads)
+    else
+        bowtie2_build_options <- paste(bowtie2_build_options,"--threads",threads)
+    
+    
+    ref_dir <- dir(ref_dir, full.names = TRUE)
+    
+    # Convert user specified path to absolute path for debugging purposes 
+    lib_dir <- tools::file_path_as_absolute(lib_dir)
+    
+    # Call the bowtie2_build function from Rbowtie2
+    Rbowtie2::bowtie2_build(references = ref_dir, 
+                            bt2Index = file.path(lib_dir, lib_name),
+                            ... = bowtie2_build_options,
+                            overwrite = overwrite
+    )
+    
+    
+    message("Successfully built the Bowtie2 indexes")
+    
+    return(tools::file_path_as_absolute(lib_dir))
 }

@@ -64,117 +64,111 @@
 #' overwrite = TRUE)
 #' }
 
-align_target_bowtie <- function(read1, read2 = NULL,
-                                lib_dir, libs,
-                                align_dir, align_file,
-                                bowtie2_options = NULL,
-                                threads = 8, overwrite = FALSE) {
-  
-  # Convert user specified paths to absolute paths for debugging purposes
-  lib_dir <- tools::file_path_as_absolute(lib_dir)
-  align_dir <- tools::file_path_as_absolute(align_dir)
-  
-  # If user does not specify their own parameters then use default
-  # PathoScope parameters
-  if (missing(bowtie2_options)) {
-    bowtie2_options <- paste("--very-sensitive-local -k 100 --score-min L,20,1.0","--threads",threads)
-  }
-  else{
-    bowtie2_options <- paste(bowtie2_options, "--threads", threads)
-  }
-  
-  # If user does not specify mate pair reads then align against indexes using
-  # Bowtie2 unpaired alignment
-  if (missing(read2)) {
-    bam_files <- numeric(length(libs))
-    for (i in seq_along(libs)) {
-      # Do not attach the .bam extension because Rbowtie2 does this already
-      bam_files[i] <-
-        file.path(align_dir, paste(basename(tools::file_path_sans_ext(read1)),
-                                   ".", libs[i], sep = ""))
-      
-      message("Attempting to perform Bowtie2 unpaired alignment on ",libs[i]," index")
-      
-      Rbowtie2::bowtie2(
-        bt2Index = file.path(lib_dir, libs[i]),
-        output = bam_files[i],
-        outputType = "bam",
-        seq1 = read1,
-        overwrite = overwrite,
-        bowtie2_options
-      )
-      
-      # Attach .bam extension to bam files in order to call this function
-      filter_unmapped_reads(paste0(bam_files[i], ".bam"))
-      
+align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir, align_file, bowtie2_options = NULL, threads = 8, overwrite = FALSE) {
+    
+    # Convert user specified paths to absolute paths for debugging purposes
+    lib_dir <- tools::file_path_as_absolute(lib_dir)
+    align_dir <- tools::file_path_as_absolute(align_dir)
+    
+    # If user does not specify their own parameters then use default
+    # PathoScope parameters
+    if (missing(bowtie2_options)) {
+        bowtie2_options <- paste("--very-sensitive-local -k 100 --score-min L,20,1.0","--threads",threads)
     }
-    
-    # Create variable names for files
-    outputFile <- file.path(align_dir, paste0(align_file, ".bam"))
-    bam_files <- paste0(bam_files, ".bam")
-    
-    # If more than one libraries were align to then combine the bam files
-    if (length(bam_files) > 1) {
-      message("Merging the bam files into ",align_file,".bam")
-      merge_bam_files(bam_files, tools::file_path_sans_ext(outputFile))
-    }
-    
-    # Otherwise rename the bam file to be the name of the output file
     else{
-      file.rename(bam_files, outputFile)
+        bowtie2_options <- paste(bowtie2_options, "--threads", threads)
     }
     
-    message("DONE! Alignments written to ", outputFile)
-    
-    return(align_dir)
-    
-  }
-  
-  # If user specifies mate pair reads then align against indexes using
-  # paired-end alignment
-  else{
-    bam_files <- numeric(length(libs))
-    for (i in seq_along(libs)) {
-      # Do not attach the .bam extension because Rbowtie2 does this already
-      bam_files[i] <-
-        file.path(align_dir, paste(basename(tools::file_path_sans_ext(read1)),
-                                   ".", libs[i], sep = ""))
-      
-      message("Attempting to perform Bowtie2 paired alignment on ",libs[i]," index")
-      
-      Rbowtie2::bowtie2(
-        bt2Index = file.path(lib_dir, libs[i]),
-        output = bam_files[i],
-        outputType = "bam",
-        seq1 = read1,
-        seq2 = read2,
-        overwrite = overwrite,
-        bowtie2_options
-      )
-      
-      # Attach .bam extension to bam files in order to call this function
-      filter_unmapped_reads(paste0(bam_files[i], ".bam"))
-      
+    # If user does not specify mate pair reads then align against indexes using
+    # Bowtie2 unpaired alignment
+    if (missing(read2)) {
+        bam_files <- numeric(length(libs))
+        for (i in seq_along(libs)) {
+            # Do not attach the .bam extension because Rbowtie2 does this already
+            bam_files[i] <-
+                file.path(align_dir, paste(basename(tools::file_path_sans_ext(read1)),".", libs[i], sep = ""))
+            
+            message("Attempting to perform Bowtie2 unpaired alignment on ",libs[i]," index")
+            
+            Rbowtie2::bowtie2(
+                bt2Index = file.path(lib_dir, libs[i]),
+                output = bam_files[i],
+                outputType = "bam",
+                seq1 = read1,
+                overwrite = overwrite,
+                bowtie2_options
+            )
+            
+            # Attach .bam extension to bam files in order to call this function
+            filter_unmapped_reads(paste0(bam_files[i], ".bam"))
+            
+        }
+        
+        # Create variable names for files
+        outputFile <- file.path(align_dir, paste0(align_file, ".bam"))
+        bam_files <- paste0(bam_files, ".bam")
+        
+        # If more than one libraries were align to then combine the bam files
+        if (length(bam_files) > 1) {
+            message("Merging the bam files into ",align_file,".bam")
+            merge_bam_files(bam_files, tools::file_path_sans_ext(outputFile))
+        }
+        
+        # Otherwise rename the bam file to be the name of the output file
+        else{
+            file.rename(bam_files, outputFile)
+        }
+        
+        message("DONE! Alignments written to ", outputFile)
+        
+        return(align_dir)
+        
     }
     
-    # Create variable names for files
-    outputFile <- file.path(align_dir, paste0(align_file, ".bam"))
-    bam_files <- paste0(bam_files, ".bam")
-    
-    # If more than one libraries were align to then combine the bam files
-    if (length(bam_files) > 1) {
-      message("Merging the bam files into ",align_file,".bam")
-      merge_bam_files(bam_files, tools::file_path_sans_ext(outputFile))
-    }
-    
-    # Otherwise rename the bam file to be the name of the output file
+    # If user specifies mate pair reads then align against indexes using
+    # paired-end alignment
     else{
-      file.rename(bam_files, outputFile)
+        bam_files <- numeric(length(libs))
+        for (i in seq_along(libs)) {
+            # Do not attach the .bam extension because Rbowtie2 does this already
+            bam_files[i] <-
+                file.path(align_dir, paste(basename(tools::file_path_sans_ext(read1)),".", libs[i], sep = ""))
+            
+            message("Attempting to perform Bowtie2 paired alignment on ",libs[i]," index")
+            
+            Rbowtie2::bowtie2(
+                bt2Index = file.path(lib_dir, libs[i]),
+                output = bam_files[i],
+                outputType = "bam",
+                seq1 = read1,
+                seq2 = read2,
+                overwrite = overwrite,
+                bowtie2_options
+            )
+            
+            # Attach .bam extension to bam files in order to call this function
+            filter_unmapped_reads(paste0(bam_files[i], ".bam"))
+            
+        }
+        
+        # Create variable names for files
+        outputFile <- file.path(align_dir, paste0(align_file, ".bam"))
+        bam_files <- paste0(bam_files, ".bam")
+        
+        # If more than one libraries were align to then combine the bam files
+        if (length(bam_files) > 1) {
+            message("Merging the bam files into ",align_file,".bam")
+            merge_bam_files(bam_files, tools::file_path_sans_ext(outputFile))
+        }
+        
+        # Otherwise rename the bam file to be the name of the output file
+        else{
+            file.rename(bam_files, outputFile)
+        }
+        
+        message("DONE! Alignments written to ", outputFile)
+        
+        return(align_dir)
+        
     }
-    
-    message("DONE! Alignments written to ", outputFile)
-    
-    return(align_dir)
-    
-  }
 }
