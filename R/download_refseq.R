@@ -91,12 +91,12 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
     message("Loading the refseq table for ", parent_kingdom)
     if (parent_kingdom %in% c("archaea", "bacteria", "fungi", "invertebrate", "plant", "protozoa", "viral")) {
         refseq_link <- paste("ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/", parent_kingdom, "/assembly_summary.txt", sep = "")
-        refseq_table <- read.table(refseq_link, header = TRUE, sep = "\t", comment.char = "", quote = "", skip = 1)
+        refseq_table <- utils::read.table(refseq_link, header = TRUE, sep = "\t", comment.char = "", quote = "", skip = 1)
     } else if (parent_kingdom == "metazoa") {
         refseq_link_1 <- paste("ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/", "vertebrate_mammalian", "/assembly_summary.txt", sep = "")
-        refseq_table_1 <- read.table(refseq_link_1, header = TRUE, sep = "\t", comment.char = "", quote = "", skip = 1)
+        refseq_table_1 <- utils::read.table(refseq_link_1, header = TRUE, sep = "\t", comment.char = "", quote = "", skip = 1)
         refseq_link_2 <- paste("ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/", "vertebrate_other", "/assembly_summary.txt", sep = "")
-        refseq_table_2 <- read.table(refseq_link_2, header = TRUE, sep = "\t", comment.char = "", quote = "", skip = 1)
+        refseq_table_2 <- utils::read.table(refseq_link_2, header = TRUE, sep = "\t", comment.char = "", quote = "", skip = 1)
         refseq_table <- rbind(refseq_table_1, refseq_table_2)
     } else {message("Parent kingdom table could not be retrieved from NCBI database.
 Try a different taxon.")}
@@ -156,7 +156,7 @@ and `reference` to TRUE")
                 if (!dir.exists(download_dir)) {
                     dir.create(download_dir)
                 }
-                download.file(location, destination)
+                utils::download.file(location, destination)
                 
                 ## Read in the genome
                 ref <- Biostrings::readDNAStringSet(destination)
