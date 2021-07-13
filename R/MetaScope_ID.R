@@ -302,7 +302,7 @@ metascope_id <- function(bam_file, aligner = "bowtie", out_file = paste(tools::f
     message("Found reads for ", length(best_hit), " genomes")
     
     # Write to file
-    write.csv(results, file = out_file, row.names = FALSE)
+    utils::write.csv(results, file = out_file, row.names = FALSE)
     message("Results written to ", out_file)
     return(results)
 }
