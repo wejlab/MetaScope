@@ -84,7 +84,7 @@ extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads, loca
         rci <- barcode
     }
     # ind_match <- as.character(index) == rci
-    ind_match <- adist(as.character(index), rci) <= hDist
+    ind_match <- utils::adist(as.character(index), rci) <= hDist
     numReads <- sum(ind_match)
     outFileName <- paste(location, "/", sampleName, "_", barcode, ".fastq.gz", sep = "")
     if (numReads == 0) {
@@ -157,7 +157,7 @@ demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
                         location = "./demultiplex_fastq", cores = 1,
                         hammingDist = 0) {
     message("Reading Sample Names and Barcodes from: ", barcodeFile)
-    bcFile <- read.table(barcodeFile, sep = "\t", header = TRUE)
+    bcFile <- utils::read.table(barcodeFile, sep = "\t", header = TRUE)
     barcodes <- bcFile[, 2]
     samNames <- bcFile[, 1]
     message("\tFound information for ", length(barcodes), " samples/barcodes")
@@ -218,7 +218,7 @@ demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
     
     summaryMat <- cbind(bcFile[seq_along(barcodes), ],
                         NumberOfReads = numReads)
-    write.table(summaryMat, file = paste(location,"/summary.txt", sep = ""),
+    utils::write.table(summaryMat, file = paste(location,"/summary.txt", sep = ""),
                 col.names = FALSE, row.names = TRUE, quote = FALSE)
     return(summaryMat)
 }
