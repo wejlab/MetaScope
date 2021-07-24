@@ -54,7 +54,7 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
                             compress = TRUE, patho_out = FALSE){
     
     # Converts first letter to uppercase and the other letters to lowercase
-    taxon <- stringr::str_to_title(taxon)
+    taxon <- stringr::str_to_sentence(taxon)
     
     # Get the rank of the input taxon
     tryCatch({suppressMessages(classification.table <- taxize::classification(
@@ -67,22 +67,35 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
     # Get the NCBI scientific names of children species or strains
     children_list <- get_children(taxon, rank_input, data = taxonomy_table)
     
-    # Get the parent taxon in kingdom rank
+    # Get the parent taxon in superkingdom rank
     parent_kingdom <- classification.table$name[classification.table$rank
-                                                == "kingdom"]
-    parent_rank <- "Kingdom"
-    if (identical(parent_kingdom,character(0))){
+                                                == "superkingdom"]
+    parent_rank <- "Superkingdom"
+    
+    # The Eukaryota superkingdom is not a folder on the NCBI FTP site.
+    # Instead grab the the specific Eukaryota kingdom.
+    if (identical(parent_kingdom, "Eukaryota")){
         parent_kingdom <- classification.table$name[classification.table$rank
-                                                    == "superkingdom"]
-        parent_rank <- "Superkingdom"
+                                                    == "kingdom"]
+        
+        parent_rank <- "Kingdom"
+        
     }
     
     message(taxon," is a ", rank_input, " under the ", parent_kingdom," ",parent_rank)
     parent_kingdom <- tolower(parent_kingdom)
     
+    # Some folders on the NCBI FTP site do not match the parent kingdom taken
+    # from the classification table. Have to apply some modificiations.
+    
     # If parent kingdom is viruses, change it to be viral
-    if ("viruses" %in% parent_kingdom){
+    if (identical(parent_kingdom, "viruses")){
         parent_kingdom <- "viral"
+    }
+    
+    # If parent kingdom is viridiplantae, change it to be plant
+    if (identical(parent_kingdom, "viridiplantae")){
+        parent_kingdom <- "plant"
     }
     
     
@@ -102,7 +115,15 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
 Try a different taxon.")}
     
     # Filter the table, keep the lines with species or strains of input
-    species_table <- refseq_table[which(refseq_table$organism_name %in% children_list),]
+    
+    # If the taxon specifiec is a strain or species with no strain, filter the table by the taxon
+    if (rlang::is_empty(children_list)){
+        species_table <- refseq_table[which(tolower(refseq_table$organism_name) %in% tolower(taxon)),]
+    }
+    # Else filter the table by the taxon in the children list
+    else{
+        species_table <- refseq_table[which(tolower(refseq_table$organism_name) %in% tolower(children_list)),]
+    }
     
     # Reduce the table size based on reference or represenative
     if (representative) {
