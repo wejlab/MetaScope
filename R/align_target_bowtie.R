@@ -96,7 +96,7 @@ align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir, a
                 outputType = "bam",
                 seq1 = read1,
                 overwrite = overwrite,
-                bowtie2_options
+                ... = bowtie2_options
             )
             
             # Attach .bam extension to bam files in order to call this function
@@ -143,7 +143,7 @@ align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir, a
                 seq1 = read1,
                 seq2 = read2,
                 overwrite = overwrite,
-                bowtie2_options
+                ... = bowtie2_options
             )
             
             # Attach .bam extension to bam files in order to call this function
