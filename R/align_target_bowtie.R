@@ -27,9 +27,6 @@
 #' @export
 #'
 #' @examples
-#' # Code not run
-#' \donttest{
-#'
 #' ## Create alignment bam file produced by Bowtie2
 #'
 #' # Create a temporary directory to store reference fasta files
@@ -40,29 +37,28 @@
 #' lib_temp <- tempfile()
 #' dir.create(lib_temp)
 #'
-#' # Create a temporary directory to store the index files
+#' # Create a temporary directory to store the alignment file
 #' align_temp <- tempfile()
 #' dir.create(align_temp)
 #'
-#' # Download all the RefSeq reference viral genomes to current directory
-#' download_refseq('viruses', compress = TRUE)
+#' # Create object with path to example reference fasta file
+#' refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
 #'
-#' # Move downloaded fasta file to temporary reference directory
-#' file.rename(from = file.path(".", "Viruses.fasta.gz"),
-#' to = file.path(ref_temp, "Viruses.fasta.gz"))
+#' # Copy the reference fasta file to the temporary directory 
+#' file.copy(from = refPath, to = file.path(ref_temp, "Mononegavirales.fasta"))
 #'
-#' # Create bowtie index files in temporary index directory
-#' mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "virus",
+#' # Create the bowtie index files in the temporary index directory
+#' mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "mononegavirales",
 #' overwrite=FALSE)
 #'
-#' # Get path to example reads
+#' # Create object with path to the example reads
 #' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
 #'
-#' # Create alignment file
+#' # Create the bowtie2 alignment file
 #' align_target_bowtie(read1 = readPath, lib_dir = lib_temp,
-#' libs = "virus", align_dir = align_temp, align_file = "example",
+#' libs = "mononegavirales", align_dir = align_temp, align_file = "virus_example",
 #' overwrite = TRUE)
-#' }
+
 
 align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir, align_file, bowtie2_options = NULL, threads = 8, overwrite = FALSE) {
     
