@@ -73,13 +73,22 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
     parent_rank <- "Superkingdom"
     
     # The Eukaryota superkingdom is not a folder on the NCBI FTP site.
-    # Instead grab the the specific Eukaryota kingdom.
+    # Instead grab the corresponding kingdom as some eukaryota kingdoms
+    # are folders on the FTP site
     if (identical(parent_kingdom, "Eukaryota")){
         parent_kingdom <- classification.table$name[classification.table$rank
                                                     == "kingdom"]
-        
         parent_rank <- "Kingdom"
         
+        # There are only two eukaryota kingdoms in the taxonomy table that 
+        # have a corresponding folder on the FTP site. If not one of these
+        # two kingdoms then forced to search all the eukaryota folders on the
+        # site
+        if (!(parent_kingdom %in% c("Viridiplantae", "Fungi"))){
+            parent_kingdom <- classification.table$name[classification.table$rank
+                                                        == "superkingdom"]
+            parent_rank <- "Superkingdom"
+        }
     }
     
     message(taxon," is a ", rank_input, " under the ", parent_kingdom," ",parent_rank)
@@ -102,15 +111,19 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
     # Download the assembly summary refseq table from NCBI
     ## which includes genome download link
     message("Loading the refseq table for ", parent_kingdom)
-    if (parent_kingdom %in% c("archaea", "bacteria", "fungi", "invertebrate", "plant", "protozoa", "viral")) {
+    if (parent_kingdom %in% c("archaea", "bacteria", "fungi", "plant", "viral")) {
         refseq_link <- paste("ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/", parent_kingdom, "/assembly_summary.txt", sep = "")
         refseq_table <- utils::read.table(refseq_link, header = TRUE, sep = "\t", comment.char = "", quote = "", skip = 1)
-    } else if (parent_kingdom == "metazoa") {
+    } else if (parent_kingdom == "eukaryota") {
         refseq_link_1 <- paste("ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/", "vertebrate_mammalian", "/assembly_summary.txt", sep = "")
         refseq_table_1 <- utils::read.table(refseq_link_1, header = TRUE, sep = "\t", comment.char = "", quote = "", skip = 1)
         refseq_link_2 <- paste("ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/", "vertebrate_other", "/assembly_summary.txt", sep = "")
         refseq_table_2 <- utils::read.table(refseq_link_2, header = TRUE, sep = "\t", comment.char = "", quote = "", skip = 1)
-        refseq_table <- rbind(refseq_table_1, refseq_table_2)
+        refseq_link_3 <- paste("ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/", "invertebrate", "/assembly_summary.txt", sep = "")
+        refseq_table_3 <- utils::read.table(refseq_link_2, header = TRUE, sep = "\t", comment.char = "", quote = "", skip = 1)
+        refseq_link_4 <- paste("ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/", "protozoa", "/assembly_summary.txt", sep = "")
+        refseq_table_4 <- utils::read.table(refseq_link_2, header = TRUE, sep = "\t", comment.char = "", quote = "", skip = 1)
+        refseq_table <- rbind(refseq_table_1, refseq_table_2, refseq_table_3, refseq_table_4)
     } else {message("Parent kingdom table could not be retrieved from NCBI database.
 Try a different taxon.")}
     
