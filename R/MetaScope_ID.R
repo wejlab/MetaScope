@@ -104,20 +104,22 @@ unique_identifier <- function(x)
 #'
 #' @examples
 #' # Code not run
-#' \donttest{
-#' ## Get a reference genome library
-#' download_refseq('viruses', compress = FALSE)
+#' 
+#' ## Create object with path to example reference fasta file
+#' refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
+#' 
+#' ## Copy the example reference fasta file to the current directory
+#' file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
 #'
 #' ## Make and align to a single a reference genome library
-#' mk_subread_index('Viruses.fasta')
-#' readPath <- system.file("extdata", "virus_example.fastq",
-#' package = "MetaScope")
-#' viral_map <- align_target(readPath, "Viruses", project_name = "virus_example")
+#' mk_subread_index('Mononegavirales.fasta')
+#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+#' viral_map <- align_target(readPath, "Mononegavirales", project_name = "virus_example")
 #'
 #' #### Apply MetaScope ID:
 #' metascope_id(viral_map, aligner="subread")
-#' }
-#'
+#' 
+
 
 metascope_id <- function(bam_file, aligner = "bowtie", out_file = paste(tools::file_path_sans_ext(bam_file),".metascope_id.csv", sep = ""), EMconv = 1/10000, EMmaxIts = 25) {
     
