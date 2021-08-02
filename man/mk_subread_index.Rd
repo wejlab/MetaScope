@@ -32,12 +32,22 @@ indexes, with _1, _2, etc at the end of the ref_lib basename.
 }
 \examples{
 
-## Download all RefSeq reference Mononegavirales genomes and make an index
-download_refseq('Mononegavirales', compress = FALSE)
+## Create object with path to example reference fasta file
+refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
+
+## Copy the example reference fasta file to the current directory
+file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
+
+## Make subread index
 mk_subread_index('Mononegavirales.fasta')
 
-## Download all RefSeq reference Mononegavirales genomes and make more than one index
-download_refseq('Mononegavirales', compress = FALSE)
-mk_subread_index('Mononegavirales.fasta', split = .00005)
+## Create object with path to example reference fasta file
+refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
+
+## Copy the example reference fasta file to the current directory
+file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
+
+## Make subread index
+mk_subread_index('Mononegavirales.fasta', split = .002)
 
 }

@@ -47,7 +47,6 @@ and then use this file to download the genome(s) and combine them in a single
 compressed or uncompressed .fasta file.
 }
 \examples{
-# Code not run
 
 ## Download all RefSeq reference bacterial superkingdom genomes
 download_refseq('bacteria', reference = TRUE, representative = FALSE)

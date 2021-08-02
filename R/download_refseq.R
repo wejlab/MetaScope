@@ -30,7 +30,6 @@
 #' @export
 #'
 #' @examples
-#' # Code not run
 #' 
 #' ## Download all RefSeq reference bacterial superkingdom genomes
 #' download_refseq('bacteria', reference = TRUE, representative = FALSE)
