@@ -31,8 +31,7 @@ for removal of any target reads that are also aligned to filter libraries.
 This function is not intended for use by users.
 }
 \examples{
-# Code not run
-\donttest{
+
 readPath <- system.file("extdata", "bacteria_example.bam",
                         package = "MetaScope")
 
@@ -43,6 +42,5 @@ read_names <- list(qnames[1:100], qnames[400:500])
 out <- "bacteria_example.filtered.bam"
 
 remove_matches(readPath, read_names, out)
-}
 
 }

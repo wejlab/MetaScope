@@ -47,24 +47,23 @@ passed to `filter_host()` to remove reads that also map to filter library
 genomes.
 }
 \examples{
-# Code not run
-\donttest{
-## Get a reference genome library
-download_refseq('viruses', compress = FALSE)
+
+## Create object with path to example reference fasta file
+refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
+
+## Copy the example reference fasta file to the current directory
+file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
 
 ## Make and align to a single reference genome library
-mk_subread_index('Viruses.fasta')
-readPath <- system.file("extdata", "virus_example.fastq",
-package = "MetaScope")
-viral_map <- align_target(readPath, "Viruses", project_name="virus_example")
+mk_subread_index("Mononegavirales.fasta")
+readPath <- system.file("extdata", "virus_example.fastq",package = "MetaScope")
+viral_map <- align_target(readPath, "Mononegavirales", project_name="virus_example")
 viral_map_sam <- Rsamtools::asSam(viral_map, overwrite = TRUE)
 
-## Make and align to a multiple reference genome libraries
-mk_subread_index('Viruses.fasta', split = 0.005)
-targLibs <- c("Viruses_1", "Viruses_2")
-readPath <- system.file("extdata", "virus_example.fastq",
-package = "MetaScope")
+## Make and align to multiple reference genome libraries
+mk_subread_index('Mononegavirales.fasta', split = 0.002)
+targLibs <- c("Mononegavirales_1", "Mononegavirales_2")
+readPath <- system.file("extdata", "virus_example.fastq",package = "MetaScope")
 viral_map <- align_target(readPath, targLibs, project_name = "virus_example")
-}
 
 }

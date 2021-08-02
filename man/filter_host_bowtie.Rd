@@ -61,43 +61,39 @@ This resulting .bam file may be used downstream for further analysis.
 }
 \examples{
 # Code not run
-\donttest{
-# Create a temporary directory to store the filter fasta file
+
+## Assuming a bam file has already been created with align_target_bowtie
+
+## Create a temporary directory to store the filter fasta file
 ref_temp <- tempfile()
 dir.create(ref_temp)
 
-# Create a temporary directory to store the filter index files
+## Create a temporary directory to store the filter index files
 lib_temp <- tempfile()
 dir.create(lib_temp)
 
-# Create a temporary directory to store the filtered alignment bam file
+## Create a temporary directory to store the filtered alignment bam file
 align_temp <- tempfile()
 dir.create(align_temp)
 
-# Download all the RefSeq reference archaea genomes to current directory
-download_refseq("archaea", representative = TRUE, compress = TRUE)
+## Create object with the path to the example reads
+readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
 
-# Move downloaded fasta file from current directory to temporary ref directory
-file.rename(from = file.path(".", "Archaea.fasta.gz"),
-to = file.path(ref_temp, "Archaea.fasta.gz"))
+## Create object with path to previously created bam file 
+bamPath <- system.file("extdata", "virus_example.bam", package = "MetaScope")
 
-# Create bowtie archaea index files in temporary index directory
-mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "archaea",
+## Create object with path to the filter fasta file
+refPath <- system.file("extdata","Morbillivirus.fasta", package = "MetaScope")
+
+## Move the filter fasta file to the temporary reference directory 
+file.copy(from = refPath, to = file.path(ref_temp, "Morbillivirus.fasta"))
+
+## Create the bowtie index files in the temporary index directory
+mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "morbillivirus",
 overwrite=FALSE)
 
-# Get path to example reads
-readPath <- system.file("extdata", "SRR606366.fastq", package = "MetaScope")
-
-# Get path to corresponding unfiltered bacteria aligned bam file
-bamPath <- system.file("extdata", "bacteria_example.bam", package = "MetaScope")
-
-# Specify where the archaea filtered bam file should be written
-outputPath <- file.path(align_temp, "bacteria_example.filtered.bam")
-
-# Filter the bam file of reads that match to an archaeal genome
-filter_host_bowtie(reads = readPath, unfiltered_bam = bamPath, 
-lib_dir = lib_temp, libs = "archaea", output = outputPath)
-
-} 
+## Filter reads from the bam file that align to morbillivirus genomes
+filter_host_bowtie(reads = readPath, unfiltered_bam = bamPath, lib_dir = lib_temp,
+libs = "morbillivirus")
 
 }

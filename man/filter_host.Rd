@@ -49,20 +49,17 @@ This resulting .bam file may be used upstream for further analysis.
 It is not intended for use by users.
 }
 \examples{
-# Code not run
-\donttest{
+
 ## Assuming a BAM file has been created previously with align_target()
 
-## Download and index the filter genome library
-download_refseq('archaea', compress = FALSE, representative = TRUE)
-mk_subread_index('archaea.fasta')
+## Copy the example filter fasta file to the current directory
+refPath <- system.file("extdata","Morbillivirus.fasta", package = "MetaScope")
+mk_subread_index('Morbillivirus.fasta')
 
 ## Create object with file location of previously aligned BAM file
-readPath <- system.file("extdata", "bacteria_example.bam",
-                         package = "MetaScope")
+readPath <- system.file("extdata", "virus_example.bam", package = "MetaScope")
 
 ## Filter with host reference genome library
-filter_host(readPath, libs = 'archaea')
-}
+filter_host(readPath, libs = 'Morbillivirus')
 
 }

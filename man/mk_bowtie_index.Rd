@@ -45,23 +45,19 @@ on the combined size of the reference fasta files.
 }
 \examples{
  
-# Code not run
-\donttest{
-## Download all RefSeq reference viral genomes and make an index
+## Create a bowtie index from the reference fasta file
 
-# Create a temporary directory to store reference fasta files
+## Create a temporary directory to store the reference fasta file
 ref_temp <- tempfile()
 dir.create(ref_temp)
 
-# Download all the RefSeq reference viral genomes
-download_refseq('viruses', compress = TRUE)
+## Create object with path to example reference fasta file
+refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
 
-# Move downloaded fasta file to temporary directory 
-file.rename(from = file.path(".", "Viruses.fasta.gz"), 
-to = file.path(ref_temp, "Viruses.fasta.gz"))
+## Copy the example reference fasta file to the temporary directory 
+file.copy(from = refPath, to = file.path(ref_temp, "Mononegavirales.fasta"))
 
-# Create bowtie index files in current directory
-mk_bowtie_index(ref_dir = ref_temp, lib_dir = ".", lib_name = "virus", 
+## Create the bowtie index files in the current directory
+mk_bowtie_index(ref_dir = ref_temp, lib_dir = ".", lib_name = "mononegavirales", 
 threads = 4, overwrite=FALSE)
-}
 }
