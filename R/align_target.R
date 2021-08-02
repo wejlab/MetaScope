@@ -141,8 +141,8 @@ combined_header <- function(bam_files, header_file = "header_tmp.sam") {
 #' ## Note that the following would be an equivalent command if samtools is
 #' installed
 #' system2("samtools reheader header_tmp.sam virus_example2.bam > virus_example2h.bam")
-#' }
 #'
+
 bam_reheader_R <- function(head, old_bam, new_bam = paste(tools::file_path_sans_ext(old_bam), "h.bam", sep = "")) {
     # system(paste('samtools reheader ' , head, ' ', old_bam,' > ',
     # new_bam, sep=''))
