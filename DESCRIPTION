@@ -1,6 +1,6 @@
 Package: MetaScope
 Type: Package
-Title: This package contains tools and functions for preprocessing microbiome data.
+Title: This package contains tools and functions for preprocessing microbiome data
 Version: 0.0.99
 Authors@R:
   c(person(given = "W. Evan", family = "Johnson", role = c("aut", "cre"),
