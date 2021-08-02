@@ -17,9 +17,7 @@ strain; each row is a taxonomic classification for an unique species or
 strain.
 }
 \examples{
-# Code not run
-\donttest{
+
 generate_taxonomy_table()
-}
 
 }

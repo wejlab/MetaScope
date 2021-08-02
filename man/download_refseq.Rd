@@ -48,7 +48,7 @@ compressed or uncompressed .fasta file.
 }
 \examples{
 # Code not run
-\donttest{
+
 ## Download all RefSeq reference bacterial superkingdom genomes
 download_refseq('bacteria', reference = TRUE, representative = FALSE)
 
@@ -64,6 +64,5 @@ download_refseq('Primates', reference = TRUE,
 
 ## Download Rickettsia genus genome
 download_refseq('Rickettsia', representative = TRUE, compress = FALSE)
-}
 
 }

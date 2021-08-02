@@ -10,11 +10,10 @@
 #' NCBI genomes.
 #'
 #' @examples
-#' # Code not run
-#' \donttest{
-#' generate_taxonomy_table()
-#' }
 #' 
+#' generate_taxonomy_table()
+#' 
+
 
 generate_taxonomy_table <- function() {
     # Download the updated refseq table from NCBI

@@ -31,7 +31,7 @@
 #'
 #' @examples
 #' # Code not run
-#' \donttest{
+#' 
 #' ## Download all RefSeq reference bacterial superkingdom genomes
 #' download_refseq('bacteria', reference = TRUE, representative = FALSE)
 #'
@@ -47,8 +47,7 @@
 #'
 #' ## Download Rickettsia genus genome
 #' download_refseq('Rickettsia', representative = TRUE, compress = FALSE)
-#' }
-#'
+#' 
 
 download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
                             compress = TRUE, patho_out = FALSE){

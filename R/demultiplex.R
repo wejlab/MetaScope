@@ -51,8 +51,6 @@
 #'                         package = "MetaScope")
 #' reads <- Biostrings::readQualityScaledDNAStringSet(readPath)
 #' 
-#' # Code not run
-#' \donttest{
 #' ## Extract reads from the first barcode
 #' results <- extractReads(1, bcFile[, 2], bcFile[, 1], inds, reads,
 #'                         rcBarcodes = FALSE, location = ".")
@@ -70,7 +68,7 @@
 #'                                            location = ".", 
 #'                                            BPPARAM = multicoreParam)
 #' # End of code not run                                           
-#' }                                            
+#'                                             
 #' @export
 #'
 extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads, location = "./demultiplex_fastq", rcBarcodes = TRUE, hDist = 0) {
@@ -142,13 +140,11 @@ extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads, loca
 #'                          package = "MetaScope")
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #'                          package = "MetaScope")
-#' \donttest{
-#' # Code not run
+#'                          
 #' ## Get barcode, index, and read data locations
 #' demult <- demultiplex(barcodePath, indexPath, readPath, rcBarcodes = FALSE,
 #'                       hammingDist = 2)
 #' demult
-#' }
 #'
 #' @export
 #' 
