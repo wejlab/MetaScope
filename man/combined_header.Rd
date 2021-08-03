@@ -24,17 +24,17 @@ It is not intended for use by users.
 }
 \examples{
 
-refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
-file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
-mk_subread_index('Mononegavirales.fasta', split = .002)
+# refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
+# file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
+# mk_subread_index('Mononegavirales.fasta', split = .002)
 
-readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
-Rsubread::align(index = "Mononegavirales_1", readfile1 = readPath,
-output_file = "virus_example1.bam")
-Rsubread::align(index = "Mononegavirales_2", readfile1 = readPath,
-output_file = "virus_example2.bam")
+# readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+# Rsubread::align(index = "Mononegavirales_1", readfile1 = readPath,
+# output_file = "virus_example1.bam")
+# Rsubread::align(index = "Mononegavirales_2", readfile1 = readPath,
+# output_file = "virus_example2.bam")
 
-bam_files <- c('virus_example1.bam','virus_example2.bam')
-com_head <- combined_header(bam_files)
+# bam_files <- c('virus_example1.bam','virus_example2.bam')
+# com_head <- combined_header(bam_files)
 
 }

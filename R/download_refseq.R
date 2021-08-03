@@ -1,3 +1,5 @@
+globalVariables(c("taxonomy_table"))
+
 #' Download RefSeq genome libraries
 #'
 #' This function will automatically download RefSeq genome libraries in a

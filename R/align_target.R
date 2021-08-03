@@ -20,12 +20,12 @@ globalVariables(c("align_details"))
 #'
 #' @examples
 #' 
-#' refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
-#' file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
-#' mk_subread_index('Mononegavirales.fasta')
-#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
-#' Rsubread::align(index = "Mononegavirales", readfile1 = readPath, output_file = "virus_example.bam")
-#' filtered <- filter_unmapped_reads("virus_example.bam")
+#' # refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
+#' # file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
+#' # mk_subread_index('Mononegavirales.fasta')
+#' # readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+#' # Rsubread::align(index = "Mononegavirales", readfile1 = readPath, output_file = "virus_example.bam")
+#' # filtered <- filter_unmapped_reads("virus_example.bam")
 #'
 
 filter_unmapped_reads <- function(bamfile) {
@@ -60,18 +60,18 @@ filter_unmapped_reads <- function(bamfile) {
 #' 
 #' @examples
 #' 
-#' refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
-#' file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
-#' mk_subread_index('Mononegavirales.fasta', split = .002)
+#' # refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
+#' # file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
+#' # mk_subread_index('Mononegavirales.fasta', split = .002)
 #'
-#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
-#' Rsubread::align(index = "Mononegavirales_1", readfile1 = readPath,
-#' output_file = "virus_example1.bam")
-#' Rsubread::align(index = "Mononegavirales_2", readfile1 = readPath,
-#' output_file = "virus_example2.bam")
+#' # readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+#' # Rsubread::align(index = "Mononegavirales_1", readfile1 = readPath,
+#' # output_file = "virus_example1.bam")
+#' # Rsubread::align(index = "Mononegavirales_2", readfile1 = readPath,
+#' # output_file = "virus_example2.bam")
 #'
-#' bam_files <- c('virus_example1.bam','virus_example2.bam')
-#' com_head <- combined_header(bam_files)
+#' # bam_files <- c('virus_example1.bam','virus_example2.bam')
+#' # com_head <- combined_header(bam_files)
 #' 
 
 combined_header <- function(bam_files, header_file = "header_tmp.sam") {
@@ -124,23 +124,22 @@ combined_header <- function(bam_files, header_file = "header_tmp.sam") {
 #' 
 #' @examples
 #' 
-#' refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
-#' file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
-#' mk_subread_index('Mononegavirales.fasta', split = .002)
-#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+#' # refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
+#' # file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
+#' # mk_subread_index('Mononegavirales.fasta', split = .002)
+#' # readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
 #'
-#' Rsubread::align(index = "Mononegavirales_1", readfile1 = readPath,
-#' output_file = "virus_example1.bam")
-#' Rsubread::align(index = "Mononegavirales_2", readfile1 = readPath,
-#' output_file = "virus_example2.bam")
+#' # Rsubread::align(index = "Mononegavirales_1", readfile1 = readPath,
+#' # output_file = "virus_example1.bam")
+#' # Rsubread::align(index = "Mononegavirales_2", readfile1 = readPath,
+#' # output_file = "virus_example2.bam")
 #'
-#' bam_files <- c('virus_example1.bam','virus_example2.bam')
-#' com_head <- combined_header(bam_files)
-#' bam_reheader_R(com_head, 'virus_example2.bam')
+#' # bam_files <- c('virus_example1.bam','virus_example2.bam')
+#' # com_head <- combined_header(bam_files)
+#' # bam_reheader_R(com_head, 'virus_example2.bam')
 #'
-#' ## Note that the following would be an equivalent command if samtools is
-#' installed
-#' system2("samtools reheader header_tmp.sam virus_example2.bam > virus_example2h.bam")
+#' ## Note that the following would be an equivalent command if samtools is installed
+#' # system2("samtools reheader header_tmp.sam virus_example2.bam > virus_example2h.bam")
 #'
 
 bam_reheader_R <- function(head, old_bam, new_bam = paste(tools::file_path_sans_ext(old_bam), "h.bam", sep = "")) {
@@ -191,22 +190,22 @@ bam_reheader_R <- function(head, old_bam, new_bam = paste(tools::file_path_sans_
 #'
 #' @examples
 #' 
-#' refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
-#' file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
-#' mk_subread_index('Mononegavirales.fasta', split = .002)
+#' # refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
+#' # file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
+#' # mk_subread_index('Mononegavirales.fasta', split = .002)
 #'
-#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
-#' Rsubread::align(index = "Mononegavirales_1", readfile1 = readPath,
-#' output_file = "virus_example1.bam", maxMismatches = 3)
-#' Rsubread::align(index = "Mononegavirales_2", readfile1 = readPath,
-#' output_file = "virus_example2.bam")
+#' # readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+#' # Rsubread::align(index = "Mononegavirales_1", readfile1 = readPath,
+#' # output_file = "virus_example1.bam", maxMismatches = 3)
+#' # Rsubread::align(index = "Mononegavirales_2", readfile1 = readPath,
+#' # output_file = "virus_example2.bam")
 #'
-#' bam_files <- c('virus_example1.bam','virus_example2.bam')
-#' com_head <- combined_header(bam_files)
-#' bam_reheader_R(com_head, 'virus_example1.bam')
-#' bam_reheader_R(com_head, 'virus_example1.bam')
-#' bam_files <- c('virus_example1h.bam','virus_example2h.bam')
-#' merged_all <- merge_bam_files(bam_files, 'virus_example_merged')
+#' # bam_files <- c('virus_example1.bam','virus_example2.bam')
+#' # com_head <- combined_header(bam_files)
+#' # bam_reheader_R(com_head, 'virus_example1.bam')
+#' # bam_reheader_R(com_head, 'virus_example1.bam')
+#' # bam_files <- c('virus_example1h.bam','virus_example2h.bam')
+#' # merged_all <- merge_bam_files(bam_files, 'virus_example_merged')
 #'
 
 merge_bam_files <- function(bam_files, destination, head_file = paste(destination, "_header.sam", sep = "")) {

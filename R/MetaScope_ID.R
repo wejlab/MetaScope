@@ -1,3 +1,5 @@
+globalVariables(c("qname","rname"))
+
 #' Count the number of base lengths in a CIGAR string for a given operation
 #' 
 #' The ‘CIGAR’ (Compact Idiosyncratic Gapped Alignment Report) string is how
@@ -115,7 +117,7 @@ unique_identifier <- function(x)
 #' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
 #' viral_map <- align_target(readPath, "Mononegavirales", project_name = "virus_example")
 #'
-#' #### Apply MetaScope ID:
+#' ## Apply MetaScope ID:
 #' metascope_id(viral_map, aligner="subread")
 #' 
 

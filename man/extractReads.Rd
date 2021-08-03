@@ -91,6 +91,5 @@ parallel_results <- BiocParallel::bplapply(1:6, extractReads, bcFile[, 2],
                                            rcBarcodes = FALSE, 
                                            location = ".", 
                                            BPPARAM = multicoreParam)
-# End of code not run                                           
                                             
 }

@@ -54,6 +54,8 @@ It is not intended for use by users.
 
 ## Copy the example filter fasta file to the current directory
 refPath <- system.file("extdata","Morbillivirus.fasta", package = "MetaScope")
+
+## Make subread index
 mk_subread_index('Morbillivirus.fasta')
 
 ## Create object with file location of previously aligned BAM file

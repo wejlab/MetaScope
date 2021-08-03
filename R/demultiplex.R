@@ -67,7 +67,6 @@
 #'                                            rcBarcodes = FALSE, 
 #'                                            location = ".", 
 #'                                            BPPARAM = multicoreParam)
-#' # End of code not run                                           
 #'                                             
 #' @export
 #'
