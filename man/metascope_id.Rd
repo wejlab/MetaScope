@@ -42,7 +42,6 @@ library/.bam files use NCBI accession names for reference names (rnames in
 .bam file).
 }
 \examples{
-# Code not run
 
 ## Create object with path to example reference fasta file
 refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")

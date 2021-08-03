@@ -103,7 +103,6 @@ unique_identifier <- function(x)
 #' @export
 #'
 #' @examples
-#' # Code not run
 #' 
 #' ## Create object with path to example reference fasta file
 #' refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
