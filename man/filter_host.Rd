@@ -50,18 +50,20 @@ It is not intended for use by users.
 }
 \examples{
 
-## Assuming a BAM file has been created previously with align_target()
+#### Filter reads from bam file that align to any of the filter libraries
 
-## Copy the example filter fasta file to the current directory
+## Assuming a bam file has been created previously with align_target()
+
+## Copy the example filter library to the current directory
 refPath <- system.file("extdata","Morbillivirus.fasta", package = "MetaScope")
 
-## Make subread index
+## Make subread index of filter library
 mk_subread_index('Morbillivirus.fasta')
 
-## Create object with file location of previously aligned BAM file
+## Create object with file location of previously aligned bam file
 readPath <- system.file("extdata", "virus_example.bam", package = "MetaScope")
 
-## Filter with host reference genome library
+## Filter bam file 
 filter_host(readPath, libs = 'Morbillivirus')
 
 }

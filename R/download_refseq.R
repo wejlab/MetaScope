@@ -33,6 +33,8 @@ globalVariables(c("taxonomy_table"))
 #'
 #' @examples
 #' 
+#' #### Download RefSeq genomes
+#' 
 #' ## Download all RefSeq reference bacterial superkingdom genomes
 #' download_refseq('bacteria', reference = TRUE, representative = FALSE)
 #'

@@ -27,34 +27,35 @@
 #' @export
 #'
 #' @examples
-#' ## Create alignment bam file produced by Bowtie2
+#' 
+#' #### Align example reads to an example reference library using Rbowtie2
 #'
-#' ## Create a temporary directory to store reference fasta files
+#' ## Create a temporary directory to store reference library 
 #' ref_temp <- tempfile()
 #' dir.create(ref_temp)
 #'
-#' ## Create a temporary directory to store the index files
+#' ## Create a temporary directory to store the reference library index files
 #' lib_temp <- tempfile()
 #' dir.create(lib_temp)
 #'
-#' ## Create a temporary directory to store the alignment file
+#' ## Create a temporary directory to store the bam file
 #' align_temp <- tempfile()
 #' dir.create(align_temp)
 #'
-#' ## Create object with path to example reference fasta file
+#' ## Create object with path to example reference library
 #' refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
 #'
-#' ## Copy the reference fasta file to the temporary directory 
+#' ## Copy the reference library to the temporary directory 
 #' file.copy(from = refPath, to = file.path(ref_temp, "Mononegavirales.fasta"))
 #'
-#' ## Create the bowtie index files in the temporary index directory
+#' ## Create the bowtie index files in the temporary index library directory
 #' mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "mononegavirales",
 #' overwrite=FALSE)
 #'
 #' ## Create object with path to the example reads
-#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+#' readPath <- system.file("extdata", "demultiplexed_virus_example.fastq", package = "MetaScope")
 #'
-#' ## Create the bowtie2 alignment file
+#' ## Align reads to the reference library
 #' align_target_bowtie(read1 = readPath, lib_dir = lib_temp,
 #' libs = "mononegavirales", align_dir = align_temp, align_file = "virus_example",
 #' overwrite = TRUE)

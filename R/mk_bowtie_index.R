@@ -30,19 +30,20 @@
 #' @export
 #' 
 #' @examples  
-#' ## Create a bowtie index from the reference fasta file
 #' 
-#' ## Create a temporary directory to store the reference fasta file
+#' #### Create a bowtie index from the example reference library
+#' 
+#' ## Create a temporary directory to store the reference library
 #' ref_temp <- tempfile()
 #' dir.create(ref_temp)
 #' 
-#' ## Create object with path to example reference fasta file
+#' ## Create object with path to the example reference library
 #' refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
 #' 
-#' ## Copy the example reference fasta file to the temporary directory 
+#' ## Copy the example reference library to the temporary directory 
 #' file.copy(from = refPath, to = file.path(ref_temp, "Mononegavirales.fasta"))
 #' 
-#' ## Create the bowtie index files in the current directory
+#' ## Create the reference library index files in the current directory
 #' mk_bowtie_index(ref_dir = ref_temp, lib_dir = ".", lib_name = "mononegavirales", 
 #' threads = 4, overwrite=FALSE)
 

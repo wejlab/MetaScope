@@ -106,15 +106,17 @@ unique_identifier <- function(x)
 #'
 #' @examples
 #' 
-#' ## Create object with path to example reference fasta file
+#' #### Align reads to reference library and then apply metascope_id()
+#' 
+#' ## Create object with path to example reference library
 #' refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
 #' 
-#' ## Copy the example reference fasta file to the current directory
+#' ## Copy the example reference library to the current directory
 #' file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
 #'
-#' ## Make and align to a single a reference genome library
+#' ## Make and align to a single reference library
 #' mk_subread_index('Mononegavirales.fasta')
-#' readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+#' readPath <- system.file("extdata", "demultiplexed_virus_example.fastq", package = "MetaScope")
 #' viral_map <- align_target(readPath, "Mononegavirales", project_name = "virus_example")
 #'
 #' ## Apply MetaScope ID:

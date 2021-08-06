@@ -28,7 +28,7 @@ It is not intended for use by users.
 # file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
 # mk_subread_index('Mononegavirales.fasta', split = .002)
 
-# readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+# readPath <- system.file("extdata", "demultiplexed_virus_example.fastq", package = "MetaScope")
 # Rsubread::align(index = "Mononegavirales_1", readfile1 = readPath,
 # output_file = "virus_example1.bam")
 # Rsubread::align(index = "Mononegavirales_2", readfile1 = readPath,

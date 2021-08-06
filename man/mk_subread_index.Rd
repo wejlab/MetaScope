@@ -11,7 +11,7 @@ mk_subread_index(ref_lib, split = 4, mem = 8000)
 (uncompressed) .fasta format}
 
 \item{split}{The maximum allowed size of the genome file (in GB). If the
-ref_lib file is larger than this, the function will spolt the library into
+ref_lib file is larger than this, the function will split the library into
 multiple parts}
 
 \item{mem}{The maximum amount of memory (in MB) that can be used by the
@@ -32,22 +32,27 @@ indexes, with _1, _2, etc at the end of the ref_lib basename.
 }
 \examples{
 
-## Create object with path to example reference fasta file
+#### Create a subread index from the example reference library
+
+## Create object with path to example reference library
 refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
 
-## Copy the example reference fasta file to the current directory
+## Copy the example reference library to the current directory
 file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
 
-## Make subread index
+## Make subread index of reference library
 mk_subread_index('Mononegavirales.fasta')
 
-## Create object with path to example reference fasta file
+
+#### Create multiple subread indexes from the example reference library
+
+## Create object with path to example reference library
 refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
 
-## Copy the example reference fasta file to the current directory
+## Copy the example reference library to the current directory
 file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
 
-## Make subread index
+## Make multiple subread indexes of reference library
 mk_subread_index('Mononegavirales.fasta', split = .002)
 
 }

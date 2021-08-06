@@ -31,7 +31,7 @@ It is not intended for use by package users.
 # refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
 # file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
 # mk_subread_index('Mononegavirales.fasta')
-# readPath <- system.file("extdata", "virus_example.fastq", package = "MetaScope")
+# readPath <- system.file("extdata", "demultiplexed_virus_example.fastq", package = "MetaScope")
 # Rsubread::align(index = "Mononegavirales", readfile1 = readPath, output_file = "virus_example.bam")
 # filtered <- filter_unmapped_reads("virus_example.bam")
 
