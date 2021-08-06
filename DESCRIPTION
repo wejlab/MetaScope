@@ -25,7 +25,9 @@ Imports:
     dplyr,
     Matrix,
     qlcMatrix,
-    stringr
+    stringr,
+    rlang,
+    data.table
 Remotes:
     rvarki/Rbowtie2
 Suggests:
