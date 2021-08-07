@@ -46,7 +46,6 @@ filter reference libraries. This function takes as input the name
 of the .bam file produced via \code{align_target()}, and produces a
 sorted .bam file with any reads that match the filter libraries removed.
 This resulting .bam file may be used upstream for further analysis.
-It is not intended for use by users.
 }
 \examples{
 
@@ -54,13 +53,13 @@ It is not intended for use by users.
 
 ## Assuming a bam file has been created previously with align_target()
 
-## Copy the example filter library to the current directory
+## Create object with path to the example filter library
 refPath <- system.file("extdata","Morbillivirus.fasta", package = "MetaScope")
 
 ## Make subread index of filter library
 mk_subread_index('Morbillivirus.fasta')
 
-## Create object with file location of previously aligned bam file
+## Create object with path to the previously aligned bam file
 readPath <- system.file("extdata", "virus_example.bam", package = "MetaScope")
 
 ## Filter bam file 

@@ -21,8 +21,8 @@ globalVariables(c("align_details"))
 #' 
 #' @examples
 #' 
-#' readPath <- system.file("extdata", "virus_example.bam",
-#'                         package = "MetaScope")
+#' #readPath <- system.file("extdata", "virus_example.bam",
+#' #                        package = "MetaScope")
 #'
 #' ## Assume that the first 10 query names aligned to first filter library
 #' ## And another 10 aligned to second filter library
@@ -68,7 +68,6 @@ remove_matches <- function(reads_bam, read_names, name_out) {
 #' of the .bam file produced via \code{align_target()}, and produces a
 #' sorted .bam file with any reads that match the filter libraries removed.
 #' This resulting .bam file may be used upstream for further analysis.
-#' It is not intended for use by users.
 #'
 #' @param reads_bam The name of a merged, sorted .bam file that has previously
 #' been aligned to a reference library. Likely, the output from running an
@@ -88,13 +87,13 @@ remove_matches <- function(reads_bam, read_names, name_out) {
 #' 
 #' ## Assuming a bam file has been created previously with align_target()
 #'
-#' ## Copy the example filter library to the current directory
+#' ## Create object with path to the example filter library
 #' refPath <- system.file("extdata","Morbillivirus.fasta", package = "MetaScope")
 #' 
 #' ## Make subread index of filter library
 #' mk_subread_index('Morbillivirus.fasta')
 #'
-#' ## Create object with file location of previously aligned bam file
+#' ## Create object with path to the previously aligned bam file
 #' readPath <- system.file("extdata", "virus_example.bam", package = "MetaScope")
 #'
 #' ## Filter bam file 

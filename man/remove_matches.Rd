@@ -32,8 +32,8 @@ This function is not intended for use by users.
 }
 \examples{
 
-readPath <- system.file("extdata", "virus_example.bam",
-                        package = "MetaScope")
+#readPath <- system.file("extdata", "virus_example.bam",
+#                        package = "MetaScope")
 
 ## Assume that the first 10 query names aligned to first filter library
 ## And another 10 aligned to second filter library
