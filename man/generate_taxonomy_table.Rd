@@ -18,6 +18,6 @@ strain.
 }
 \examples{
 
-generate_taxonomy_table()
+#generate_taxonomy_table()
 
 }
