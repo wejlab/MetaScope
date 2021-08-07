@@ -45,7 +45,6 @@ on the combined size of the reference fasta files.
 }
 \examples{
  
-
 #### Create a bowtie index from the example reference library
 
 ## Create a temporary directory to store the reference library

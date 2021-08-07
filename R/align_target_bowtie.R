@@ -27,7 +27,6 @@
 #' @export
 #'
 #' @examples
-#' 
 #' #### Align example reads to an example reference library using Rbowtie2
 #'
 #' ## Create a temporary directory to store reference library 

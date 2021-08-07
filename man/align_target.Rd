@@ -47,7 +47,6 @@ passed to `filter_host()` to remove reads that also map to filter library
 genomes.
 }
 \examples{
-
 #### Align example reads to an example reference library using Rsubread
 
 ## Create object with path to example reference library

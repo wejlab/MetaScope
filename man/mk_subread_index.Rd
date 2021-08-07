@@ -31,7 +31,6 @@ too large (default >4GB) it will automatically be split into multiple
 indexes, with _1, _2, etc at the end of the ref_lib basename.
 }
 \examples{
-
 #### Create a subread index from the example reference library
 
 ## Create object with path to example reference library

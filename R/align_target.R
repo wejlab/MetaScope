@@ -268,7 +268,6 @@ merge_bam_files <- function(bam_files, destination, head_file = paste(destinatio
 #' @export
 #'
 #' @examples
-#' 
 #' #### Align example reads to an example reference library using Rsubread
 #' 
 #' ## Create object with path to example reference library

@@ -54,7 +54,6 @@ file is stored.
 Align microbiome reads to set of indexed Bowtie2 libraries
 }
 \examples{
-
 #### Align example reads to an example reference library using Rbowtie2
 
 ## Create a temporary directory to store reference library 

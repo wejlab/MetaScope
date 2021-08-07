@@ -48,7 +48,6 @@ sorted .bam file with any reads that match the filter libraries removed.
 This resulting .bam file may be used upstream for further analysis.
 }
 \examples{
-
 #### Filter reads from bam file that align to any of the filter libraries
 
 ## Assuming a bam file has been created previously with align_target()

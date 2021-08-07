@@ -30,7 +30,6 @@
 #' @export
 #' 
 #' @examples  
-#' 
 #' #### Create a bowtie index from the example reference library
 #' 
 #' ## Create a temporary directory to store the reference library

@@ -88,7 +88,7 @@ unique_identifier <- function(x)
 #' @param bam_file The .bam file that needs to be summarized, annotated, and
 #' needs removal of ambiguity.
 #' @param aligner The aligner which was used to create the bam file. Default is 
-#' "bowtie" but can also be set to "subread" or "other"
+#' "subread" but can also be set to "bowtie" or "other"
 #' @param out_file The name of the .csv output file. Defaults to the bam_file
 #' basename plus ".metascope_id.csv".
 #' @param EMconv The convergence parameter of the EM algorithm. Default set at
@@ -105,7 +105,6 @@ unique_identifier <- function(x)
 #' @export
 #'
 #' @examples
-#' 
 #' #### Align reads to reference library and then apply metascope_id()
 #' 
 #' ## Create object with path to example reference library
@@ -124,7 +123,7 @@ unique_identifier <- function(x)
 #' 
 
 
-metascope_id <- function(bam_file, aligner = "bowtie", out_file = paste(tools::file_path_sans_ext(bam_file),".metascope_id.csv", sep = ""), EMconv = 1/10000, EMmaxIts = 25) {
+metascope_id <- function(bam_file, aligner = "subread", out_file = paste(tools::file_path_sans_ext(bam_file),".metascope_id.csv", sep = ""), EMconv = 1/10000, EMmaxIts = 25) {
     
     # Check to make sure valid aligner is specified
     if (aligner != "bowtie" && aligner != "subread" && aligner != "other")

@@ -47,7 +47,6 @@ and then use this file to download the genome(s) and combine them in a single
 compressed or uncompressed .fasta file.
 }
 \examples{
-
 #### Download RefSeq genomes
 
 ## Download all RefSeq reference bacterial superkingdom genomes

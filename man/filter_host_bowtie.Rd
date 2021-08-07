@@ -60,7 +60,6 @@ sorted .bam file with any reads that match the filter libraries removed.
 This resulting .bam file may be used downstream for further analysis.
 }
 \examples{
-
 #### Filter reads from bam file that align to any of the filter libraries
 
 ## Assuming a bam file has already been created with align_target_bowtie()

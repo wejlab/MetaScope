@@ -6,7 +6,7 @@
 \usage{
 metascope_id(
   bam_file,
-  aligner = "bowtie",
+  aligner = "subread",
   out_file = paste(tools::file_path_sans_ext(bam_file), ".metascope_id.csv", sep = ""),
   EMconv = 1/10000,
   EMmaxIts = 25
@@ -17,7 +17,7 @@ metascope_id(
 needs removal of ambiguity.}
 
 \item{aligner}{The aligner which was used to create the bam file. Default is 
-"bowtie" but can also be set to "subread" or "other"}
+"subread" but can also be set to "bowtie" or "other"}
 
 \item{out_file}{The name of the .csv output file. Defaults to the bam_file
 basename plus ".metascope_id.csv".}
@@ -42,7 +42,6 @@ library/.bam files use NCBI accession names for reference names (rnames in
 .bam file).
 }
 \examples{
-
 #### Align reads to reference library and then apply metascope_id()
 
 ## Create object with path to example reference library

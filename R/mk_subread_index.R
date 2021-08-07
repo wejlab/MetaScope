@@ -22,7 +22,6 @@
 #' @export
 #'
 #' @examples
-#' 
 #' #### Create a subread index from the example reference library
 #' 
 #' ## Create object with path to example reference library

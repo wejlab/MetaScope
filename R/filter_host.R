@@ -82,7 +82,6 @@ remove_matches <- function(reads_bam, read_names, name_out) {
 #' @export
 #' 
 #' @examples
-#' 
 #' #### Filter reads from bam file that align to any of the filter libraries
 #' 
 #' ## Assuming a bam file has been created previously with align_target()
@@ -181,7 +180,6 @@ filter_host <- function(reads_bam, libs, lib_dir=NULL, output = paste(tools::fil
 #' @export
 #' 
 #' @examples
-#' 
 #' #### Filter reads from bam file that align to any of the filter libraries
 #' 
 #' ## Assuming a bam file has already been created with align_target_bowtie()
