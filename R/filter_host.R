@@ -90,6 +90,9 @@ remove_matches <- function(reads_bam, read_names, name_out) {
 #' ## Create object with path to the example filter library
 #' refPath <- system.file("extdata","Morbillivirus.fasta", package = "MetaScope")
 #' 
+#' ## Copy the example filter library to the current directory
+#' file.copy(from = refPath, to = file.path(".", "Morbillivirus.fasta"))
+#' 
 #' ## Make subread index of filter library
 #' mk_subread_index('Morbillivirus.fasta')
 #'
