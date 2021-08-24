@@ -147,8 +147,8 @@ filter_host <- function(reads_bam, libs, lib_dir=NULL, output = paste(tools::fil
 #' 
 #' After a sample is aligned to a target library with \code{align_target_bowtie()},
 #' we may use \code{filter_host_bowtie()} to remove unwelcome host contamination using
-#' filter reference libraries. This function takes as input both the reads and the
-#' name of the .bam file produced via \code{align_target_bowtie()}, and produces a
+#' filter reference libraries. This function takes as input the name of the .bam 
+#' file produced via \code{align_target_bowtie()}, and produces a
 #' sorted .bam file with any reads that match the filter libraries removed.
 #' This resulting .bam file may be used downstream for further analysis.
 #' 
@@ -162,7 +162,7 @@ filter_host <- function(reads_bam, libs, lib_dir=NULL, output = paste(tools::fil
 #' @param output The desired name of the output .bam file. Default is
 #' the basename of \code{unfiltered_bam} + \code{.filtered.bam}.
 #' @param bowtie2_options Optional: Additional parameters that can be passed to
-#' the align_target_bowtie() function. To see all the available parameters
+#' the filter_host_bowtie() function. To see all the available parameters
 #' use Rbowtie2::bowtie2_usage(). Default parameters are the parameters are the 
 #' default parameters that PathoScope 2.0 uses. NOTE: Users should pass all their
 #' parameters as one string and if optional parameters are given then the user 
@@ -195,9 +195,6 @@ filter_host <- function(reads_bam, libs, lib_dir=NULL, output = paste(tools::fil
 #' align_temp <- tempfile()
 #' dir.create(align_temp)
 #' 
-#' ## Create object with the path to the example reads
-#' readPath <- system.file("extdata", "demultiplexed_virus_example.fastq", package = "MetaScope")
-#' 
 #' ## Create object with path to previously created bam file 
 #' bamPath <- system.file("extdata", "virus_example.bam", package = "MetaScope")
 #' 
@@ -212,8 +209,7 @@ filter_host <- function(reads_bam, libs, lib_dir=NULL, output = paste(tools::fil
 #' overwrite=FALSE)
 #' 
 #' ## Filter reads from the bam file that align to the filter library
-#' filter_host_bowtie(reads = readPath, unfiltered_bam = bamPath, lib_dir = lib_temp,
-#' libs = "morbillivirus")
+#' filter_host_bowtie(reads_bam = bamPath, lib_dir = lib_temp, libs = "morbillivirus")
 #' 
 
 
