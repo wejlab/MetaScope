@@ -1,13 +1,15 @@
-mk_table <- function(this_t, taxon_ranks) {
+mk_table <- function(intable, taxon_ranks) {
+  this_t <- as.data.frame(intable)
   if(!identical(this_t$rank, character(0))) {
     t_n <- nrow(this_t)
     # convert 'no rank' to 'strain'
-    if(this_t$rank[t_n] == 'no rank' & this_t$rank[t_n - 1] == 'species') {
+    if (this_t$rank[t_n] == 'no rank' & this_t$rank[t_n - 1] == 'species') {
       this_t$rank[t_n] <- 'strain'
     }
     return(this_t %>%
              dplyr::filter(rank %in% taxon_ranks) %>%
              dplyr::right_join(., tibble(rank = taxon_ranks), by = "rank") %>%
+             arrange(factor(rank, levels = taxon_ranks)) %>%
              dplyr::select(name) %>% 
              unlist)
   }
@@ -36,7 +38,7 @@ generate_taxonomy_table <- function() {
   # This table contains all species/strains with an available genome
   refseq_link <- "ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
   tax_id <- read.table(refseq_link, header = T, sep = "\t",
-                             comment.char = "", quote = "", skip = 1) %>%
+                       comment.char = "", quote = "", skip = 1) %>%
     dplyr::distinct(taxid) %>%
     unlist %>% unname
   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
