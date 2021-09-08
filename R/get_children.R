@@ -30,7 +30,7 @@
 
 get_children <- function(input_taxon, input_rank, data = taxonomy_table){
     # Get child strains
-    strain_list <- unique(data[, "strain"][data[, input_rank] %in% input_taxon])
+    strain_list <- unique(data[, "strain"][tolower(data[, input_rank]) %in% tolower(input_taxon)])
     strain_list <- strain_list[!is.na(strain_list)]
     
     # Get the children species
