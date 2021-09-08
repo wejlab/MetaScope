@@ -21,8 +21,7 @@
 #' @param overwrite Whether existing files should be overwritten.
 #' Default is FALSE.
 #'
-#' @return Returns the path to the directory where the output alignment
-#' file is stored.
+#' @return Returns the path to where the output alignment file is stored.
 #'
 #' @export
 #'
@@ -116,6 +115,6 @@ align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir, a
     
     message("DONE! Alignments written to ", outputFile)
     
-    return(align_dir)
+    return(outputFile)
         
 }
