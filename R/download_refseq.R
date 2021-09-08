@@ -153,7 +153,7 @@ Try a different taxon.")}
     total_genomes <- nrow(species_table)
     if (total_genomes == 0){
         stop("No available genome for ", taxon, " - try setting both `representative`
-and `reference` to TRUE")
+and `reference` to FALSE")
     } else{
         message("Downloading ",total_genomes," ",taxon," genome(s) from RefSeq")
         
