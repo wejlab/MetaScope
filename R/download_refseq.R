@@ -54,9 +54,6 @@ globalVariables(c("taxonomy_table"))
 download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
                             compress = TRUE, patho_out = FALSE){
     
-    # Converts first letter to uppercase and the other letters to lowercase
-    taxon <- stringr::str_to_sentence(taxon)
-    
     # Get the rank of the input taxon
     tryCatch({suppressMessages(classification.table <- taxize::classification(
         taxize::get_uid(taxon, messages = FALSE)[[1]], db = 'ncbi')[[1]])},
