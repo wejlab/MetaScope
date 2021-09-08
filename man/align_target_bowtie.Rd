@@ -47,8 +47,7 @@ Default is 8 threads.}
 Default is FALSE.}
 }
 \value{
-Returns the path to the directory where the output alignment
-file is stored.
+Returns the path to where the output alignment file is stored.
 }
 \description{
 Align microbiome reads to set of indexed Bowtie2 libraries
