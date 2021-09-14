@@ -11,7 +11,7 @@ table of taxonomic relationships for all species or strains with
 NCBI genomes.
 }
 \description{
-This code will generate the taxnonmy table for all species or strains with
+This code will generate the taxnonomy table for all species or strains with
 available NCBI genomes. Each column is a taxonomic rank or indication of a
 strain; each row is a taxonomic classification for an unique species or
 strain.
@@ -21,5 +21,4 @@ strain.
 \dontrun{
 generate_taxonomy_table()
 }
-
 }
