@@ -82,7 +82,6 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
     parent_kingdom <- "viral"
   }
 
-
   # Download the assembly summary refseq table from NCBI
   ## which includes genome download link
   message(paste("Loading the refseq table for", parent_kingdom))
@@ -129,8 +128,8 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
   }
   total_genomes <- nrow(species_table)
   if (total_genomes == 0){
-    message("No available genome for ", taxon, " - try setting both `representative`
-            and `reference` to TRUE")
+    message("No available genome for ", taxon, " - try setting both ",
+            "`representative` and `reference` to either TRUE or FALSE")
   } else{
     message(paste("Downloading", total_genomes, taxon, "genome(s) from RefSeq"))
 
