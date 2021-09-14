@@ -6,7 +6,9 @@ Authors@R:
   c(person(given = "W. Evan", family = "Johnson", role = c("aut", "cre"),
            email = "wej@bu.edu"),
     person(given = "Aubrey R.", family = "Odom", role = c("aut"),
-           email = "aodom@bu.edu"))
+           email = "aodom@bu.edu")),
+    person(given = "Rahul", family = "Varki", role = c("aut"),
+           email = "rvarki@bu.edu"))
 Maintainer: W. Evan Johnson <wej@bu.edu>
 Description: This package contains the tools and methods for preprocessing microbiome data.
     It contains tools for library generation, demultiplexing, alignment, and microbe identification.
@@ -25,7 +27,8 @@ Imports:
     BiocParallel,
     dplyr,
     Matrix,
-    qlcMatrix
+    qlcMatrix,
+    magrittr
 Suggests:
     BiocStyle,
     knitr,
