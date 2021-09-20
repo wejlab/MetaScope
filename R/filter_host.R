@@ -229,7 +229,7 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs, output = paste(tools::f
         lib_file <- paste(tools::file_path_sans_ext(reads_bam),".", libs[i], ".bam", sep = "")
         
         # Align reads to lib and generate new filter BAM file
-        Rbowtie2::bowtie2(bt2Index = file.path(lib_dir,libs[i]), output = tools::file_path_sans_ext(lib_file), outputType = "bam", bamFile = reads_bam, ... = bowtie2_options, overwrite = overwrite)
+        Rbowtie2::bowtie2_samtools(bt2Index = file.path(lib_dir,libs[i]), output = tools::file_path_sans_ext(lib_file), outputType = "bam", bamFile = reads_bam, ... = bowtie2_options, overwrite = overwrite)
         
         # sort BAM file and remove umapped reads (package helper function)
         filter_unmapped_reads(lib_file)

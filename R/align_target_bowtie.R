@@ -83,7 +83,7 @@ align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir, a
         
         message("Attempting to perform Bowtie2 alignment on ",libs[i]," index")
         
-        Rbowtie2::bowtie2(
+        Rbowtie2::bowtie2_samtools(
             bt2Index = file.path(lib_dir, libs[i]),
             output = bam_files[i],
             outputType = "bam",
