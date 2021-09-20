@@ -5,7 +5,7 @@
 \alias{taxonomy_table}
 \title{Taxonomy table}
 \format{
-An object of class \code{data.frame} with 63927 rows and 9 columns.
+An object of class \code{data.frame} with 71046 rows and 9 columns.
 }
 \usage{
 taxonomy_table
