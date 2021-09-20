@@ -27,9 +27,8 @@ Imports:
     qlcMatrix,
     stringr,
     rlang,
-    data.table
-Remotes:
-    rvarki/Rbowtie2
+    data.table,
+    Rbowtie2
 Suggests:
     BiocStyle,
     knitr,
