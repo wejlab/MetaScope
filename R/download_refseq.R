@@ -218,7 +218,7 @@ and `reference` to FALSE")
         if (!patho_out) file.remove(combined_fasta_patho)
         
         # Ensure removal of intermediate folder of files
-        unlink("viral_refseq_download", recursive = TRUE, force = TRUE)
+        unlink(download_dir, recursive = TRUE, force = TRUE)
         
         message("DONE! Downloaded ", i, " genomes to ", combined_fasta)
     }
