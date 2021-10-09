@@ -214,12 +214,37 @@ filter_host <- function(reads_bam, libs, lib_dir=NULL, output = paste(tools::fil
 
 
 filter_host_bowtie <- function(reads_bam, lib_dir, libs, output = paste(tools::file_path_sans_ext(reads_bam), "filtered", "bam", sep = "."), bowtie2_options = NULL, threads = 8, overwrite = FALSE){
+    # Note: Need to do library(ShortRead) otherwise get error: Error in occurrenceFilter(withSread = TRUE)  
     
     # If no optional parameters are passed then use default parameters else use user parameters 
     if (missing(bowtie2_options))
         bowtie2_options <- paste("--very-sensitive-local -k 100 --score-min L,20,1.0", "--threads",threads)
     else
         bowtie2_options <- paste(bowtie2_options,"--threads",threads)
+    
+    # Convert reads_bam into fastq (Default 1,000,000,000 read chunks) Note: Reads will show up multiple times if multimapped in bam
+    
+    message("Creating Intermediate Fastq File")
+    bf <- Rsamtools::BamFile(reads_bam, yieldSize = 1000000000)
+    open(bf)
+    read_loc <- file.path(dirname(reads_bam),"intermediate.fastq")
+    
+    # Function to write chunks into fastq
+    fun <- function(bf, to) {
+        chunk <- Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(what = c("seq", "qual","qname")))
+        fq <- ShortRead::ShortReadQ(chunk[[1]]$seq, chunk[[1]]$qual, Biostrings::BStringSet(chunk[[1]]$qname))
+        fq <- FastqCleaner::unique_filter(fq)
+        ShortRead::writeFastq(fq, to, "a", compress = TRUE)
+        length(fq)
+    }
+    
+    # Write chunks to fastq and break when no reads left to write
+    while (TRUE) {
+        len <- fun(bf, read_loc)
+        if(identical(len,0L))
+            break
+    }
+    message("Finished Creating Intermediate Fastq File")
     
     # Initialize list of names
     read_names <- vector(mode = "list", length(libs))
@@ -229,7 +254,12 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs, output = paste(tools::f
         lib_file <- paste(tools::file_path_sans_ext(reads_bam),".", libs[i], ".bam", sep = "")
         
         # Align reads to lib and generate new filter BAM file
-        Rbowtie2::bowtie2_samtools(bt2Index = file.path(lib_dir,libs[i]), output = tools::file_path_sans_ext(lib_file), outputType = "bam", bamFile = reads_bam, ... = bowtie2_options, overwrite = overwrite)
+        Rbowtie2::bowtie2_samtools(bt2Index = file.path(lib_dir,libs[i]), 
+                                   output = tools::file_path_sans_ext(lib_file), 
+                                   outputType = "bam", 
+                                   seq1 = read_loc , 
+                                   ... = bowtie2_options, 
+                                   overwrite = overwrite)
         
         # sort BAM file and remove umapped reads (package helper function)
         filter_unmapped_reads(lib_file)
@@ -242,6 +272,9 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs, output = paste(tools::f
         
     }
     
+    # remove intermediate fastq file
+    file.remove(read_loc)
+    
     # helper function to sort headers and filter BAM file
     remove_matches(reads_bam, read_names, output)
     
@@ -250,9 +283,4 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs, output = paste(tools::f
     
     return(output)
 }
-
-
-
-
-
 
