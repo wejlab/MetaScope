@@ -1,5 +1,7 @@
 globalVariables(c("qname","rname"))
 
+#Testing new changes made to ID function. Score changes, unique indicator change (I think unique indicator could be issue with 0 masking unique reads) 
+
 #' Count the number of base lengths in a CIGAR string for a given operation
 #' 
 #' The ‘CIGAR’ (Compact Idiosyncratic Gapped Alignment Report) string is how
@@ -54,28 +56,6 @@ count_matches <- function(x, char = "M") {
     return(data.table::fifelse(is.na(out[1]), yes = 0, no = out[1]))
 }
 
-#' Determines if a read is multi-mapping 
-#' 
-#' A read should be multi-mapping if it appears more than once in a bam file. 
-#' The function accepts the read group size which will either be 1 if the read
-#' is mapped uniquely or >1 if the read is multi-mapping. The function will 
-#' return 0 if the read is unique and 1 if the read is multi-mapping. 
-#' The function is intended to be used to create the uniqueness indicator 
-#' (y_ind_2) which is used for calculating theta. Not meant to be used outside
-#' of function.
-#' 
-#' @param x Integer. An integer representing the group size of a specific read.
-#' @return either 0 (unique) or 1 (multi-mapping)
-
-unique_identifier <- function(x)
-{
-    if(x == 1){
-        return(0)
-    }
-    else{
-        return(1)
-    }
-}
 
 #' MetaScope ID
 #'
@@ -131,37 +111,24 @@ metascope_id <- function(bam_file, aligner = "subread", out_file = paste(tools::
     
     message("Reading .bam file: ", bam_file)
     
-    # If the aligner is set to bowtie then also extract the AS (alignment score) tag
-    if (aligner == "bowtie")
+    if (identical(aligner,"bowtie"))
         params <- Rsamtools::ScanBamParam(what = c("qname", "rname", "cigar", "qwidth"), tag = c("AS"))
-    # If the aligner is set to subread then also extract the NM (edit score) tag
-    else if (aligner == "subread")
+    else if (identical(aligner,"subread"))
         params <- Rsamtools::ScanBamParam(what = c("qname", "rname", "cigar", "qwidth"), tag = c("NM"))
-    # If the aligner is set to other then we do not extract any additional tags
-    else if (aligner == "other")
+    else if (identical(aligner,"other"))
         params <- Rsamtools::ScanBamParam(what = c("qname", "rname", "cigar", "qwidth"))
     
     reads <- Rsamtools::scanBam(bam_file, param = params)
     unmapped <- is.na(reads[[1]]$rname)
     mapped_qname <- reads[[1]]$qname[!unmapped]
     mapped_rname <- reads[[1]]$rname[!unmapped]
-    
-    # If aligner is set to bowtie then we have to do additional processing to get accession numbers
-    if (aligner == "bowtie")
-        mapped_rname <- gsub(".*accession\\|","",mapped_rname)
-    
     mapped_cigar <- reads[[1]]$cigar[!unmapped]
     mapped_qwidth <- reads[[1]]$qwidth[!unmapped]
     
-    
-    # If aligner is set to bowtie then we want to get the mapped alignment scores
     if (aligner == "bowtie")
         mapped_alignment <- reads[[1]][["tag"]][["AS"]][!unmapped]
-    
-    # If aligner is set to subread then we want to get the mapped edit scores
     else if (aligner == "subread")
         mapped_edit <- reads[[1]][["tag"]][["NM"]][!unmapped]
-    
     
     read_names <- unique(mapped_qname)
     accessions <- unique(mapped_rname)
@@ -171,7 +138,22 @@ metascope_id <- function(bam_file, aligner = "subread", out_file = paste(tools::
     
     # Convert accessions to taxids and get genome names
     message("Obtaining taxonomy and genome names")
-    suppressMessages(tax_id_all <- taxize::genbank2uid(id = accessions))
+    
+    #If URI length is greater than 2500 characters then split accession list  
+    URI_length <- nchar(paste(accessions, collapse = "+"))
+    if (URI_length > 2500){
+        chunks <- split(accessions, ceiling(seq_along(accessions)/100))
+        tax_id_all <- c()
+        for (i in 1:length(chunks)){
+            suppressMessages(tax_id_chunk <- taxize::genbank2uid(id = chunks[[i]]))
+            Sys.sleep(3)
+            tax_id_all <- c(tax_id_all, tax_id_chunk)
+        }
+    }
+    else{
+        suppressMessages(tax_id_all <- taxize::genbank2uid(id = accessions))
+    }
+    
     taxids <- vapply(tax_id_all, function(x) x[1], character(1))
     unique_taxids <- unique(taxids)
     taxid_inds <- match(taxids, unique_taxids)
@@ -183,75 +165,58 @@ metascope_id <- function(bam_file, aligner = "subread", out_file = paste(tools::
     message("Setting up the EM algorithm")
     qname_inds <- match(mapped_qname, read_names)
     rname_inds <- match(mapped_rname, accessions)
-    rname_tax_inds <- taxid_inds[rname_inds]
-    # Don't uncomment below line 
-    #cigar_strings <- mapped_cigar[rname_inds]
-    qwidths <- mapped_qwidth[rname_inds]
+    rname_tax_inds <- taxid_inds[rname_inds] #accession to taxid
     
     # Order based on read names
     rname_tax_inds <- rname_tax_inds[order(qname_inds)]
-    # Modified this from original
     cigar_strings <- mapped_cigar[order(qname_inds)]
+    qwidths <- mapped_qwidth[order(qname_inds)]
     
-    # If aligner is set to bowtie we want to order the alignment scores
     if (aligner == "bowtie")
         scores <- mapped_alignment[order(qname_inds)]
-    # If aligner is set to subread we want to order the edit scores
     else if (aligner == "subread")
         scores <- mapped_edit[order(qname_inds)]
-    # If aligner is set to other then we make no assumptions about scores
     else if (aligner == "other")
         scores <- 1
     
-    qwidths <- qwidths[order(qname_inds)]
     qname_inds <- sort(qname_inds)
     
-    
-    
-    # If aligner is subread then to get an alignment score we subtract the edit score
-    # from the number of nucleotide matches which is taken from the cigar string.
-    if (aligner == "subread"){
+    #Subread alignment scores: CIGAR string matches - edit score
+    if (identical(aligner,"subread")){
         num_match <- unlist(vapply(cigar_strings, count_matches, USE.NAMES = FALSE, double(1)))
-        alignment_score <- num_match - scores
-        relative_alignment_score <- alignment_score - min(alignment_score)
-        exp_alignment_score <- 2^relative_alignment_score
+        alignment_scores <- num_match - scores
+        scaling_factor <- 100.0/max(alignment_scores)
+        relative_alignment_scores <- alignment_scores - min(alignment_scores)
+        exp_alignment_scores <- exp(relative_alignment_scores) * scaling_factor
     }
     
-    # If aligner is bowtie then we already have an alignment score 
-    else if (aligner == "bowtie"){
-        relative_alignment_score <- scores - min(scores)
-        exp_alignment_score <- 2^relative_alignment_score
+    # Bowtie2 alignment scores: AS value + read length (qwidths) 
+    else if (identical(aligner,"bowtie")){
+        alignment_scores <- scores + qwidths
+        scaling_factor <- 100.0/max(alignment_scores)
+        relative_alignment_scores <- alignment_scores - min(alignment_scores)
+        exp_alignment_scores <- exp(relative_alignment_scores) * scaling_factor
     }
     
-    # If aligner is other then we make no assumptions about the alignment score
-    else if (aligner == "other"){
-        exp_alignment_score <- 1
+    # Other alignment scores: No assumptions
+    else if (identical(aligner,"other")){
+        exp_alignment_scores <- 1
     }
     
     
-    combined <- dplyr::bind_cols("qname" = qname_inds, "rname" = rname_tax_inds, "scores" = exp_alignment_score)
-    
+    combined <- dplyr::bind_cols("qname" = qname_inds, "rname" = rname_tax_inds, "scores" = exp_alignment_scores)
     input_distinct <- dplyr::distinct(combined, qname, rname, .keep_all = TRUE)
     qname_inds_2 <- input_distinct$qname
     rname_tax_inds_2 <- input_distinct$rname
-    
-    # Normalize the exponential alignment scores so that the scores 
-    # represent a probability that the read originates from that genome
-    by_read <- dplyr::group_by(input_distinct, qname)
-    scores_2 <- dplyr::summarize(by_read, scores_2 = scores/(sum(scores)))$scores_2
-    
-    # Uniqueness indicator vector (1 = multimapping, 0 = unique or non multimapping)
-    y_ind_2 <- dplyr::summarize(by_read, multimapping_2 = unique_identifier(dplyr::n()))$multimapping_2
+    scores_2 <- input_distinct$scores
+    unique_read_ind <- unique(combined[[1]][(duplicated(input_distinct[,1]) | duplicated(input_distinct[,1], fromLast = TRUE))])
+    y_ind_2 <- as.numeric(input_distinct[[1]] %in% unique_read_ind) #1 if read is multimapping else 0  
     
     
     gammas <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2, x = scores_2)
-    
     pi_old <- rep(1 / nrow(gammas), ncol(gammas))
     pi_new <-  Matrix::colMeans(gammas)
-    
-    # Added this
     theta_new <- Matrix::colMeans(gammas)
-    
     
     conv <- max(abs(pi_new - pi_old) / pi_old)
     it <- 0
@@ -260,22 +225,14 @@ metascope_id <- function(bam_file, aligner = "subread", out_file = paste(tools::
     while (conv > EMconv & it < EMmaxIts) {
         # Expectation Step: Estimate expected value for each read to each genome
         pi_mat <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2, x = pi_new[rname_tax_inds_2])
-        
-        # Added this
         theta_mat <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2, x = theta_new[rname_tax_inds_2])
-        
-        # Modified this
         weighted_gamma <- gammas * pi_mat * theta_mat
-        
         weighted_gamma_sums <- Matrix::rowSums(weighted_gamma)
         gammas_new <- weighted_gamma/weighted_gamma_sums
         
         # Maximization step: proportion of reads to each genome
         pi_new <- Matrix::colMeans(gammas_new)
-        
-        #Added this
         theta_new <- (Matrix::colSums(y_ind_2*gammas_new)+1) / (nrow(gammas_new)+1)
-        
         
         # Check convergence
         it <- it + 1
