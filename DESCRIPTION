@@ -32,7 +32,7 @@ Imports:
     data.table,
     Rbowtie2,
     magrittr,
-    ShortRead,
+    ShortRead
 Suggests:
     BiocStyle,
     knitr,
