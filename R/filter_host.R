@@ -233,7 +233,8 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs, output = paste(tools::f
     fun <- function(bf, to) {
         chunk <- Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(what = c("seq", "qual","qname")))
         fq <- ShortRead::ShortReadQ(chunk[[1]]$seq, chunk[[1]]$qual, Biostrings::BStringSet(chunk[[1]]$qname))
-        fq <- FastqCleaner::unique_filter(fq)
+        uniqFilter <- ShortRead::srFilter(function(x){!duplicated(x@id)},name = "FirstOccuranceReads")
+        fq <- fq[uniqFilter(fq)]
         ShortRead::writeFastq(fq, to, "a", compress = TRUE)
         length(fq)
     }

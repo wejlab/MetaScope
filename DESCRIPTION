@@ -33,7 +33,6 @@ Imports:
     Rbowtie2,
     magrittr,
     ShortRead,
-    FastqCleaner
 Suggests:
     BiocStyle,
     knitr,
