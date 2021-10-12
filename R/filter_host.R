@@ -222,8 +222,7 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs, output = paste(tools::f
     else
         bowtie2_options <- paste(bowtie2_options,"--threads",threads)
     
-    # Convert reads_bam into fastq (Default 1,000,000,000 read chunks) Note: Reads will show up multiple times if multimapped in bam
-    
+    # Convert reads_bam into fastq (Default 1,000,000,000 read chunks) 
     message("Creating Intermediate Fastq File")
     bf <- Rsamtools::BamFile(reads_bam, yieldSize = 1000000000)
     open(bf)
