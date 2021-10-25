@@ -209,8 +209,8 @@ metascope_id <- function(bam_file, aligner = "subread", out_file = paste(tools::
     qname_inds_2 <- input_distinct$qname
     rname_tax_inds_2 <- input_distinct$rname
     scores_2 <- input_distinct$scores
-    unique_read_ind <- unique(combined[[1]][(duplicated(input_distinct[,1]) | duplicated(input_distinct[,1], fromLast = TRUE))])
-    y_ind_2 <- as.numeric(input_distinct[[1]] %in% unique_read_ind) #1 if read is multimapping else 0  
+    non_unique_read_ind <- unique(combined[[1]][(duplicated(input_distinct[,1]) | duplicated(input_distinct[,1], fromLast = TRUE))])
+    y_ind_2 <- as.numeric(unique(input_distinct[[1]]) %in% non_unique_read_ind) #1 if read is multimapping, 0 if read is unique
     
     
     gammas <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2, x = scores_2)
