@@ -43,6 +43,6 @@ biocViews:
     ReproducibleResearch,
     SequencingData
 VignetteBuilder: knitr
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 BugReports: https://github.com/compbiomed/MetaScope/issues
 Language: en-US
