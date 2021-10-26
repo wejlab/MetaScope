@@ -21,14 +21,14 @@ globalVariables(c("align_details"))
 #' 
 #' @examples
 #' 
-#' #readPath <- system.file("extdata", "virus_example.bam",
+#' #readPath <- system.file("extdata", "subread_target.bam",
 #' #                        package = "MetaScope")
 #'
 #' ## Assume that the first 10 query names aligned to first filter library
 #' ## And another 10 aligned to second filter library
 #' # qnames <- Rsamtools::scanBam(readPath)[[1]]$qname
 #' # read_names <- list(qnames[1:10], qnames[30:40])
-#' # out <- "virus_example.filtered.bam"
+#' # out <- "subread_target.filtered.bam"
 #' 
 #' # remove_matches(readPath, read_names, out)
 #'
@@ -87,19 +87,19 @@ remove_matches <- function(reads_bam, read_names, name_out) {
 #' ## Assuming a bam file has been created previously with align_target()
 #'
 #' ## Create object with path to the example filter library
-#' refPath <- system.file("extdata","Morbillivirus.fasta", package = "MetaScope")
+#' refPath <- system.file("extdata","filter.fasta", package = "MetaScope")
 #' 
 #' ## Copy the example filter library to the current directory
-#' file.copy(from = refPath, to = file.path(".", "Morbillivirus.fasta"))
+#' file.copy(from = refPath, to = file.path(".", "filter.fasta"))
 #' 
 #' ## Make subread index of filter library
-#' mk_subread_index('Morbillivirus.fasta')
+#' mk_subread_index('filter.fasta')
 #'
 #' ## Create object with path to the previously aligned bam file
-#' readPath <- system.file("extdata", "virus_example.bam", package = "MetaScope")
+#' readPath <- system.file("extdata", "subread_target.bam", package = "MetaScope")
 #'
 #' ## Filter bam file 
-#' filter_host(readPath, libs = 'Morbillivirus')
+#' filter_host(readPath, libs = "filter")
 #'
 
 filter_host <- function(reads_bam, libs, lib_dir=NULL, output = paste(tools::file_path_sans_ext(reads_bam), "filtered", "bam", sep = "."), settings = align_details) {
@@ -196,20 +196,20 @@ filter_host <- function(reads_bam, libs, lib_dir=NULL, output = paste(tools::fil
 #' dir.create(align_temp)
 #' 
 #' ## Create object with path to previously created bam file 
-#' bamPath <- system.file("extdata", "virus_example.bam", package = "MetaScope")
+#' bamPath <- system.file("extdata", "bowtie_target.bam", package = "MetaScope")
 #' 
 #' ## Create object with path to the filter library
-#' refPath <- system.file("extdata","Morbillivirus.fasta", package = "MetaScope")
+#' refPath <- system.file("extdata","filter.fasta", package = "MetaScope")
 #' 
 #' ## Move the filter library to the temporary reference directory 
-#' file.copy(from = refPath, to = file.path(ref_temp, "Morbillivirus.fasta"))
+#' file.copy(from = refPath, to = file.path(ref_temp, "filter.fasta"))
 #' 
 #' ## Create the bowtie index files in the temporary index directory
-#' mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "morbillivirus",
+#' mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "filter",
 #' overwrite=FALSE)
 #' 
 #' ## Filter reads from the bam file that align to the filter library
-#' filter_host_bowtie(reads_bam = bamPath, lib_dir = lib_temp, libs = "morbillivirus")
+#' filter_host_bowtie(reads_bam = bamPath, lib_dir = lib_temp, libs = "filter")
 #' 
 
 

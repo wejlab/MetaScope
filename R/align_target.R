@@ -279,14 +279,14 @@ merge_bam_files <- function(bam_files, destination, head_file = paste(destinatio
 #' ## Make and align to a single reference library
 #' mk_subread_index("target.fasta")
 #' readPath <- system.file("extdata", "reads.fastq",package = "MetaScope")
-#' target_map <- align_target(readPath, "target", project_name="target")
+#' target_map <- align_target(readPath, "target", project_name="subread_target")
 #' target_map_sam <- Rsamtools::asSam(target_map, overwrite = TRUE)
 #'
 #' ## Make and align to multiple reference libraries
 #' mk_subread_index('target.fasta', split = .02)
 #' targLibs <- c("target_1", "target_2")
 #' readPath <- system.file("extdata", "reads.fastq",package = "MetaScope")
-#' target_map <- align_target(readPath, targLibs, project_name = "target")
+#' target_map <- align_target(readPath, targLibs, project_name = "subread_target")
 #' 
 
 align_target <- function(reads, libs, lib_dir=NULL, project_name = tools::file_path_sans_ext(reads), settings = align_details) {

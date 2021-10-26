@@ -55,7 +55,7 @@
 #'
 #' ## Align reads to the reference library
 #' align_target_bowtie(read1 = readPath, lib_dir = lib_temp,
-#' libs = "target", align_dir = align_temp, align_file = "target",
+#' libs = "target", align_dir = align_temp, align_file = "bowtie_target",
 #' overwrite = TRUE)
 
 
