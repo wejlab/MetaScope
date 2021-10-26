@@ -214,7 +214,7 @@ filter_host <- function(reads_bam, libs, lib_dir=NULL, output = paste(tools::fil
 
 
 filter_host_bowtie <- function(reads_bam, lib_dir, libs, output = paste(tools::file_path_sans_ext(reads_bam), "filtered", "bam", sep = "."), bowtie2_options = NULL, threads = 8, overwrite = FALSE){
-    suppressMessages(library(ShortRead)) #Error occurs within function below otherwise 
+    suppressPackageStartupMessages(library(ShortRead)) #Error occurs within function below otherwise 
     
     # If no optional parameters are passed then use default parameters else use user parameters 
     if (missing(bowtie2_options))
