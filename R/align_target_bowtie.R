@@ -41,21 +41,21 @@
 #' dir.create(align_temp)
 #'
 #' ## Create object with path to example reference library
-#' refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
+#' refPath <- system.file("extdata","target.fasta", package = "MetaScope")
 #'
 #' ## Copy the reference library to the temporary directory 
-#' file.copy(from = refPath, to = file.path(ref_temp, "Mononegavirales.fasta"))
+#' file.copy(from = refPath, to = file.path(ref_temp, "target.fasta"))
 #'
 #' ## Create the bowtie index files in the temporary index library directory
-#' mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "mononegavirales",
+#' mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "target",
 #' overwrite=FALSE)
 #'
 #' ## Create object with path to the example reads
-#' readPath <- system.file("extdata", "demultiplexed_virus_example.fastq", package = "MetaScope")
+#' readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
 #'
 #' ## Align reads to the reference library
 #' align_target_bowtie(read1 = readPath, lib_dir = lib_temp,
-#' libs = "mononegavirales", align_dir = align_temp, align_file = "virus_example",
+#' libs = "target", align_dir = align_temp, align_file = "target",
 #' overwrite = TRUE)
 
 

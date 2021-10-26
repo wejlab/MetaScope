@@ -25,25 +25,25 @@
 #' #### Create a subread index from the example reference library
 #' 
 #' ## Create object with path to example reference library
-#' refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
+#' refPath <- system.file("extdata","target.fasta", package = "MetaScope")
 #' 
 #' ## Copy the example reference library to the current directory
-#' file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
+#' file.copy(from = refPath, to = file.path(".", "target.fasta"))
 #' 
 #' ## Make subread index of reference library
-#' mk_subread_index('Mononegavirales.fasta')
+#' mk_subread_index('target.fasta')
 #' 
 #' 
 #' #### Create multiple subread indexes from the example reference library
 #'
 #' ## Create object with path to example reference library
-#' refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
+#' refPath <- system.file("extdata","target.fasta", package = "MetaScope")
 #' 
 #' ## Copy the example reference library to the current directory
-#' file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
+#' file.copy(from = refPath, to = file.path(".", "target.fasta"))
 #' 
 #' ## Make multiple subread indexes of reference library
-#' mk_subread_index('Mononegavirales.fasta', split = .002)
+#' mk_subread_index('target.fasta', split = .02)
 #' 
 
 mk_subread_index <- function(ref_lib, split = 4, mem = 8000) {
