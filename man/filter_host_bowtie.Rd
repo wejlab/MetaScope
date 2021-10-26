@@ -73,19 +73,19 @@ align_temp <- tempfile()
 dir.create(align_temp)
 
 ## Create object with path to previously created bam file 
-bamPath <- system.file("extdata", "virus_example.bam", package = "MetaScope")
+bamPath <- system.file("extdata", "bowtie_target.bam", package = "MetaScope")
 
 ## Create object with path to the filter library
-refPath <- system.file("extdata","Morbillivirus.fasta", package = "MetaScope")
+refPath <- system.file("extdata","filter.fasta", package = "MetaScope")
 
 ## Move the filter library to the temporary reference directory 
-file.copy(from = refPath, to = file.path(ref_temp, "Morbillivirus.fasta"))
+file.copy(from = refPath, to = file.path(ref_temp, "filter.fasta"))
 
 ## Create the bowtie index files in the temporary index directory
-mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "morbillivirus",
+mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "filter",
 overwrite=FALSE)
 
 ## Filter reads from the bam file that align to the filter library
-filter_host_bowtie(reads_bam = bamPath, lib_dir = lib_temp, libs = "morbillivirus")
+filter_host_bowtie(reads_bam = bamPath, lib_dir = lib_temp, libs = "filter")
 
 }

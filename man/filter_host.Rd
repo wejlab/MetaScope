@@ -53,18 +53,18 @@ This resulting .bam file may be used upstream for further analysis.
 ## Assuming a bam file has been created previously with align_target()
 
 ## Create object with path to the example filter library
-refPath <- system.file("extdata","Morbillivirus.fasta", package = "MetaScope")
+refPath <- system.file("extdata","filter.fasta", package = "MetaScope")
 
 ## Copy the example filter library to the current directory
-file.copy(from = refPath, to = file.path(".", "Morbillivirus.fasta"))
+file.copy(from = refPath, to = file.path(".", "filter.fasta"))
 
 ## Make subread index of filter library
-mk_subread_index('Morbillivirus.fasta')
+mk_subread_index('filter.fasta')
 
 ## Create object with path to the previously aligned bam file
-readPath <- system.file("extdata", "virus_example.bam", package = "MetaScope")
+readPath <- system.file("extdata", "subread_target.bam", package = "MetaScope")
 
 ## Filter bam file 
-filter_host(readPath, libs = 'Morbillivirus')
+filter_host(readPath, libs = "filter")
 
 }

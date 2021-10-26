@@ -52,12 +52,12 @@ ref_temp <- tempfile()
 dir.create(ref_temp)
 
 ## Create object with path to the example reference library
-refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
+refPath <- system.file("extdata","target.fasta", package = "MetaScope")
 
 ## Copy the example reference library to the temporary directory 
-file.copy(from = refPath, to = file.path(ref_temp, "Mononegavirales.fasta"))
+file.copy(from = refPath, to = file.path(ref_temp, "target.fasta"))
 
 ## Create the reference library index files in the current directory
-mk_bowtie_index(ref_dir = ref_temp, lib_dir = ".", lib_name = "mononegavirales", 
+mk_bowtie_index(ref_dir = ref_temp, lib_dir = ".", lib_name = "target", 
 threads = 4, overwrite=FALSE)
 }

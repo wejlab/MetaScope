@@ -50,21 +50,21 @@ genomes.
 #### Align example reads to an example reference library using Rsubread
 
 ## Create object with path to example reference library
-refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
+refPath <- system.file("extdata","target.fasta", package = "MetaScope")
 
 ## Copy the example reference library to the current directory
-file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
+file.copy(from = refPath, to = file.path(".", "target.fasta"))
 
 ## Make and align to a single reference library
-mk_subread_index("Mononegavirales.fasta")
-readPath <- system.file("extdata", "demultiplexed_virus_example.fastq",package = "MetaScope")
-viral_map <- align_target(readPath, "Mononegavirales", project_name="virus_example")
-viral_map_sam <- Rsamtools::asSam(viral_map, overwrite = TRUE)
+mk_subread_index("target.fasta")
+readPath <- system.file("extdata", "reads.fastq",package = "MetaScope")
+target_map <- align_target(readPath, "target", project_name="subread_target")
+target_map_sam <- Rsamtools::asSam(target_map, overwrite = TRUE)
 
 ## Make and align to multiple reference libraries
-mk_subread_index('Mononegavirales.fasta', split = 0.002)
-targLibs <- c("Mononegavirales_1", "Mononegavirales_2")
-readPath <- system.file("extdata", "demultiplexed_virus_example.fastq",package = "MetaScope")
-viral_map <- align_target(readPath, targLibs, project_name = "virus_example")
+mk_subread_index('target.fasta', split = .02)
+targLibs <- c("target_1", "target_2")
+readPath <- system.file("extdata", "reads.fastq",package = "MetaScope")
+target_map <- align_target(readPath, targLibs, project_name = "subread_target")
 
 }

@@ -28,11 +28,11 @@ It is not intended for use by package users.
 }
 \examples{
 
-# refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
-# file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
-# mk_subread_index('Mononegavirales.fasta')
-# readPath <- system.file("extdata", "demultiplexed_virus_example.fastq", package = "MetaScope")
-# Rsubread::align(index = "Mononegavirales", readfile1 = readPath, output_file = "virus_example.bam")
-# filtered <- filter_unmapped_reads("virus_example.bam")
+# refPath <- system.file("extdata","target.fasta", package = "MetaScope")
+# file.copy(from = refPath, to = file.path(".", "target.fasta"))
+# mk_subread_index('target.fasta')
+# readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
+# Rsubread::align(index = "target", readfile1 = readPath, output_file = "example.bam")
+# filtered <- filter_unmapped_reads("example.bam")
 
 }

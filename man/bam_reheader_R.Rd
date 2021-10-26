@@ -31,21 +31,21 @@ function in samtools. It is not intended for use by users.
 }
 \examples{
 
-# refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
-# file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
-# mk_subread_index('Mononegavirales.fasta', split = .002)
-# readPath <- system.file("extdata", "demultiplexed_virus_example.fastq", package = "MetaScope")
+# refPath <- system.file("extdata","target.fasta", package = "MetaScope")
+# file.copy(from = refPath, to = file.path(".", "target.fasta"))
+# mk_subread_index('target.fasta', split = .02)
+# readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
 
-# Rsubread::align(index = "Mononegavirales_1", readfile1 = readPath,
-# output_file = "virus_example1.bam")
-# Rsubread::align(index = "Mononegavirales_2", readfile1 = readPath,
-# output_file = "virus_example2.bam")
+# Rsubread::align(index = "target_1", readfile1 = readPath,
+# output_file = "example1.bam")
+# Rsubread::align(index = "target_2", readfile1 = readPath,
+# output_file = "example2.bam")
 
-# bam_files <- c('virus_example1.bam','virus_example2.bam')
+# bam_files <- c('example1.bam','example2.bam')
 # com_head <- combined_header(bam_files)
-# bam_reheader_R(com_head, 'virus_example2.bam')
+# bam_reheader_R(com_head, 'example2.bam')
 
 ## Note that the following would be an equivalent command if samtools is installed
-# system2("samtools reheader header_tmp.sam virus_example2.bam > virus_example2h.bam")
+# system2("samtools reheader header_tmp.sam example2.bam > example2h.bam")
 
 }
