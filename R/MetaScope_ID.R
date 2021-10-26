@@ -87,19 +87,31 @@ count_matches <- function(x, char = "M") {
 #' @examples
 #' #### Align reads to reference library and then apply metascope_id()
 #' 
-#' ## Create object with path to example reference library
-#' refPath <- system.file("extdata","Mononegavirales.fasta", package = "MetaScope")
+#' ## Assuming filtered bam files already exist
 #' 
-#' ## Copy the example reference library to the current directory
-#' file.copy(from = refPath, to = file.path(".", "Mononegavirales.fasta"))
-#'
-#' ## Make and align to a single reference library
-#' mk_subread_index('Mononegavirales.fasta')
-#' readPath <- system.file("extdata", "demultiplexed_virus_example.fastq", package = "MetaScope")
-#' viral_map <- align_target(readPath, "Mononegavirales", project_name = "virus_example")
-#'
-#' ## Apply MetaScope ID:
-#' metascope_id(viral_map, aligner="subread")
+#' ## Subread aligned bam file
+#' 
+#' ## Create object with path to filtered subread bam file 
+#' bamPath <- system.file("extdata","subread_target.filtered.bam", package = "MetaScope")
+#' 
+#' ## Run metascope id with the aligner option set to subread
+#' metascope_id(bam_file = bamPath, aligner = "subread")
+#' 
+#' ## Bowtie aligned bam file 
+#' 
+#' ## Create object with path to filtered subread bam file 
+#' bamPath <- system.file("extdata","bowtie_target.filtered.bam", package = "MetaScope")
+#' 
+#' ## Run metascope id with the aligner option set to bowtie
+#' metascope_id(bam_file = bamPath, aligner = "bowtie")
+#' 
+#' ## Different or unknown aligned bam file
+#' 
+#' ## Create object with path to unknown origin bam file 
+#' bamPath <- system.file("extdata","subread_target.filtered.bam", package = "MetaScope")
+#' 
+#' ## Run metascope id with the aligner option set to other 
+#' metascope_id(bam_file = bamPath, aligner = "other")
 #' 
 
 
