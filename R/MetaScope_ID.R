@@ -199,7 +199,7 @@ metascope_id <- function(bam_file, aligner = "subread", out_file = paste(tools::
         alignment_scores <- num_match - scores
         scaling_factor <- 100.0/max(alignment_scores)
         relative_alignment_scores <- alignment_scores - min(alignment_scores)
-        exp_alignment_scores <- exp(relative_alignment_scores) * scaling_factor
+        exp_alignment_scores <- exp(relative_alignment_scores * scaling_factor)
     }
     
     # Bowtie2 alignment scores: AS value + read length (qwidths) 
@@ -207,7 +207,7 @@ metascope_id <- function(bam_file, aligner = "subread", out_file = paste(tools::
         alignment_scores <- scores + qwidths
         scaling_factor <- 100.0/max(alignment_scores)
         relative_alignment_scores <- alignment_scores - min(alignment_scores)
-        exp_alignment_scores <- exp(relative_alignment_scores) * scaling_factor
+        exp_alignment_scores <- exp(relative_alignment_scores * scaling_factor)
     }
     
     # Other alignment scores: No assumptions
