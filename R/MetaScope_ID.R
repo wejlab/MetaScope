@@ -43,7 +43,8 @@ globalVariables(c("qname","rname"))
 
 count_matches <- function(x, char = "M") {
     if (length(char) != 1) {
-        stop("Please provide a single character operator with which to parse.")
+        stop("Please provide a single character ",
+             "operator with which to parse.")
     } else if (length(x) != 1) {
         stop("Please provide a single CIGAR string to be parsed.")
     }
@@ -52,9 +53,32 @@ count_matches <- function(x, char = "M") {
     start <- as.numeric(ind)
     end <- start + attr(ind, "match.length") - 2
     out <- sum(as.numeric(apply(cbind(start, end), 1,
-                                function(y) substr(x, start = y[1], stop = y[2]))))
+                                function(y) substr(x, start = y[1],
+                                                   stop = y[2]))))
     return(data.table::fifelse(is.na(out[1]), yes = 0, no = out[1]))
 }
+
+#' Helper Function for MetaScope ID
+
+locations <- function(which_taxid, which_genome,
+                      accessions, taxids, reads,
+                      plots_save = tools::file_path_sans_ext(bam_file)) {
+    # map back to accessions
+    choose_acc <- paste(accessions[which(as.numeric(taxids) %in% which_taxid)])
+    # map back to BAM
+    map2bam_acc <- which(reads[[1]]$rname %in% choose_acc)
+    # Split genome name to make digestible
+    use_name <- paste(strsplit(which_genome, " ")[[1]][1:2], collapse = " ")
+    ggplot2::qplot(reads[[1]]$pos[map2bam_acc],
+                   geom = "histogram",
+                   main = "Locations associated with species:",
+                   xlab = "Leftmost position in genome",
+                   ylab = "Read Count") +
+        ggplot2::labs(subtitle = use_name)
+    ggplot2::ggsave(paste0(plots_save, "/", which_taxid, ".png"),
+                    device = "png")
+}
+
 
 
 #' MetaScope ID
@@ -92,7 +116,8 @@ count_matches <- function(x, char = "M") {
 #' ## Subread aligned bam file
 #' 
 #' ## Create object with path to filtered subread bam file 
-#' bamPath <- system.file("extdata","subread_target.filtered.bam", package = "MetaScope")
+#' bamPath <- system.file("extdata","subread_target.filtered.bam",
+#' package = "MetaScope")
 #' 
 #' ## Run metascope id with the aligner option set to subread
 #' metascope_id(bam_file = bamPath, aligner = "subread")
@@ -100,7 +125,8 @@ count_matches <- function(x, char = "M") {
 #' ## Bowtie aligned bam file 
 #' 
 #' ## Create object with path to filtered subread bam file 
-#' bamPath <- system.file("extdata","bowtie_target.filtered.bam", package = "MetaScope")
+#' bamPath <- system.file("extdata","bowtie_target.filtered.bam",
+#' package = "MetaScope")
 #' 
 #' ## Run metascope id with the aligner option set to bowtie
 #' metascope_id(bam_file = bamPath, aligner = "bowtie")
@@ -108,100 +134,107 @@ count_matches <- function(x, char = "M") {
 #' ## Different or unknown aligned bam file
 #' 
 #' ## Create object with path to unknown origin bam file 
-#' bamPath <- system.file("extdata","subread_target.filtered.bam", package = "MetaScope")
+#' bamPath <- system.file("extdata","subread_target.filtered.bam",
+#' package = "MetaScope")
 #' 
 #' ## Run metascope id with the aligner option set to other 
 #' metascope_id(bam_file = bamPath, aligner = "other")
 #' 
 
 
-metascope_id <- function(bam_file, aligner = "subread", out_file = paste(tools::file_path_sans_ext(bam_file),".metascope_id.csv", sep = ""), EMconv = 1/10000, EMmaxIts = 25) {
-    
+metascope_id <- function(bam_file, aligner = "subread",
+                         out_file = paste(tools::file_path_sans_ext(bam_file),
+                                          ".metascope_id.csv", sep = ""),
+                         EMconv = 1/10000, EMmaxIts = 25,
+                         num_species_plot = NULL) {
+
     # Check to make sure valid aligner is specified
     if (aligner != "bowtie" && aligner != "subread" && aligner != "other")
-        stop("Please make sure aligner is set to either 'bowtie', 'subread', or 'other'")
-    
+        stop("Please make sure aligner is set to either 'bowtie', 'subread',
+             or 'other'")
+
     message("Reading .bam file: ", bam_file)
-    
+
+    to_pull <- c("qname", "rname", "cigar","qwidth", "pos")
     if (identical(aligner,"bowtie"))
-        params <- Rsamtools::ScanBamParam(what = c("qname", "rname", "cigar", "qwidth"), tag = c("AS"))
+        params <- Rsamtools::ScanBamParam(what = to_pull, tag = c("AS"))
     else if (identical(aligner,"subread"))
-        params <- Rsamtools::ScanBamParam(what = c("qname", "rname", "cigar", "qwidth"), tag = c("NM"))
+        params <- Rsamtools::ScanBamParam(what = to_pull, tag = c("NM"))
     else if (identical(aligner,"other"))
-        params <- Rsamtools::ScanBamParam(what = c("qname", "rname", "cigar", "qwidth"))
-    
+        params <- Rsamtools::ScanBamParam(what = to_pull)
+
     reads <- Rsamtools::scanBam(bam_file, param = params)
     unmapped <- is.na(reads[[1]]$rname)
     mapped_qname <- reads[[1]]$qname[!unmapped]
     mapped_rname <- reads[[1]]$rname[!unmapped]
     mapped_cigar <- reads[[1]]$cigar[!unmapped]
     mapped_qwidth <- reads[[1]]$qwidth[!unmapped]
-    
+
     if (aligner == "bowtie")
         mapped_alignment <- reads[[1]][["tag"]][["AS"]][!unmapped]
     else if (aligner == "subread")
         mapped_edit <- reads[[1]][["tag"]][["NM"]][!unmapped]
-    
+
     read_names <- unique(mapped_qname)
     accessions <- unique(mapped_rname)
-    
+
     message("\tFound ", length(read_names), " reads aligned to ",
             length(accessions), " NCBI accessions")
-    
+
     # Convert accessions to taxids and get genome names
     message("Obtaining taxonomy and genome names")
-    
-    #If URI length is greater than 2500 characters then split accession list  
+
+    # If URI length is greater than 2500 characters then split accession list
     URI_length <- nchar(paste(accessions, collapse = "+"))
     if (URI_length > 2500){
         chunks <- split(accessions, ceiling(seq_along(accessions)/100))
         tax_id_all <- c()
         for (i in 1:length(chunks)){
-            suppressMessages(tax_id_chunk <- taxize::genbank2uid(id = chunks[[i]]))
+            suppressMessages(
+                tax_id_chunk <- taxize::genbank2uid(id = chunks[[i]]))
             Sys.sleep(3)
             tax_id_all <- c(tax_id_all, tax_id_chunk)
         }
-    }
-    else{
-        suppressMessages(tax_id_all <- taxize::genbank2uid(id = accessions))
-    }
-    
+    } else suppressMessages(tax_id_all <- taxize::genbank2uid(id = accessions))
+
     taxids <- vapply(tax_id_all, function(x) x[1], character(1))
     unique_taxids <- unique(taxids)
     taxid_inds <- match(taxids, unique_taxids)
-    genome_names <- vapply(tax_id_all, function(x) attr(x, "name"), character(1))
+    genome_names <- vapply(tax_id_all, function(x) attr(x, "name"),
+                           character(1))
     unique_genome_names <- genome_names[!duplicated(taxid_inds)]
     message("\tFound ", length(unique_taxids), " unique NCBI taxonomy IDs")
-    
+
     # Make an aligment matrix (rows: reads, cols: unique taxids)
     message("Setting up the EM algorithm")
     qname_inds <- match(mapped_qname, read_names)
     rname_inds <- match(mapped_rname, accessions)
     rname_tax_inds <- taxid_inds[rname_inds] #accession to taxid
-    
+
     # Order based on read names
     rname_tax_inds <- rname_tax_inds[order(qname_inds)]
     cigar_strings <- mapped_cigar[order(qname_inds)]
     qwidths <- mapped_qwidth[order(qname_inds)]
-    
+
     if (aligner == "bowtie")
         scores <- mapped_alignment[order(qname_inds)]
     else if (aligner == "subread")
         scores <- mapped_edit[order(qname_inds)]
     else if (aligner == "other")
         scores <- 1
-    
+
     qname_inds <- sort(qname_inds)
-    
+
     #Subread alignment scores: CIGAR string matches - edit score
     if (identical(aligner,"subread")){
-        num_match <- unlist(vapply(cigar_strings, count_matches, USE.NAMES = FALSE, double(1)))
+        num_match <- unlist(vapply(cigar_strings, count_matches,
+                                   USE.NAMES = FALSE,double(1)))
         alignment_scores <- num_match - scores
         scaling_factor <- 100.0/max(alignment_scores)
         relative_alignment_scores <- alignment_scores - min(alignment_scores)
         exp_alignment_scores <- exp(relative_alignment_scores * scaling_factor)
     }
-    
+
     # Bowtie2 alignment scores: AS value + read length (qwidths) 
     else if (identical(aligner,"bowtie")){
         alignment_scores <- scores + qwidths
@@ -209,43 +242,47 @@ metascope_id <- function(bam_file, aligner = "subread", out_file = paste(tools::
         relative_alignment_scores <- alignment_scores - min(alignment_scores)
         exp_alignment_scores <- exp(relative_alignment_scores * scaling_factor)
     }
-    
+
     # Other alignment scores: No assumptions
     else if (identical(aligner,"other")){
         exp_alignment_scores <- 1
     }
-    
-    
-    combined <- dplyr::bind_cols("qname" = qname_inds, "rname" = rname_tax_inds, "scores" = exp_alignment_scores)
+
+    combined <- dplyr::bind_cols("qname" = qname_inds,
+                                 "rname" = rname_tax_inds,
+                                 "scores" = exp_alignment_scores)
     input_distinct <- dplyr::distinct(combined, qname, rname, .keep_all = TRUE)
     qname_inds_2 <- input_distinct$qname
     rname_tax_inds_2 <- input_distinct$rname
     scores_2 <- input_distinct$scores
-    non_unique_read_ind <- unique(combined[[1]][(duplicated(input_distinct[,1]) | duplicated(input_distinct[,1], fromLast = TRUE))])
-    y_ind_2 <- as.numeric(unique(input_distinct[[1]]) %in% non_unique_read_ind) #1 if read is multimapping, 0 if read is unique
-    
-    
+    non_unique_read_ind <- unique(combined[[1]][(
+        duplicated(input_distinct[,1]) | duplicated(input_distinct[,1],
+                                                    fromLast = TRUE))])
+    # 1 if read is multimapping, 0 if read is unique
+    y_ind_2 <- as.numeric(unique(input_distinct[[1]]) %in% non_unique_read_ind)
+
     gammas <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2, x = scores_2)
     pi_old <- rep(1 / nrow(gammas), ncol(gammas))
     pi_new <-  Matrix::colMeans(gammas)
     theta_new <- Matrix::colMeans(gammas)
-    
+
     conv <- max(abs(pi_new - pi_old) / pi_old)
     it <- 0
-    
+
     message("Starting EM iterations")
     while (conv > EMconv & it < EMmaxIts) {
-        # Expectation Step: Estimate expected value for each read to each genome
-        pi_mat <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2, x = pi_new[rname_tax_inds_2])
-        theta_mat <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2, x = theta_new[rname_tax_inds_2])
+        # Expectation Step: Estimate expected value for each read to ea genome
+        pi_mat <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2,
+                                       x = pi_new[rname_tax_inds_2])
+        theta_mat <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2,
+                                          x = theta_new[rname_tax_inds_2])
         weighted_gamma <- gammas * pi_mat * theta_mat
         weighted_gamma_sums <- Matrix::rowSums(weighted_gamma)
         gammas_new <- weighted_gamma/weighted_gamma_sums
-        
         # Maximization step: proportion of reads to each genome
         pi_new <- Matrix::colMeans(gammas_new)
-        theta_new <- (Matrix::colSums(y_ind_2*gammas_new)+1) / (nrow(gammas_new)+1)
-        
+        theta_new_num <- (Matrix::colSums(y_ind_2 * gammas_new) + 1)
+        theta_new <- num / (nrow(gammas_new) + 1)
         # Check convergence
         it <- it + 1
         conv <- max(abs(pi_new - pi_old) / pi_old, na.rm = TRUE)
@@ -253,28 +290,36 @@ metascope_id <- function(bam_file, aligner = "subread", out_file = paste(tools::
         print(c(it, conv))
     }
     message("\tDONE! Converged in ", it, " interations.")
-    
+
     # Collect results
     hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which
     best_hit <- Matrix::colSums(hit_which)
     names(best_hit) <- seq_along(best_hit)
     best_hit <- best_hit[best_hit != 0]
-    
     hits_ind <- as.numeric(names(best_hit))
-    
     final_taxids <- unique_taxids[hits_ind]
     final_genomes <- unique_genome_names[hits_ind]
-    
     proportion <- best_hit / sum(best_hit)
     gammasums <- Matrix::colSums(gammas_new)
     EMreads <- round(gammasums[hits_ind], 1)
     EMprop <- gammasums[hits_ind] / sum(gammas_new)
-    
-    aubs <- results <- cbind(TaxonomyID = final_taxids, Genome = final_genomes, read_count = best_hit, Proportion = proportion, EMreads = EMreads, EMProportion = EMprop)
+    results <- cbind(TaxonomyID = final_taxids, Genome = final_genomes,
+                     read_count = best_hit, Proportion = proportion,
+                     EMreads = EMreads, EMProportion = EMprop)
     results <- results[order(best_hit, decreasing = TRUE), ]
     message("Found reads for ", length(best_hit), " genomes")
     
-    # Write to file
+    # PLotting of genome locations
+    if (is.null(num_species_plot)){
+        num_species_plot <- min(length(final_taxids), 50)
+    }
+    if (num_species_plot > 0) {
+        message("Creating coverage plots")
+        sapply(seq_along(results$TaxonomyID)[1:num_species_plot],
+               function(x) locations(as.numeric(results$TaxonomyID)[x],
+                                     which_genome = results$Genome[x],
+                                     accessions, taxids, reads))
+    }
     utils::write.csv(results, file = out_file, row.names = FALSE)
     message("Results written to ", out_file)
     return(results)
