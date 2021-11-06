@@ -11,7 +11,7 @@ mk_subread_index(ref_lib, split = 4, mem = 8000)
 (uncompressed) .fasta format}
 
 \item{split}{The maximum allowed size of the genome file (in GB). If the
-ref_lib file is larger than this, the function will spolt the library into
+ref_lib file is larger than this, the function will split the library into
 multiple parts}
 
 \item{mem}{The maximum amount of memory (in MB) that can be used by the
@@ -31,15 +31,27 @@ too large (default >4GB) it will automatically be split into multiple
 indexes, with _1, _2, etc at the end of the ref_lib basename.
 }
 \examples{
-# Code not run
-\dontrun{
-## Download all RefSeq reference viral genomes and make an index
-download_refseq('viral', compress = FALSE)
-mk_subread_index('viral.fasta')
+#### Create a subread index from the example reference library
 
-## Download all RefSeq reference viral genomes and make more than one index
-download_refseq('viral', compress = FALSE)
-mk_subread_index('viral.fasta', split = .0005)
-}
+## Create object with path to example reference library
+refPath <- system.file("extdata","target.fasta", package = "MetaScope")
+
+## Copy the example reference library to the current directory
+file.copy(from = refPath, to = file.path(".", "target.fasta"))
+
+## Make subread index of reference library
+mk_subread_index('target.fasta')
+
+
+#### Create multiple subread indexes from the example reference library
+
+## Create object with path to example reference library
+refPath <- system.file("extdata","target.fasta", package = "MetaScope")
+
+## Copy the example reference library to the current directory
+file.copy(from = refPath, to = file.path(".", "target.fasta"))
+
+## Make multiple subread indexes of reference library
+mk_subread_index('target.fasta', split = .02)
 
 }

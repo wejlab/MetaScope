@@ -47,24 +47,24 @@ passed to `filter_host()` to remove reads that also map to filter library
 genomes.
 }
 \examples{
-# Code not run
-\dontrun{
-## Get a reference genome library
-download_refseq('viral', compress = FALSE)
+#### Align example reads to an example reference library using Rsubread
 
-## Make and align to a single reference genome library
-mk_subread_index('viral.fasta')
-readPath <- system.file("extdata", "virus_example.fastq",
-package = "MetaScope")
-viral_map <- align_target(readPath, "viral", project_name="virus_example")
-viral_map_sam <- Rsamtools::asSam(viral_map, overwrite = TRUE)
+## Create object with path to example reference library
+refPath <- system.file("extdata","target.fasta", package = "MetaScope")
 
-## Make and align to a multiple reference genome libraries
-mk_subread_index('viral.fasta', split = 0.005)
-targLibs <- c("viral_1", "viral_2")
-readPath <- system.file("extdata", "virus_example.fastq",
-package = "MetaScope")
-viral_map <- align_target(readPath, targLibs, project_name = "virus_example")
-}
+## Copy the example reference library to the current directory
+file.copy(from = refPath, to = file.path(".", "target.fasta"))
+
+## Make and align to a single reference library
+mk_subread_index("target.fasta")
+readPath <- system.file("extdata", "reads.fastq",package = "MetaScope")
+target_map <- align_target(readPath, "target", project_name="subread_target")
+target_map_sam <- Rsamtools::asSam(target_map, overwrite = TRUE)
+
+## Make and align to multiple reference libraries
+mk_subread_index('target.fasta', split = .02)
+targLibs <- c("target_1", "target_2")
+readPath <- system.file("extdata", "reads.fastq",package = "MetaScope")
+target_map <- align_target(readPath, targLibs, project_name = "subread_target")
 
 }

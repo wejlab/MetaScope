@@ -31,18 +31,16 @@ for removal of any target reads that are also aligned to filter libraries.
 This function is not intended for use by users.
 }
 \examples{
-# Code not run
-\dontrun{
-readPath <- system.file("extdata", "bacteria_example.bam",
-                        package = "MetaScope")
 
-## Assume that the first 100 query names aligned to first filter library
-## And another 100 aligned to second filter library
-qnames <- Rsamtools::scanBam(readPath)[[1]]$qname
-read_names <- list(qnames[1:100], qnames[400:500])
-out <- "bacteria_example.filtered.bam"
+#readPath <- system.file("extdata", "subread_target.bam",
+#                        package = "MetaScope")
 
-remove_matches(readPath, read_names, out)
-}
+## Assume that the first 10 query names aligned to first filter library
+## And another 10 aligned to second filter library
+# qnames <- Rsamtools::scanBam(readPath)[[1]]$qname
+# read_names <- list(qnames[1:10], qnames[30:40])
+# out <- "subread_target.filtered.bam"
+
+# remove_matches(readPath, read_names, out)
 
 }

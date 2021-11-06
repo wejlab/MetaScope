@@ -27,15 +27,12 @@ reference mapped lines in the .bam file.
 It is not intended for use by package users.
 }
 \examples{
-# Code not run
-\dontrun{
-download_refseq('viral', compress = FALSE)
-mk_subread_index('viral.fasta')
-readPath <- system.file("extdata", "virus_example.fastq",
-package = "MetaScope")
-Rsubread::align(index = "viral", readfile1 = readPath,
-output_file = "virus_example.bam")
-filtered <- filter_unmapped_reads("virus_example.bam")
-}
+
+# refPath <- system.file("extdata","target.fasta", package = "MetaScope")
+# file.copy(from = refPath, to = file.path(".", "target.fasta"))
+# mk_subread_index('target.fasta')
+# readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
+# Rsubread::align(index = "target", readfile1 = readPath, output_file = "example.bam")
+# filtered <- filter_unmapped_reads("example.bam")
 
 }

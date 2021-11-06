@@ -31,24 +31,22 @@ then merges and sorts the .bam files. This is similar to the
 headers. It is not intended for use by users.
 }
 \examples{
-# Code not run
-\dontrun{
-download_refseq('viral', compress = FALSE)
-mk_subread_index('viral.fasta', split = .0005)
 
-readPath <- system.file("extdata", "virus_example.fastq",
-package = "MetaScope")
-Rsubread::align(index = "viral_1", readfile1 = readPath,
-output_file = "virus_example1.bam", maxMismatches = 3)
-Rsubread::align(index = "viral_2", readfile1 = readPath,
-output_file = "virus_example2.bam")
+# refPath <- system.file("extdata","target.fasta", package = "MetaScope")
+# file.copy(from = refPath, to = file.path(".", "target.fasta"))
+# mk_subread_index('target.fasta', split = .02)
 
-bam_files <- c('virus_example1.bam','virus_example2.bam')
-com_head <- combined_header(bam_files)
-bam_reheader_R(com_head, 'virus_example1.bam')
-bam_reheader_R(com_head, 'virus_example1.bam')
-bam_files <- c('virus_example1h.bam','virus_example2h.bam')
-merged_all <- merge_bam_files(bam_files, 'virus_example_merged')
-}
+# readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
+# Rsubread::align(index = "target_1", readfile1 = readPath,
+# output_file = "target1.bam", maxMismatches = 3)
+# Rsubread::align(index = "target_2", readfile1 = readPath,
+# output_file = "target2.bam")
+
+# bam_files <- c('target1.bam','target2.bam')
+# com_head <- combined_header(bam_files)
+# bam_reheader_R(com_head, 'target1.bam')
+# bam_reheader_R(com_head, 'target2.bam')
+# bam_files <- c('target1h.bam','target2h.bam')
+# merged_all <- merge_bam_files(bam_files, 'example_merged')
 
 }

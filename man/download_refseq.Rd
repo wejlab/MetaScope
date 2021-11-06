@@ -47,23 +47,22 @@ and then use this file to download the genome(s) and combine them in a single
 compressed or uncompressed .fasta file.
 }
 \examples{
-# Code not run
-\dontrun{
+#### Download RefSeq genomes
+
 ## Download all RefSeq reference bacterial superkingdom genomes
 download_refseq('bacteria', reference = TRUE, representative = FALSE)
 
-## Download all RefSeq representative viral genomes
-download_refseq('viral', representative = TRUE)
+## Download all RefSeq representative mononegavirales genomes
+download_refseq('mononegavirales', representative = TRUE)
 
-## Download all RefSeq viral genomes
-download_refseq('viral', reference = FALSE)
+## Download all RefSeq morbillivirus genomes
+download_refseq('morbillivirus', reference = FALSE)
 
-## Download all primate reference genomes, uncompressed
-download_refseq('Primates', reference = TRUE,
+## Download all RefSeq bacilli reference genomes, uncompressed
+download_refseq('Bacilli', reference = TRUE,
                 representative = FALSE, compress = FALSE)
 
-## Download Rickettsia genus genome
-download_refseq('Rickettsia', representative = TRUE, compress = FALSE)
-}
+## Download RefSeq Escherichia coli IAI1 strain 
+download_refseq('Escherichia coli IAI1', reference = FALSE, compress = FALSE)
 
 }

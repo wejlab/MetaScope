@@ -46,23 +46,25 @@ filter reference libraries. This function takes as input the name
 of the .bam file produced via \code{align_target()}, and produces a
 sorted .bam file with any reads that match the filter libraries removed.
 This resulting .bam file may be used upstream for further analysis.
-It is not intended for use by users.
 }
 \examples{
-# Code not run
-\dontrun{
-## Assuming a BAM file has been created previously with align_target()
+#### Filter reads from bam file that align to any of the filter libraries
 
-## Download and index the filter genome library
-download_refseq('archaea', compress = FALSE, representative = TRUE)
-mk_subread_index('archaea.fasta')
+## Assuming a bam file has been created previously with align_target()
 
-## Create object with file location of previously aligned BAM file
-readPath <- system.file("extdata", "bacteria_example.bam",
-                         package = "MetaScope")
+## Create object with path to the example filter library
+refPath <- system.file("extdata","filter.fasta", package = "MetaScope")
 
-## Filter with host reference genome library
-filter_host(readPath, libs = 'archaea')
-}
+## Copy the example filter library to the current directory
+file.copy(from = refPath, to = file.path(".", "filter.fasta"))
+
+## Make subread index of filter library
+mk_subread_index('filter.fasta')
+
+## Create object with path to the previously aligned bam file
+readPath <- system.file("extdata", "subread_target.bam", package = "MetaScope")
+
+## Filter bam file 
+filter_host(readPath, libs = "filter")
 
 }
