@@ -1,17 +1,17 @@
-mk_table <- function(intable, taxon_ranks) {
+mk_table <- function (intable, taxon_ranks) {
   this_t <- as.data.frame(intable)
-  if(!identical(this_t$rank, character(0))) {
+  if (!identical(this_t$rank, character(0))) {
     t_n <- nrow(this_t)
-    # convert 'no rank' to 'strain'
-    if (this_t$rank[t_n] == 'no rank' & this_t$rank[t_n - 1] == 'species') {
-      this_t$rank[t_n] <- 'strain'
+    if (this_t$rank[t_n] == "no rank" & this_t$rank[t_n - 1] == "species") {
+      this_t$rank[t_n] <- "strain"
     }
-    return(this_t %>%
-             dplyr::filter(rank %in% taxon_ranks) %>%
-             dplyr::right_join(., tibble(rank = taxon_ranks), by = "rank") %>%
-             arrange(factor(rank, levels = taxon_ranks)) %>%
-             dplyr::select(name) %>% 
-             unlist)
+    this_t %>%
+      dplyr::filter(rank %in% taxon_ranks) %>% 
+      dplyr::right_join(., tibble(rank = taxon_ranks), 
+                        by = "rank") %>% 
+      arrange(factor(rank, levels = taxon_ranks)) %>% 
+      dplyr::select(name) %>% 
+      unlist
   }
 }
 
