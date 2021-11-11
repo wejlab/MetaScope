@@ -79,8 +79,6 @@ locations <- function(which_taxid, which_genome,
                     device = "png")
 }
 
-
-
 #' MetaScope ID
 #'
 #' This function will read in a .bam file, annotate the taxonomy and genome
@@ -150,18 +148,19 @@ metascope_id <- function(bam_file, aligner = "subread",
 
     # Check to make sure valid aligner is specified
     if (aligner != "bowtie" && aligner != "subread" && aligner != "other")
-        stop("Please make sure aligner is set to either 'bowtie', 'subread',
-             or 'other'")
+        stop("Please make sure aligner is set to either 'bowtie', 'subread',",
+             " or 'other'")
 
     message("Reading .bam file: ", bam_file)
 
     to_pull <- c("qname", "rname", "cigar","qwidth", "pos")
-    if (identical(aligner,"bowtie"))
+    if (identical(aligner,"bowtie")) {
         params <- Rsamtools::ScanBamParam(what = to_pull, tag = c("AS"))
-    else if (identical(aligner,"subread"))
+    } else if (identical(aligner,"subread")) {
         params <- Rsamtools::ScanBamParam(what = to_pull, tag = c("NM"))
-    else if (identical(aligner,"other"))
+    } else if (identical(aligner,"other")) {
         params <- Rsamtools::ScanBamParam(what = to_pull)
+    }
 
     reads <- Rsamtools::scanBam(bam_file, param = params)
     unmapped <- is.na(reads[[1]]$rname)
@@ -170,9 +169,9 @@ metascope_id <- function(bam_file, aligner = "subread",
     mapped_cigar <- reads[[1]]$cigar[!unmapped]
     mapped_qwidth <- reads[[1]]$qwidth[!unmapped]
 
-    if (aligner == "bowtie")
+    if (aligner == "bowtie") {
         mapped_alignment <- reads[[1]][["tag"]][["AS"]][!unmapped]
-    else if (aligner == "subread")
+    } else if (aligner == "subread")
         mapped_edit <- reads[[1]][["tag"]][["NM"]][!unmapped]
 
     read_names <- unique(mapped_qname)
@@ -187,9 +186,9 @@ metascope_id <- function(bam_file, aligner = "subread",
     # If URI length is greater than 2500 characters then split accession list
     URI_length <- nchar(paste(accessions, collapse = "+"))
     if (URI_length > 2500){
-        chunks <- split(accessions, ceiling(seq_along(accessions)/100))
+        chunks <- split(accessions, ceiling(seq_along(accessions) / 100))
         tax_id_all <- c()
-        for (i in 1:length(chunks)){
+        for (i in 1:length(chunks)) {
             suppressMessages(
                 tax_id_chunk <- taxize::genbank2uid(id = chunks[[i]]))
             Sys.sleep(3)
@@ -216,38 +215,31 @@ metascope_id <- function(bam_file, aligner = "subread",
     cigar_strings <- mapped_cigar[order(qname_inds)]
     qwidths <- mapped_qwidth[order(qname_inds)]
 
-    if (aligner == "bowtie")
+    if (aligner == "bowtie") {
         scores <- mapped_alignment[order(qname_inds)]
-    else if (aligner == "subread")
+    } else if (aligner == "subread") {
         scores <- mapped_edit[order(qname_inds)]
-    else if (aligner == "other")
-        scores <- 1
-
+    } else if (aligner == "other") scores <- 1
     qname_inds <- sort(qname_inds)
 
     #Subread alignment scores: CIGAR string matches - edit score
-    if (identical(aligner,"subread")){
+    if (identical(aligner, "subread")) {
         num_match <- unlist(vapply(cigar_strings, count_matches,
-                                   USE.NAMES = FALSE,double(1)))
+                                   USE.NAMES = FALSE, double(1)))
         alignment_scores <- num_match - scores
-        scaling_factor <- 100.0/max(alignment_scores)
+        scaling_factor <- 100.0 / max(alignment_scores)
         relative_alignment_scores <- alignment_scores - min(alignment_scores)
         exp_alignment_scores <- exp(relative_alignment_scores * scaling_factor)
-    }
-
-    # Bowtie2 alignment scores: AS value + read length (qwidths) 
-    else if (identical(aligner,"bowtie")){
+    } else if (identical(aligner, "bowtie")) {
+        # Bowtie2 alignment scores: AS value + read length (qwidths) 
         alignment_scores <- scores + qwidths
-        scaling_factor <- 100.0/max(alignment_scores)
+        scaling_factor <- 100.0 / max(alignment_scores)
         relative_alignment_scores <- alignment_scores - min(alignment_scores)
         exp_alignment_scores <- exp(relative_alignment_scores * scaling_factor)
-    }
-
-    # Other alignment scores: No assumptions
-    else if (identical(aligner,"other")){
+    } else if (identical(aligner, "other")) {
+        # Other alignment scores: No assumptions
         exp_alignment_scores <- 1
     }
-
     combined <- dplyr::bind_cols("qname" = qname_inds,
                                  "rname" = rname_tax_inds,
                                  "scores" = exp_alignment_scores)
@@ -256,16 +248,14 @@ metascope_id <- function(bam_file, aligner = "subread",
     rname_tax_inds_2 <- input_distinct$rname
     scores_2 <- input_distinct$scores
     non_unique_read_ind <- unique(combined[[1]][(
-        duplicated(input_distinct[,1]) | duplicated(input_distinct[,1],
+        duplicated(input_distinct[,1]) | duplicated(input_distinct[, 1],
                                                     fromLast = TRUE))])
     # 1 if read is multimapping, 0 if read is unique
     y_ind_2 <- as.numeric(unique(input_distinct[[1]]) %in% non_unique_read_ind)
-
     gammas <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2, x = scores_2)
     pi_old <- rep(1 / nrow(gammas), ncol(gammas))
     pi_new <-  Matrix::colMeans(gammas)
     theta_new <- Matrix::colMeans(gammas)
-
     conv <- max(abs(pi_new - pi_old) / pi_old)
     it <- 0
 
@@ -278,11 +268,11 @@ metascope_id <- function(bam_file, aligner = "subread",
                                           x = theta_new[rname_tax_inds_2])
         weighted_gamma <- gammas * pi_mat * theta_mat
         weighted_gamma_sums <- Matrix::rowSums(weighted_gamma)
-        gammas_new <- weighted_gamma/weighted_gamma_sums
+        gammas_new <- weighted_gamma / weighted_gamma_sums
         # Maximization step: proportion of reads to each genome
         pi_new <- Matrix::colMeans(gammas_new)
         theta_new_num <- (Matrix::colSums(y_ind_2 * gammas_new) + 1)
-        theta_new <- num / (nrow(gammas_new) + 1)
+        theta_new <- theta_new_num / (nrow(gammas_new) + 1)
         # Check convergence
         it <- it + 1
         conv <- max(abs(pi_new - pi_old) / pi_old, na.rm = TRUE)
@@ -306,9 +296,9 @@ metascope_id <- function(bam_file, aligner = "subread",
     results <- cbind(TaxonomyID = final_taxids, Genome = final_genomes,
                      read_count = best_hit, Proportion = proportion,
                      EMreads = EMreads, EMProportion = EMprop)
-    results <- results[order(best_hit, decreasing = TRUE), ]
+    results <- as.data.frame(results[order(best_hit, decreasing = TRUE), ])
     message("Found reads for ", length(best_hit), " genomes")
-    
+
     # PLotting of genome locations
     if (is.null(num_species_plot)){
         num_species_plot <- min(length(final_taxids), 50)
