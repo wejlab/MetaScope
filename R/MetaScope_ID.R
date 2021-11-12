@@ -61,7 +61,7 @@ count_matches <- function(x, char = "M") {
 #' Helper Function for MetaScope ID
 
 locations <- function(which_taxid, which_genome,
-                      accessions, taxids, reads) {
+                      accessions, taxids, reads, bam_file) {
     plots_save <- paste(stringr::str_split(tools::file_path_sans_ext(bam_file),
                                            "\\.")[[1]][1],
                         "coverage", sep = "_")
@@ -203,10 +203,10 @@ metascope_id <- function(bam_file, aligner = "subread",
             success <- FALSE
             attempt <- 0
             # Attempt to get taxid up to three times for each chunk
-            while (attempt <= 3 && !success) {
+            while (!success) {
                 try({
                     attempt <- attempt + 1
-                    if (attempt > 2) message("Attempt #", attempt, "Chunk #", i)
+                    if (attempt > 1) message("Attempt #", attempt, " Chunk #", i)
                     suppressMessages(
                         tax_id_chunk <- taxize::genbank2uid(id = chunks[[i]],
                                                             key = "01d22876be34df5c28f4aedc479a2674c809"))
@@ -331,7 +331,8 @@ metascope_id <- function(bam_file, aligner = "subread",
         sapply(seq_along(results$TaxonomyID)[1:num_species_plot],
                function(x) locations(as.numeric(results$TaxonomyID)[x],
                                      which_genome = results$Genome[x],
-                                     accessions, taxids, reads))
+                                     accessions, taxids, reads,
+                                     bam_file))
     }
     utils::write.csv(results, file = out_file, row.names = FALSE)
     message("Results written to ", out_file)
