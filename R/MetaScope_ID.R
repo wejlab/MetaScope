@@ -1,4 +1,4 @@
-globalVariables(c("qname","rname"))
+globalVariables(c("qname", "rname"))
 
 #Testing new changes made to ID function. Score changes, unique indicator change (I think unique indicator could be issue with 0 masking unique reads) 
 
@@ -61,21 +61,28 @@ count_matches <- function(x, char = "M") {
 #' Helper Function for MetaScope ID
 
 locations <- function(which_taxid, which_genome,
-                      accessions, taxids, reads,
-                      plots_save = tools::file_path_sans_ext(bam_file)) {
+                      accessions, taxids, reads) {
+    plots_save <- paste(stringr::str_split(tools::file_path_sans_ext(bam_file),
+                                           "\\.")[[1]][1],
+                        "coverage", sep = "_")
     # map back to accessions
     choose_acc <- paste(accessions[which(as.numeric(taxids) %in% which_taxid)])
     # map back to BAM
     map2bam_acc <- which(reads[[1]]$rname %in% choose_acc)
     # Split genome name to make digestible
-    use_name <- paste(strsplit(which_genome, " ")[[1]][1:2], collapse = " ")
+    this_genome <- strsplit(which_genome, " ")[[1]][1:2]
+    use_name <- paste(this_genome, collapse = " ")
+    coverage <- round(mean(seq_len(338099) %in% unique(
+        reads[[1]]$pos[map2bam_acc])), 3)
     ggplot2::qplot(reads[[1]]$pos[map2bam_acc],
                    geom = "histogram",
-                   main = "Locations associated with species:",
+                   main = paste("Positions of reads mapped to", use_name),
                    xlab = "Leftmost position in genome",
                    ylab = "Read Count") +
-        ggplot2::labs(subtitle = use_name)
-    ggplot2::ggsave(paste0(plots_save, "/", which_taxid, ".png"),
+        ggplot2::labs(subtitle = paste("Coverage is", coverage),
+                      caption = paste0("Accession Number: ", choose_acc))
+    ggplot2::ggsave(paste0(plots_save, "/",
+                           stringr::str_replace(use_name, " ", "_"), ".png"),
                     device = "png")
 }
 
@@ -99,6 +106,9 @@ locations <- function(which_taxid, which_genome,
 #' the EMconv is below the threshhold. Default set at \code{50}.
 #' If set at \code{0}, the algorithm skips the EM step and summarizes the .bam
 #' file 'as is'
+#' @param num_species_plot The number of genome coverage plots to be saved.
+#' Default is \code{NULL}, which saves coverage plots for the ten most
+#' highly abundant species.
 #' 
 #' @return
 #' This function returns a .csv file with annotated read counts to genomes with
@@ -175,7 +185,7 @@ metascope_id <- function(bam_file, aligner = "subread",
         mapped_edit <- reads[[1]][["tag"]][["NM"]][!unmapped]
 
     read_names <- unique(mapped_qname)
-    accessions <- unique(mapped_rname)
+    accessions <- as.character(unique(mapped_rname))
 
     message("\tFound ", length(read_names), " reads aligned to ",
             length(accessions), " NCBI accessions")
@@ -188,13 +198,26 @@ metascope_id <- function(bam_file, aligner = "subread",
     if (URI_length > 2500){
         chunks <- split(accessions, ceiling(seq_along(accessions) / 100))
         tax_id_all <- c()
+        message(paste("Accession list broken into", length(chunks), "chunks"))
         for (i in 1:length(chunks)) {
-            suppressMessages(
-                tax_id_chunk <- taxize::genbank2uid(id = chunks[[i]]))
-            Sys.sleep(3)
-            tax_id_all <- c(tax_id_all, tax_id_chunk)
+            success <- FALSE
+            attempt <- 0
+            # Attempt to get taxid up to three times for each chunk
+            while (attempt <= 3 && !success) {
+                try({
+                    attempt <- attempt + 1
+                    if (attempt > 2) message("Attempt #", attempt, "Chunk #", i)
+                    suppressMessages(
+                        tax_id_chunk <- taxize::genbank2uid(id = chunks[[i]],
+                                                            key = "01d22876be34df5c28f4aedc479a2674c809"))
+                    Sys.sleep(1)
+                    tax_id_all <- c(tax_id_all, tax_id_chunk)
+                    success <- TRUE
+                })
+            }
         }
-    } else suppressMessages(tax_id_all <- taxize::genbank2uid(id = accessions))
+    } else suppressMessages(tax_id_all <- taxize::genbank2uid(id = accessions,
+                                                              key = "01d22876be34df5c28f4aedc479a2674c809"))
 
     taxids <- vapply(tax_id_all, function(x) x[1], character(1))
     unique_taxids <- unique(taxids)
@@ -301,7 +324,7 @@ metascope_id <- function(bam_file, aligner = "subread",
 
     # PLotting of genome locations
     if (is.null(num_species_plot)){
-        num_species_plot <- min(length(final_taxids), 50)
+        num_species_plot <- min(length(final_taxids), 10)
     }
     if (num_species_plot > 0) {
         message("Creating coverage plots")
