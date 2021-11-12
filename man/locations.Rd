@@ -4,14 +4,7 @@
 \alias{locations}
 \title{Helper Function for MetaScope ID}
 \usage{
-locations(
-  which_taxid,
-  which_genome,
-  accessions,
-  taxids,
-  reads,
-  plots_save = tools::file_path_sans_ext(bam_file)
-)
+locations(which_taxid, which_genome, accessions, taxids, reads, bam_file)
 }
 \description{
 Helper Function for MetaScope ID

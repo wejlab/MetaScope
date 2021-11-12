@@ -2,6 +2,7 @@
 
 export(align_target)
 export(align_target_bowtie)
+export(convert_animalcules)
 export(count_matches)
 export(demultiplex)
 export(download_refseq)

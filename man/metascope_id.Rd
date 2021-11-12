@@ -30,6 +30,10 @@ basename plus ".metascope_id.csv".}
 the EMconv is below the threshhold. Default set at \code{50}.
 If set at \code{0}, the algorithm skips the EM step and summarizes the .bam
 file 'as is'}
+
+\item{num_species_plot}{The number of genome coverage plots to be saved.
+Default is \code{NULL}, which saves coverage plots for the ten most
+highly abundant species.}
 }
 \value{
 This function returns a .csv file with annotated read counts to genomes with
