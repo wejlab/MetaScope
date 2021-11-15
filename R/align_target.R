@@ -1,7 +1,7 @@
 globalVariables(c("align_details"))
 #' Filter unmapped reads
 #'
-#' This function will to remove all unmapped reads or lines in a .bam file
+#' This function will remove all unmapped reads or lines in a .bam file
 #' (warning: overwrites the original file!). This function is needed because
 #' combining multiple .bam files from different microbial libraries may lead
 #' to some reads that mapped to one library and have unmapped entries from
@@ -15,7 +15,7 @@ globalVariables(c("align_details"))
 #'
 #' @return
 #' This function will overwrite the existing .bam file with a new .bam file in
-#' the same location that has only mapped lines. The function iself returns the
+#' the same location that has only mapped lines. The function itself returns the
 #' output .bam file name.
 #'
 #' @examples
@@ -30,18 +30,23 @@ globalVariables(c("align_details"))
 
 filter_unmapped_reads <- function(bamfile) {
     # sort bam file
-    sorted_bamfile <- Rsamtools::sortBam(bamfile,paste(tools::file_path_sans_ext(bamfile), ".sorted", sep = ""))
+    sorted_bamfile <- Rsamtools::sortBam(
+        bamfile, paste(tools::file_path_sans_ext(bamfile),
+                       ".sorted", sep = ""))
     # index bam file
     bam_index <- Rsamtools::indexBam(sorted_bamfile)
     # filter umapped reads
-    filtered_bam <- Rsamtools::filterBam(sorted_bamfile, destination = bamfile,index = bam_index, indexDestination = FALSE, param = Rsamtools::ScanBamParam(flag = Rsamtools::scanBamFlag(isUnmappedQuery = FALSE)))
+    filtered_bam <- Rsamtools::filterBam(
+        sorted_bamfile, destination = bamfile,
+        index = bam_index, indexDestination = FALSE,
+        param = Rsamtools::ScanBamParam(flag = Rsamtools::scanBamFlag(
+            isUnmappedQuery = FALSE)))
     # clean up
     file.remove(sorted_bamfile)
     file.remove(bam_index)
     # return filtered file name
     return(filtered_bam)
 }
-
 
 #' Create a combined .bam header
 #' 
@@ -76,26 +81,21 @@ filter_unmapped_reads <- function(bamfile) {
 
 combined_header <- function(bam_files, header_file = "header_tmp.sam") {
     print(paste("Making a combined header file:", header_file))
-    
     # get first and last line of header
     bam_head <- Rsamtools::scanBamHeader(bam_files[1])
     n <- length(bam_head[[1]]$text)
     last <- c(names(bam_head[[1]]$text)[n], bam_head[[1]]$text[[n]])
-    
     # open and print the first line of header
     head_con <- file(header_file, open = "w")
     cat(c(names(bam_head[[1]]$text)[1], bam_head[[1]]$text[[1]]),
-        file = head_con, 
+        file = head_con,
         sep = "\t")
     cat("\n", file = head_con, sep = "")
-    
     # print genomes from all .bam files
     for (bfile in bam_files) {
-        # print(paste('Reading/writing genomes from', bfile))
         bam_head <- Rsamtools::scanBamHeader(bfile)
-        
         for (j in 2:(length(bam_head[[1]]$text) - 1)) {
-            cat(c(names(bam_head[[1]]$text)[j], bam_head[[1]]$text[[j]]), 
+            cat(c(names(bam_head[[1]]$text)[j], bam_head[[1]]$text[[j]]),
                 file = head_con, sep = "\t")
             cat("\n", file = head_con, sep = "")
         }
@@ -142,24 +142,22 @@ combined_header <- function(bam_files, header_file = "header_tmp.sam") {
 #' # system2("samtools reheader header_tmp.sam example2.bam > example2h.bam")
 #'
 
-bam_reheader_R <- function(head, old_bam, new_bam = paste(tools::file_path_sans_ext(old_bam), "h.bam", sep = "")) {
+bam_reheader_R <- function(head, old_bam,
+                           new_bam = paste(tools::file_path_sans_ext(old_bam),
+                                           "h.bam", sep = "")) {
     # system(paste('samtools reheader ' , head, ' ', old_bam,' > ',
     # new_bam, sep=''))
     new_sam <- paste(tools::file_path_sans_ext(new_bam), ".sam", sep = "")
     new_sam_con <- file(new_sam, open = "w")
     head_con <- file(head, open = "r")
-    while ((length(oneLine <- readLines(head_con, n = 1, warn = FALSE)) > 
-            0)) {
+    while (length(oneLine <- readLines(head_con, n = 1, warn = FALSE)) > 0) {
         writeLines(oneLine, new_sam_con)
     }
     close(head_con)
     old_sam <- Rsamtools::asSam(old_bam, overwrite = TRUE)
     old_sam_con <- file(old_sam, open = "r")
-    while ((length(oneLine <- readLines(old_sam_con, n = 1, warn = FALSE)) > 
-            0)) {
-        if (substr(oneLine, 1, 1) != "@") {
-            writeLines(oneLine, new_sam_con)
-        }
+    while (length(oneLine <- readLines(old_sam_con, n = 1, warn = FALSE)) > 0) {
+        if (substr(oneLine, 1, 1) != "@") writeLines(oneLine, new_sam_con)
     }
     close(new_sam_con)
     close(old_sam_con)
@@ -181,7 +179,7 @@ bam_reheader_R <- function(head, old_bam, new_bam = paste(tools::file_path_sans_
 #' @param bam_files A list of file names for the .bam files to be merged.
 #' @param destination A file name and location for the merged .bam file.
 #' @param head_file A file name and location for the combined header file.
-#' Defaults to the destiation . For example, 'example.bam' will be written
+#' Defaults to the destination . For example, 'example.bam' will be written
 #' as 'exampleh.bam'.
 #'
 #' @return
@@ -208,7 +206,9 @@ bam_reheader_R <- function(head, old_bam, new_bam = paste(tools::file_path_sans_
 #' # merged_all <- merge_bam_files(bam_files, 'example_merged')
 #'
 
-merge_bam_files <- function(bam_files, destination, head_file = paste(destination, "_header.sam", sep = "")) {
+merge_bam_files <- function(bam_files, destination,
+                            head_file = paste(destination, "_header.sam",
+                                              sep = "")) {
     com_head <- combined_header(bam_files, header_file = head_file)
     print("Merging and sorting .bam files")
     bam_files_h <- sam_files_h <- NULL
@@ -217,10 +217,14 @@ merge_bam_files <- function(bam_files, destination, head_file = paste(destinatio
         bam_files_h <- c(bam_files_h, new_bam_h)
         file.remove(bam_files[i])
         # remove .bam and .vcf and .bam.summary files for each alignment
-        suppressWarnings(file.remove(paste(bam_files[i], ".indel.vcf", sep = "")))
-        suppressWarnings(file.remove(paste(bam_files[i], ".summary", sep = "")))
+        suppressWarnings(file.remove(paste(bam_files[i],
+                                           ".indel.vcf", sep = "")))
+        suppressWarnings(file.remove(paste(bam_files[i],
+                                           ".summary", sep = "")))
     }
-    merged_bam <- Rsamtools::mergeBam(bam_files_h,paste(tools::file_path_sans_ext(destination), "_unsorted.bam", sep = ""), overwrite = TRUE)
+    merged_bam <- Rsamtools::mergeBam(
+        bam_files_h, paste(tools::file_path_sans_ext(destination),
+                           "_unsorted.bam", sep = ""), overwrite = TRUE)
     # clean up
     file.remove(com_head)
     for (i in bam_files_h) {
@@ -228,8 +232,6 @@ merge_bam_files <- function(bam_files, destination, head_file = paste(destinatio
     }
     # sort merged bam file
     merged_bam_sorted <- Rsamtools::sortBam(merged_bam, destination)
-    #merged_bam_sorted <- Rsamtools::sortBam(merged_bam, destination, byQname = T)
-    # clean up
     file.remove(merged_bam)
     # return merged and sorted bam
     return(merged_bam_sorted)
@@ -289,11 +291,14 @@ merge_bam_files <- function(bam_files, destination, head_file = paste(destinatio
 #' target_map <- align_target(readPath, targLibs, project_name = "subread_target")
 #' 
 
-align_target <- function(reads, libs, lib_dir=NULL, project_name = tools::file_path_sans_ext(reads), settings = align_details) {
+align_target <- function(reads, libs, lib_dir=NULL,
+                         project_name = tools::file_path_sans_ext(reads),
+                         settings = align_details) {
     ## needs to make a system call to samtools to merge
     bam_files <- numeric(length(libs))
     for (i in seq_along(libs)) {
-        bam_files[i] <- paste(tools::file_path_sans_ext(reads), ".", libs[i], ".bam", sep = "")
+        bam_files[i] <- paste(tools::file_path_sans_ext(reads), ".", libs[i],
+                              ".bam", sep = "")
         Rsubread::align(index = paste(lib_dir,libs[i],sep=""), 
                         readfile1 = reads,
                         output_file = bam_files[i],
@@ -318,8 +323,6 @@ align_target <- function(reads, libs, lib_dir=NULL, project_name = tools::file_p
         file.remove(paste(bam_files, ".indel.vcf", sep = ""))
         file.remove(paste(bam_files, ".summary", sep = ""))
     }
-    
     message("DONE! Alignments written to ", project_name, ".bam")
-    
     return(paste(project_name, ".bam", sep = ""))
 }

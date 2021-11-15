@@ -1,4 +1,11 @@
 #' Align microbiome reads to set of indexed Bowtie2 libraries
+#' 
+#' This is the main MetaScope target library mapping function, using RBowtie2
+#' and multiple libraries. Aligns to each library separately, filters
+#' unmapped reads from each file, and then merges and sorts the .bam files
+#' from each library into one output file. If desired, output can be
+#' passed to `filter_host_bowtie()` to remove reads that also map to filter library
+#' genomes.
 #'
 #' @param read1 Path to the .fastq file to align.
 #' @param read2 Optional: Location of the mate pair .fastq file to align.
@@ -59,62 +66,49 @@
 #' overwrite = TRUE)
 
 
-align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir, align_file, bowtie2_options = NULL, threads = 8, overwrite = FALSE) {
-    
+align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir,
+                                align_file, bowtie2_options = NULL,
+                                threads = 8, overwrite = FALSE) {
+
     # Convert user specified paths to absolute paths for debugging purposes
     lib_dir <- tools::file_path_as_absolute(lib_dir)
     align_dir <- tools::file_path_as_absolute(align_dir)
-    
     # If user does not specify their own parameters then use default
     # PathoScope parameters
     if (missing(bowtie2_options)) {
-        bowtie2_options <- paste("--very-sensitive-local -k 100 --score-min L,20,1.0","--threads",threads)
-    }
-    else{
-        bowtie2_options <- paste(bowtie2_options, "--threads", threads)
-    }
-    
-   
+        bowtie2_options <- paste(
+            "--very-sensitive-local -k 100 --score-min L,20,1.0", "--threads",
+            threads)
+    } else bowtie2_options <- paste(bowtie2_options, "--threads", threads)
+
     bam_files <- numeric(length(libs))
     for (i in seq_along(libs)) {
         # Do not attach the .bam extension because Rbowtie2 does this already
-        bam_files[i] <-
-            file.path(align_dir, paste(basename(tools::file_path_sans_ext(read1)),".", libs[i], sep = ""))
-        
-        message("Attempting to perform Bowtie2 alignment on ",libs[i]," index")
-        
-        Rbowtie2::bowtie2_samtools(
-            bt2Index = file.path(lib_dir, libs[i]),
-            output = bam_files[i],
-            outputType = "bam",
-            seq1 = read1,
-            seq2 = read2,
-            overwrite = overwrite,
-            ... = bowtie2_options
-        )
-        
+        bam_files[i] <- 
+            file.path(align_dir,
+                      paste(basename(tools::file_path_sans_ext(read1)),
+                            ".", libs[i], sep = ""))
+
+        message("Attempting to perform Bowtie2 alignment on ",
+                libs[i], " index")
+        Rbowtie2::bowtie2_samtools(bt2Index = file.path(lib_dir, libs[i]),
+                                   output = bam_files[i], outputType = "bam",
+                                   seq1 = read1, seq2 = read2,
+                                   overwrite = overwrite,
+                                   ... = bowtie2_options)
         # Attach .bam extension to bam files in order to call this function
         filter_unmapped_reads(paste0(bam_files[i], ".bam"))
-        
     }
-    
+
     # Create variable names for files
     outputFile <- file.path(align_dir, paste0(align_file, ".bam"))
     bam_files <- paste0(bam_files, ".bam")
-    
-    # If more than one libraries were align to then combine the bam files
+    # If more than one libraries were aligned to then combine the bam files
     if (length(bam_files) > 1) {
         message("Merging the bam files into ",align_file,".bam")
         merge_bam_files(bam_files, tools::file_path_sans_ext(outputFile))
-    }
-    
-    # Otherwise rename the bam file to be the name of the output file
-    else{
-        file.rename(bam_files, outputFile)
-    }
+    } else file.rename(bam_files, outputFile)
     
     message("DONE! Alignments written to ", outputFile)
-    
     return(outputFile)
-        
 }

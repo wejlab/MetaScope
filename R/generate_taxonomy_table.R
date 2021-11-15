@@ -1,3 +1,4 @@
+#' Helper function to create a taxonomy table
 mk_table <- function (intable, taxon_ranks) {
   this_t <- as.data.frame(intable)
   if (!identical(this_t$rank, character(0))) {
@@ -7,11 +8,10 @@ mk_table <- function (intable, taxon_ranks) {
     }
     this_t %>%
       dplyr::filter(rank %in% taxon_ranks) %>% 
-      dplyr::right_join(., tibble(rank = taxon_ranks), 
+      dplyr::right_join(., dplyr::tibble(rank = taxon_ranks), 
                         by = "rank") %>% 
-      arrange(factor(rank, levels = taxon_ranks)) %>% 
-      dplyr::select(name) %>% 
-      unlist
+      dplyr::arrange(factor(rank, levels = taxon_ranks)) %>% 
+      dplyr::select(name) %>% unlist
   }
 }
 
@@ -36,7 +36,8 @@ mk_table <- function (intable, taxon_ranks) {
 generate_taxonomy_table <- function() {
   # Download the updated refseq table from NCBI
   # This table contains all species/strains with an available genome
-  refseq_link <- "ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
+  refseq_link <-
+    "ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
   tax_id <- read.table(refseq_link, header = T, sep = "\t",
                        comment.char = "", quote = "", skip = 1) %>%
     dplyr::distinct(taxid) %>%

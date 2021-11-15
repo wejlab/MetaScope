@@ -59,6 +59,17 @@ count_matches <- function(x, char = "M") {
 }
 
 #' Helper Function for MetaScope ID
+#' 
+#' Used to create plots of genome coverage for any number of accession numbers
+#' 
+#' @param which_taxid Which taxid to plot
+#' @param which_genome Which genome to plot
+#' @param accessions List of accessions from \code{metascope_id()}
+#' @param taxids List of accessions from \code{metascope_id()}
+#' @param reads List of reads from bam file
+#' @param bam_file The path to the bam file
+#' 
+#' @return A plot of the read coverage for a given genome
 
 locations <- function(which_taxid, which_genome,
                       accessions, taxids, reads, bam_file) {
@@ -277,8 +288,7 @@ metascope_id <- function(bam_file, aligner = "subread",
     y_ind_2 <- as.numeric(unique(input_distinct[[1]]) %in% non_unique_read_ind)
     gammas <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2, x = scores_2)
     pi_old <- rep(1 / nrow(gammas), ncol(gammas))
-    pi_new <-  Matrix::colMeans(gammas)
-    theta_new <- Matrix::colMeans(gammas)
+    pi_new <- theta_new <- Matrix::colMeans(gammas)
     conv <- max(abs(pi_new - pi_old) / pi_old)
     it <- 0
 

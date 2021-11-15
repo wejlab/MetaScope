@@ -16,7 +16,7 @@ merge_bam_files(
 \item{destination}{A file name and location for the merged .bam file.}
 
 \item{head_file}{A file name and location for the combined header file.
-Defaults to the destiation . For example, 'example.bam' will be written
+Defaults to the destination . For example, 'example.bam' will be written
 as 'exampleh.bam'.}
 }
 \value{

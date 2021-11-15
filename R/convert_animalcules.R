@@ -23,11 +23,11 @@
 #}
 
 read_in_id <- function(path_id_counts, end_string, which_annot_col) {
-  name_file <- tail(stringr::str_split(path_id_counts, "/")[[1]], n = 1)
-  meta_counts <- read_csv(path_id_counts, show_col_types = FALSE) %>%
-    filter(!is.na(TaxonomyID)) %>%
-    select(read_count, TaxonomyID) %>%
-    mutate(sample = stringr::str_remove(name_file, end_string))
+  name_file <- utils::tail(stringr::str_split(path_id_counts, "/")[[1]], n = 1)
+  meta_counts <- readr::read_csv(path_id_counts, show_col_types = FALSE) %>%
+    dplyr::filter(!is.na(TaxonomyID)) %>%
+    dplyr::select(read_count, TaxonomyID) %>%
+    dplyr::mutate(sample = stringr::str_remove(name_file, end_string))
 }
 
 #' Create a multi-assay experiment from MetaScope output for usage with animalcules
@@ -68,33 +68,36 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
     tidyr::pivot_wider(., id_cols = c("sample", "TaxonomyID"),
                        names_from = "sample", values_from = "read_count",
                        values_fill = 0)
-  # Create taxonomy table
+  # Create taxonomy, counts tables
   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
                    "family", "genus", "species", "strain")
   all_ncbi <- taxize::classification(combined_list$TaxonomyID, db = "ncbi",
                                      max_tries = 4)
   taxonomy_table <- as.data.frame(t(sapply(all_ncbi, mk_table, taxon_ranks)))
   colnames(taxonomy_table) <- taxon_ranks
+  counts_table <- combined_list %>% dplyr::select(-TaxonomyID) %>% 
+    as.data.frame()
+  # Remove duplicated species
+  dup_sp <- taxonomy_table$species[which(duplicated(taxonomy_table$species))]
+  all_ind <- which(taxonomy_table$species == dup_sp)
+  counts_table[all_ind[1], ] <- base::colSums(counts_table[all_ind, ])
+  counts_table %<>% dplyr::filter(!duplicated(taxonomy_table$species))
+  taxonomy_table %<>% dplyr::filter(!duplicated(species))
+  
   rownames(taxonomy_table) <- stringr::str_replace(taxonomy_table$species,
                                                    " ", "_")
-  counts_table <- combined_list %>% select(-TaxonomyID) %>% as.data.frame()
   rownames(counts_table) <- rownames(taxonomy_table) 
   # Create MAE Object
-  annot_dat <- read_csv(annot_path, show_col_types = FALSE) 
+  annot_dat <- readr::read_csv(annot_path, show_col_types = FALSE) 
   se_colData <- annot_dat %>% # Only keep present samples in annotation data
-    mutate(sampcol = unlist(annot_dat[, which_annot_col])) %>%
-    filter(sampcol %in% colnames(combined_list)) %>%
-    select(-sampcol) %>%
-    S4Vectors::DataFrame()
+    dplyr::mutate(sampcol = unlist(annot_dat[, which_annot_col])) %>%
+    dplyr::filter(sampcol %in% colnames(combined_list)) %>%
+    dplyr::select(-sampcol) %>% S4Vectors::DataFrame()
   rownames(se_colData) <- se_colData[, which_annot_col]
-  se_mgx <- counts_table %>%
-    base::data.matrix() %>%
-    S4Vectors::SimpleList() %>%
-    magrittr::set_names("MGX")
-  se_rowData <- taxonomy_table %>%
-    base::data.frame() %>%
-    dplyr::mutate_all(as.character) %>%
-    S4Vectors::DataFrame()
+  se_mgx <- counts_table %>% base::data.matrix() %>%
+    S4Vectors::SimpleList() %>% magrittr::set_names("MGX")
+  se_rowData <- taxonomy_table %>% base::data.frame() %>%
+    dplyr::mutate_all(as.character) %>% S4Vectors::DataFrame()
   microbe_se <- SummarizedExperiment::SummarizedExperiment(
     assays = se_mgx, colData = se_colData, rowData = se_rowData) %>%
     TBSignatureProfiler::mkAssay(., input_name = "MGX", log = TRUE,

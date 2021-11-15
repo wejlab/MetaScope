@@ -30,9 +30,9 @@
 
 get_children <- function(input_taxon, input_rank, data = taxonomy_table){
     # Get child strains
-    strain_list <- unique(data[, "strain"][tolower(data[, input_rank]) %in% tolower(input_taxon)])
+    ind <- tolower(data[, input_rank]) %in% tolower(input_taxon)
+    strain_list <- unique(data[, "strain"][ind])
     strain_list <- strain_list[!is.na(strain_list)]
-    
     # Get the children species
     ## Delete rows with child strains
     new_table <- data[!(data[, "strain"] %in% strain_list), ]
@@ -40,6 +40,5 @@ get_children <- function(input_taxon, input_rank, data = taxonomy_table){
     species_list <- unique(new_table[, "species"][ind])
     species_list <- species_list[!is.na(species_list)]
     children_list <- c(strain_list,species_list)
-    
     return(children_list)
 }

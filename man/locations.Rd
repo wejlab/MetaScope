@@ -6,6 +6,22 @@
 \usage{
 locations(which_taxid, which_genome, accessions, taxids, reads, bam_file)
 }
+\arguments{
+\item{which_taxid}{Which taxid to plot}
+
+\item{which_genome}{Which genome to plot}
+
+\item{accessions}{List of accessions from \code{metascope_id()}}
+
+\item{taxids}{List of accessions from \code{metascope_id()}}
+
+\item{reads}{List of reads from bam file}
+
+\item{bam_file}{The path to the bam file}
+}
+\value{
+A plot of the read coverage for a given genome
+}
 \description{
-Helper Function for MetaScope ID
+Used to create plots of genome coverage for any number of accession numbers
 }

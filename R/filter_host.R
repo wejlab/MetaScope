@@ -37,27 +37,21 @@ remove_matches <- function(reads_bam, read_names, name_out) {
     # Note: reads_BAM and filter-aligned files are already sorted by chromosome
     # index bam file
     bam_index <- Rsamtools::indexBam(reads_bam)
-    
     # obtain vector of target query names from .bam file
     target_reads <- Rsamtools::scanBam(reads_bam)[[1]]$qname
-    
-    # some aligned reads may be duplicated; remove these, and unlist filter names
+    # some aligned reads may be duplicated; remove these, and unlist
     filter_reads <- unique(unlist(read_names))
-    
-    # define logical vector of which reads to keep, based on query names (qnames)
+    # define logical vector of which reads to keep, based on query names
     filter_which <- !(target_reads %in% filter_reads)
-    
     # create BamFile instance to set yieldSize
     bf <- Rsamtools::BamFile(reads_bam, yieldSize = length(filter_which))
-    
-    filtered_bam <- Rsamtools::filterBam(bf, destination = name_out, index = bam_index, indexDestination = FALSE, filter = filter_which, param = Rsamtools::ScanBamParam(what = "qname"))
-    
-    # clean up
+    filtered_bam <- Rsamtools::filterBam(
+        bf, destination = name_out, index = bam_index,
+        indexDestination = FALSE, filter = filter_which,
+        param = Rsamtools::ScanBamParam(what = "qname"))
     file.remove(bam_index)
-    
     return(reads_bam)
 }
-
 
 #' Align reads against one or more filter libraries and subsequently
 #' remove mapped reads
@@ -102,13 +96,17 @@ remove_matches <- function(reads_bam, read_names, name_out) {
 #' filter_host(readPath, libs = "filter")
 #'
 
-filter_host <- function(reads_bam, libs, lib_dir=NULL, output = paste(tools::file_path_sans_ext(reads_bam), "filtered", "bam", sep = "."), settings = align_details) {
+filter_host <- function(reads_bam, libs, lib_dir = NULL,
+                        output = paste(tools::file_path_sans_ext(reads_bam),
+                                       "filtered", "bam", sep = "."),
+                        settings = align_details) {
     # Initialize list of names
     read_names <- vector(mode = "list", length(libs))
-    
+
     for (i in seq_along(libs)) {
         # Create output file name for BAM
-        lib_file <- paste(tools::file_path_sans_ext(reads_bam), ".", libs[i], ".bam", sep = "")
+        lib_file <- paste(tools::file_path_sans_ext(reads_bam), ".",
+                          libs[i], ".bam", sep = "")
         # Align BAM to the lib & generate new file
         Rsubread::align(index = paste(lib_dir,libs[i],sep=""), 
                         readfile1 = reads_bam,
@@ -121,25 +119,35 @@ filter_host <- function(reads_bam, libs, lib_dir=NULL, output = paste(tools::fil
                         phredOffset = settings[["phredOffset"]],
                         unique = settings[["unique"]],
                         nBestLocations = settings[["nBestLocations"]])
+
         # sort BAM file and remove umapped reads (package helper function)
         filter_unmapped_reads(lib_file)
-        
         # Extract target query names from mapped BAM file
         read_names[[i]] <- Rsamtools::scanBam(lib_file)[[1]]$qname
-        
-        # throw away BAM, vcf file
+        # Throw away BAM, vcf file
         file.remove(lib_file)
         file.remove(paste(lib_file, ".indel.vcf", sep = ""))
         file.remove(paste(lib_file, ".summary", sep = ""))
     }
-    
+
     # helper function to sort headers and filter BAM file
     remove_matches(reads_bam, read_names, output)
-    
     # output final filtered BAM file
     message("DONE! Alignments written to ", output)
-    
     return(output)
+}
+
+#' Helper function for filter_host_bowtie to write chunks into fastq
+write_chunks <- function(bf, to) {
+    chunk <- Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(
+        what = c("seq", "qual","qname")))
+    fq <- ShortRead::ShortReadQ(chunk[[1]]$seq, chunk[[1]]$qual,
+                                Biostrings::BStringSet(chunk[[1]]$qname))
+    uniqFilter <- ShortRead::srFilter(function(x){!duplicated(x@id)},
+                                      name = "FirstOccuranceReads")
+    fq <- fq[uniqFilter(fq)]
+    ShortRead::writeFastq(fq, to, "a", compress = TRUE)
+    return(length(fq))
 }
 
 #' Align reads against one or more filter libraries and subsequently
@@ -210,77 +218,55 @@ filter_host <- function(reads_bam, libs, lib_dir=NULL, output = paste(tools::fil
 #' 
 #' ## Filter reads from the bam file that align to the filter library
 #' filter_host_bowtie(reads_bam = bamPath, lib_dir = lib_temp, libs = "filter")
-#' 
+#'
 
+filter_host_bowtie <- function(reads_bam, lib_dir, libs,
+                               output = paste(
+                                   tools::file_path_sans_ext(reads_bam),
+                                   "filtered", "bam", sep = "."),
+                               bowtie2_options = NULL, threads = 8,
+                               overwrite = FALSE) {
 
-filter_host_bowtie <- function(reads_bam, lib_dir, libs, output = paste(tools::file_path_sans_ext(reads_bam), "filtered", "bam", sep = "."), bowtie2_options = NULL, threads = 8, overwrite = FALSE){
-    suppressPackageStartupMessages(library(ShortRead)) #Error occurs within function below otherwise 
-    
+    suppressPackageStartupMessages(library(ShortRead)) # Error occurs within function below otherwise
     # If no optional parameters are passed then use default parameters else use user parameters 
-    if (missing(bowtie2_options))
-        bowtie2_options <- paste("--very-sensitive-local -k 100 --score-min L,20,1.0", "--threads",threads)
-    else
-        bowtie2_options <- paste(bowtie2_options,"--threads",threads)
-    
+    if (missing(bowtie2_options)) {
+        bowtie2_options <- paste("--very-sensitive-local -k 100",
+                                 "--score-min L,20,1.0", "--threads", threads)
+    } else bowtie2_options <- paste(bowtie2_options,"--threads", threads)
     # Convert reads_bam into fastq (Default 1,000,000,000 read chunks) 
     message("Creating Intermediate Fastq File")
     bf <- Rsamtools::BamFile(reads_bam, yieldSize = 1000000000)
     open(bf)
-    read_loc <- file.path(dirname(reads_bam),"intermediate.fastq")
-    
-    # Function to write chunks into fastq
-    fun <- function(bf, to) {
-        chunk <- Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(what = c("seq", "qual","qname")))
-        fq <- ShortRead::ShortReadQ(chunk[[1]]$seq, chunk[[1]]$qual, Biostrings::BStringSet(chunk[[1]]$qname))
-        uniqFilter <- ShortRead::srFilter(function(x){!duplicated(x@id)},name = "FirstOccuranceReads")
-        fq <- fq[uniqFilter(fq)]
-        ShortRead::writeFastq(fq, to, "a", compress = TRUE)
-        length(fq)
-    }
-    
+    read_loc <- file.path(dirname(reads_bam), "intermediate.fastq")
     # Write chunks to fastq and break when no reads left to write
     while (TRUE) {
-        len <- fun(bf, read_loc)
-        if(identical(len,0L))
-            break
+        len <- write_chunks(bf, read_loc)
+        if(identical(len, 0L)) break
     }
     message("Finished Creating Intermediate Fastq File")
-    
-    # Initialize list of names
-    read_names <- vector(mode = "list", length(libs))
-    
+    read_names <- vector(mode = "list", length(libs)) # Init list of names
     for (i in seq_along(libs)) {
         # Create output file name for BAM
-        lib_file <- paste(tools::file_path_sans_ext(reads_bam),".", libs[i], ".bam", sep = "")
-        
+        lib_file <- paste(tools::file_path_sans_ext(reads_bam),".",
+                          libs[i], ".bam", sep = "")
         # Align reads to lib and generate new filter BAM file
-        Rbowtie2::bowtie2_samtools(bt2Index = file.path(lib_dir,libs[i]), 
-                                   output = tools::file_path_sans_ext(lib_file), 
-                                   outputType = "bam", 
-                                   seq1 = read_loc , 
-                                   ... = bowtie2_options, 
-                                   overwrite = overwrite)
-        
+        Rbowtie2::bowtie2_samtools(
+            bt2Index = file.path(lib_dir,libs[i]),
+            output = tools::file_path_sans_ext(lib_file),
+            outputType = "bam", seq1 = read_loc, ... = bowtie2_options,
+            overwrite = overwrite)
         # sort BAM file and remove umapped reads (package helper function)
         filter_unmapped_reads(lib_file)
-        
         # Extract target query names from mapped BAM file
         read_names[[i]] <- Rsamtools::scanBam(lib_file)[[1]]$qname
-        
         # Throw away BAM file
         file.remove(lib_file)
-        
     }
-    
     # remove intermediate fastq file
     file.remove(read_loc)
-    
     # helper function to sort headers and filter BAM file
     remove_matches(reads_bam, read_names, output)
-    
     # output final filtered BAM file
     message("DONE! Alignments written to ", output)
-    
     return(output)
 }
-

@@ -50,7 +50,12 @@ Default is FALSE.}
 Returns the path to where the output alignment file is stored.
 }
 \description{
-Align microbiome reads to set of indexed Bowtie2 libraries
+This is the main MetaScope target library mapping function, using RBowtie2
+and multiple libraries. Aligns to each library separately, filters
+unmapped reads from each file, and then merges and sorts the .bam files
+from each library into one output file. If desired, output can be
+passed to `filter_host_bowtie()` to remove reads that also map to filter library
+genomes.
 }
 \examples{
 #### Align example reads to an example reference library using Rbowtie2

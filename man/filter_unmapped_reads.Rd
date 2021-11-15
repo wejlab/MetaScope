@@ -12,11 +12,11 @@ reads}
 }
 \value{
 This function will overwrite the existing .bam file with a new .bam file in
-the same location that has only mapped lines. The function iself returns the
+the same location that has only mapped lines. The function itself returns the
 output .bam file name.
 }
 \description{
-This function will to remove all unmapped reads or lines in a .bam file
+This function will remove all unmapped reads or lines in a .bam file
 (warning: overwrites the original file!). This function is needed because
 combining multiple .bam files from different microbial libraries may lead
 to some reads that mapped to one library and have unmapped entries from
