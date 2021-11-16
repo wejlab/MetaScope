@@ -2,17 +2,17 @@
 # Helper functions for convert_animalcules
 
 # Create biom file and mapping file
-  # TO ADD: allow genus/other level combining???
 create_qiime_biom <- function(se_colData, taxonomy_table, which_annot_col,
                               counts_table, path_to_write) {
-  # Create mapping file
-  all_names <- c("#SampleID", "BarcodeSequence",	"LinkerPrimerSequence",
-                 colnames(se_colData), "Description")
-  biom_map <- data.frame(matrix("-", nrow = nrow(se_colData),
-                                ncol = length(all_names),
-                                dimnames = list(c(), c())))
-  colnames(biom_map) <- all_names
-  biom_map[, colnames(se_colData)] <- as.matrix(se_colData)
+  # Consolidate counts based on genus
+  counts_table_g <- counts_table %>%
+    mutate(genus = taxonomy_table$genus) %>% group_by(genus) %>%
+    summarise(across(.fns = sum)) %>% as.data.frame()
+  rownames(counts_table_g) <- counts_table_g$genus
+  counts_table_g %<>% select(-`genus`)
+  # Match Indices
+  ind <- match(se_colData[, which_annot_col], colnames(counts_table_g))
+  counts_table_match <- counts_table_g[, c(ind)]
   # Formatting
   alt_col <- se_colData %>% dplyr::as_tibble() %>%
     dplyr::mutate(`#SampleID` = se_colData[, which_annot_col],
@@ -23,9 +23,10 @@ create_qiime_biom <- function(se_colData, taxonomy_table, which_annot_col,
     # Metadata columns: Only alphanumeric and [_.-+% ;:,/] characters
     apply(., 2, function(x) stringr::str_remove_all(
       x, "[^[:alnum:] _.\\-+%;/:,]")) %>%
-    ifelse(. == " ", NA, .) # Change " " to NA
+    ifelse(. == " ", NA, .) %>%
+    ifelse(. == "<NA>", NA, .) # Change " " to NA
   # Remove unecessary columns
-  ind <- colnames(se_colData) == which_annot_col
+  ind <- colnames(alt_col) == which_annot_col
   alt_col2 <- alt_col[, -ind] %>% dplyr::as_tibble() %>% 
     dplyr::mutate(BarcodeSequence = "-", LinkerPrimerSequence = "-",
                   Description = "-") %>%
@@ -33,8 +34,10 @@ create_qiime_biom <- function(se_colData, taxonomy_table, which_annot_col,
   # Write files
   out_map <- paste(path_to_write, "QIIME_metadata_map.tsv", sep = "/")
   message("Writing mapping TSV to ", out_map)
-  write.table(biom_map, out_map, sep = "\t", row.names = FALSE, quote = FALSE)
-  biom_obj <- biomformat::make_biom(counts_table)
+  write.table(alt_col2, out_map, sep = "\t", row.names = FALSE, quote = FALSE)
+  # Write counts table to biom
+  colnames(counts_table_match) <- alt_col2$`#SampleID`
+  biom_obj <- biomformat::make_biom(counts_table_match)
   out_biom <- paste(path_to_write, "QIIME_featuretable.biom", sep = "/")
   message("Writing QIIME counts biom file to ", out_biom)
   biomformat::write_biom(biom_obj, out_biom)
@@ -80,12 +83,12 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 }
 
 #' Create a multi-assay experiment from MetaScope output for usage with animalcules
-
+#'
 #' Upon completion of the MetaScope pipeline, users can analyze and visualize
 #' abundances in their samples using the animalcules package. This function
 #' allows interoperability of metascope_id output with both animalcules and
-#' QIIME (coming soon!).
-
+#' QIIME. 
+#'
 #' @param meta_counts A vector of filepaths to the counts ID CSVs output
 #' by MetaScope
 #' @param annot_path The filepath to the annotation file for the samples
@@ -95,12 +98,16 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #' containing the sample IDs.
 #' These should be the same as the \code{meta_counts} root filenames.
 #' @param qiime_biom_out Would you also like a qiime-compatible biom file
-#' output? If yes, two files will be saved: one is a boDefault is \code{FALSE}.
+#' output? If yes, two files will be saved: one is a biom file of the
+#' counts table, and the other is a specifically formatted mapping file
+#' of metadata information.
+#' Default is \code{FALSE}.
 #' @param path_to_write Where should output animalcules and/or QIIME files
 #' be written to? Should be a character string of the folder path.
 #' Default is '.', i.e. the current working directory.
 #' @returns returns a multi-assay experiment file of combined sample counts
-#' data and/or biom file for QIIME. The multi-assay experiment will have
+#' data and/or biom file and mapping file for analysis with QIIME.
+#' The multi-assay experiment will have
 #' assays for the counts ("MGX"), log counts, CPM, and log CPM.
 #' @export
 #' @examples 

@@ -2,11 +2,7 @@
 % Please edit documentation in R/convert_animalcules.R
 \name{convert_animalcules}
 \alias{convert_animalcules}
-\title{Create a multi-assay experiment from MetaScope output for usage with animalcules
-Upon completion of the MetaScope pipeline, users can analyze and visualize
-abundances in their samples using the animalcules package. This function
-allows interoperability of metascope_id output with both animalcules and
-QIIME (coming soon!).}
+\title{Create a multi-assay experiment from MetaScope output for usage with animalcules}
 \usage{
 convert_animalcules(
   meta_counts,
@@ -31,7 +27,10 @@ These should be the same as the \code{meta_counts} root filenames.}
 files. Default is ".filtered.metascope_id.csv"}
 
 \item{qiime_biom_out}{Would you also like a qiime-compatible biom file
-output? If yes, two files will be saved: one is a boDefault is \code{FALSE}.}
+output? If yes, two files will be saved: one is a biom file of the
+counts table, and the other is a specifically formatted mapping file
+of metadata information.
+Default is \code{FALSE}.}
 
 \item{path_to_write}{Where should output animalcules and/or QIIME files
 be written to? Should be a character string of the folder path.
@@ -39,15 +38,15 @@ Default is '.', i.e. the current working directory.}
 }
 \value{
 returns a multi-assay experiment file of combined sample counts
-data and/or biom file for QIIME. The multi-assay experiment will have
+data and/or biom file and mapping file for analysis with QIIME.
+The multi-assay experiment will have
 assays for the counts ("MGX"), log counts, CPM, and log CPM.
 }
 \description{
-Create a multi-assay experiment from MetaScope output for usage with animalcules
 Upon completion of the MetaScope pipeline, users can analyze and visualize
 abundances in their samples using the animalcules package. This function
 allows interoperability of metascope_id output with both animalcules and
-QIIME (coming soon!).
+QIIME.
 }
 \examples{
 \donotrun{
