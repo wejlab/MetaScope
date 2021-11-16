@@ -13,7 +13,8 @@ convert_animalcules(
   annot_path,
   which_annot_col,
   end_string = ".filtered.metascope_id.csv",
-  qiime_biom_out = FALSE
+  qiime_biom_out = FALSE,
+  path_to_write = "."
 )
 }
 \arguments{
@@ -30,7 +31,11 @@ These should be the same as the \code{meta_counts} root filenames.}
 files. Default is ".filtered.metascope_id.csv"}
 
 \item{qiime_biom_out}{Would you also like a qiime-compatible biom file
-output? Default is \code{FALSE}.}
+output? If yes, two files will be saved: one is a boDefault is \code{FALSE}.}
+
+\item{path_to_write}{Where should output animalcules and/or QIIME files
+be written to? Should be a character string of the folder path.
+Default is '.', i.e. the current working directory.}
 }
 \value{
 returns a multi-assay experiment file of combined sample counts

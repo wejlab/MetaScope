@@ -1,27 +1,76 @@
 
-# Helper functions
+# Helper functions for convert_animalcules
 
-#create_qiime_biom <- function() {
-#  # Create mapping file
-#  all_names <- c("#SampleID", "BarcodeSequence",	"LinkerPrimerSequence",
-#                 colnames(sam_table), "Description")
-#  biom_map <- data.frame(matrix("-", nrow = nrow(sam_table), ncol = length(all_names),
-#                                dimnames = list(rownames(sam_table), all_names)))
-#  biom_map[, 4:14] <- sam_table
-#  biom_map$X.SampleID <- sam_table$Sample
-#  biom_map <- biom_map[, -c(13)]
-#  # write.csv(biom_map, "biom_map.csv")
-#  colnames(biom_map)[1] <- "#SampleID"
-#  
-#  #biom_map %<>% 
-#  #  mutate(shannon_div, invsimp_div, ginisim_div, unit_div)
-#  
-#  # biom_obj <- make_biom(counts_table, biom_map, tax_table)
-#  biom_obj <- make_biom(counts_table)
-#  write_biom(biom_obj, "QIIME_Work/exp2.biom")
-#  write.table(biom_map, "QIIME_Work/biom_map.tsv", sep = "\t", row.names = FALSE)
-#}
+# Create biom file and mapping file
+  # TO ADD: allow genus/other level combining???
+create_qiime_biom <- function(se_colData, taxonomy_table, which_annot_col,
+                              counts_table, path_to_write) {
+  # Create mapping file
+  all_names <- c("#SampleID", "BarcodeSequence",	"LinkerPrimerSequence",
+                 colnames(se_colData), "Description")
+  biom_map <- data.frame(matrix("-", nrow = nrow(se_colData),
+                                ncol = length(all_names),
+                                dimnames = list(c(), c())))
+  colnames(biom_map) <- all_names
+  biom_map[, colnames(se_colData)] <- as.matrix(se_colData)
+  # Formatting
+  alt_col <- se_colData %>% dplyr::as_tibble() %>%
+    dplyr::mutate(`#SampleID` = se_colData[, which_annot_col],
+           # Sample Column: alphanumeric characters and periods ONLY
+           `#SampleID` = stringr::str_replace_all(
+      `#SampleID`, c("-" = "\\.", "_" = "\\.", " " = "\\.")),
+      `#SampleID` = stringr::str_remove_all(`#SampleID`, "[^[:alnum:].]")) %>%
+    # Metadata columns: Only alphanumeric and [_.-+% ;:,/] characters
+    apply(., 2, function(x) stringr::str_remove_all(
+      x, "[^[:alnum:] _.\\-+%;/:,]")) %>%
+    ifelse(. == " ", NA, .) # Change " " to NA
+  # Remove unecessary columns
+  ind <- colnames(se_colData) == which_annot_col
+  alt_col2 <- alt_col[, -ind] %>% dplyr::as_tibble() %>% 
+    dplyr::mutate(BarcodeSequence = "-", LinkerPrimerSequence = "-",
+                  Description = "-") %>%
+    dplyr::relocate(`#SampleID`, BarcodeSequence, LinkerPrimerSequence)
+  # Write files
+  out_map <- paste(path_to_write, "QIIME_metadata_map.tsv", sep = "/")
+  message("Writing mapping TSV to ", out_map)
+  write.table(biom_map, out_map, sep = "\t", row.names = FALSE, quote = FALSE)
+  biom_obj <- biomformat::make_biom(counts_table)
+  out_biom <- paste(path_to_write, "QIIME_featuretable.biom", sep = "/")
+  message("Writing QIIME counts biom file to ", out_biom)
+  biomformat::write_biom(biom_obj, out_biom)
+}
 
+# Create MAE Object
+create_MAE <- function(annot_path, which_annot_col, combined_list,
+                       counts_table, taxonomy_table, path_to_write,
+                       qiime_biom_out) {
+  annot_dat <- readr::read_csv(annot_path, show_col_types = FALSE) 
+  se_colData <- annot_dat %>% # Only keep present samples in annotation data
+    dplyr::mutate(sampcol = unlist(annot_dat[, which_annot_col])) %>%
+    dplyr::filter(sampcol %in% colnames(combined_list)) %>%
+    dplyr::select(-sampcol) %>% S4Vectors::DataFrame()
+  rownames(se_colData) <- se_colData[, which_annot_col]
+  se_mgx <- counts_table %>% base::data.matrix() %>%
+    S4Vectors::SimpleList() %>% magrittr::set_names("MGX")
+  se_rowData <- taxonomy_table %>% base::data.frame() %>%
+    dplyr::mutate_all(as.character) %>% S4Vectors::DataFrame()
+  microbe_se <- SummarizedExperiment::SummarizedExperiment(
+    assays = se_mgx, colData = se_colData, rowData = se_rowData) %>%
+    TBSignatureProfiler::mkAssay(., input_name = "MGX", log = TRUE,
+                                 output_name = "rawcounts")
+  MAE <- MultiAssayExperiment::MultiAssayExperiment(
+    experiments = S4Vectors::SimpleList(MicrobeGenetics = microbe_se),
+    colData = se_colData)
+  out_MAE <- paste(path_to_write, "metascope_animalcules_MAE.RDS", sep = "/")
+  message("Writing animalcules Multi-Assay Experiment to ", out_MAE)
+  saveRDS(MAE, out_MAE)
+  if (qiime_biom_out) create_qiime_biom(se_colData, taxonomy_table,
+                                        which_annot_col, counts_table,
+                                        path_to_write)
+  return(MAE)
+}
+
+# Read in the MetaScope_id CSVs
 read_in_id <- function(path_id_counts, end_string, which_annot_col) {
   name_file <- utils::tail(stringr::str_split(path_id_counts, "/")[[1]], n = 1)
   meta_counts <- readr::read_csv(path_id_counts, show_col_types = FALSE) %>%
@@ -46,7 +95,10 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #' containing the sample IDs.
 #' These should be the same as the \code{meta_counts} root filenames.
 #' @param qiime_biom_out Would you also like a qiime-compatible biom file
-#' output? Default is \code{FALSE}.
+#' output? If yes, two files will be saved: one is a boDefault is \code{FALSE}.
+#' @param path_to_write Where should output animalcules and/or QIIME files
+#' be written to? Should be a character string of the folder path.
+#' Default is '.', i.e. the current working directory.
 #' @returns returns a multi-assay experiment file of combined sample counts
 #' data and/or biom file for QIIME. The multi-assay experiment will have
 #' assays for the counts ("MGX"), log counts, CPM, and log CPM.
@@ -61,7 +113,8 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 
 convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
                                 end_string = ".filtered.metascope_id.csv", 
-                                qiime_biom_out = FALSE) {
+                                qiime_biom_out = FALSE,
+                                path_to_write = ".") {
   combined_list <- data.table::rbindlist(
     lapply(all_files, read_in_id, end_string = end_string,
            which_annot_col = which_annot_col)) %>%
@@ -78,31 +131,19 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
   counts_table <- combined_list %>% dplyr::select(-TaxonomyID) %>% 
     as.data.frame()
   # Remove duplicated species
-  dup_sp <- taxonomy_table$species[which(duplicated(taxonomy_table$species))]
-  all_ind <- which(taxonomy_table$species == dup_sp)
-  counts_table[all_ind[1], ] <- base::colSums(counts_table[all_ind, ])
-  counts_table %<>% dplyr::filter(!duplicated(taxonomy_table$species))
-  taxonomy_table %<>% dplyr::filter(!duplicated(species))
-  
+  if (sum(duplicated(taxonomy_table$species)) > 0) {
+    dup_sp <- taxonomy_table$species[which(duplicated(taxonomy_table$species))]
+    for (this_sp in dup_sp) {
+      all_ind <- which(taxonomy_table$species == this_sp)
+      counts_table[all_ind[1], ] <- base::colSums(counts_table[all_ind, ])
+    }
+    counts_table %<>% dplyr::filter(!duplicated(taxonomy_table$species))
+    taxonomy_table %<>% dplyr::filter(!duplicated(species))
+  }
   rownames(taxonomy_table) <- stringr::str_replace(taxonomy_table$species,
                                                    " ", "_")
   rownames(counts_table) <- rownames(taxonomy_table) 
-  # Create MAE Object
-  annot_dat <- readr::read_csv(annot_path, show_col_types = FALSE) 
-  se_colData <- annot_dat %>% # Only keep present samples in annotation data
-    dplyr::mutate(sampcol = unlist(annot_dat[, which_annot_col])) %>%
-    dplyr::filter(sampcol %in% colnames(combined_list)) %>%
-    dplyr::select(-sampcol) %>% S4Vectors::DataFrame()
-  rownames(se_colData) <- se_colData[, which_annot_col]
-  se_mgx <- counts_table %>% base::data.matrix() %>%
-    S4Vectors::SimpleList() %>% magrittr::set_names("MGX")
-  se_rowData <- taxonomy_table %>% base::data.frame() %>%
-    dplyr::mutate_all(as.character) %>% S4Vectors::DataFrame()
-  microbe_se <- SummarizedExperiment::SummarizedExperiment(
-    assays = se_mgx, colData = se_colData, rowData = se_rowData) %>%
-    TBSignatureProfiler::mkAssay(., input_name = "MGX", log = TRUE,
-                                 output_name = "rawcounts")
-  MAE <- MultiAssayExperiment::MultiAssayExperiment(
-    experiments = S4Vectors::SimpleList(MicrobeGenetics = microbe_se),
-    colData = se_colData)
+  MAE <- create_MAE(annot_path, which_annot_col, combined_list, counts_table,
+             taxonomy_table, path_to_write, qiime_biom_out)
+  return(MAE)
 }
