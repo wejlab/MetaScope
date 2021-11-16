@@ -85,12 +85,14 @@ locations <- function(which_taxid, which_genome,
     use_name <- paste(this_genome, collapse = " ")
     coverage <- round(mean(seq_len(338099) %in% unique(
         reads[[1]]$pos[map2bam_acc])), 3)
-    ggplot2::qplot(reads[[1]]$pos[map2bam_acc],
-                   geom = "histogram",
-                   main = paste("Positions of reads mapped to", use_name),
-                   xlab = "Leftmost position in genome",
-                   ylab = "Read Count") +
-        ggplot2::labs(subtitle = paste("Coverage is", coverage),
+    # Plotting
+    dfplot <- tibble(x = reads[[1]]$pos[map2bam_acc])
+    ggplot2::ggplot(dfplot, aes(x)) + 
+        ggplot2::geom_histogram(bins = 30) +
+        ggplot2::labs(main = paste("Positions of reads mapped to", use_name),
+                      xlab = "Leftmost position in genome",
+                      ylab = "Read Count",
+                      subtitle = paste("Coverage is", coverage),
                       caption = paste0("Accession Number: ", choose_acc))
     ggplot2::ggsave(paste0(plots_save, "/",
                            stringr::str_replace(use_name, " ", "_"), ".png"),
@@ -109,6 +111,10 @@ locations <- function(which_taxid, which_genome,
 #' needs removal of ambiguity.
 #' @param aligner The aligner which was used to create the bam file. Default is 
 #' "subread" but can also be set to "bowtie" or "other"
+#' @param NCBI_key See taxize::use_entrez(). Due to the high number of
+#' requests made to NCBI, this function will be less prone to errors
+#' if you obtain an NCBI key.
+#' You may enter the string as an input or set it as ENTREZ_KEY in .Renviron.
 #' @param out_file The name of the .csv output file. Defaults to the bam_file
 #' basename plus ".metascope_id.csv".
 #' @param EMconv The convergence parameter of the EM algorithm. Default set at
@@ -162,6 +168,7 @@ locations <- function(which_taxid, which_genome,
 
 
 metascope_id <- function(bam_file, aligner = "subread",
+                         NCBI_key = "01d22876be34df5c28f4aedc479a2674c809",
                          out_file = paste(tools::file_path_sans_ext(bam_file),
                                           ".metascope_id.csv", sep = ""),
                          EMconv = 1/10000, EMmaxIts = 25,
@@ -220,7 +227,7 @@ metascope_id <- function(bam_file, aligner = "subread",
                     if (attempt > 1) message("Attempt #", attempt, " Chunk #", i)
                     suppressMessages(
                         tax_id_chunk <- taxize::genbank2uid(id = chunks[[i]],
-                                                            key = "01d22876be34df5c28f4aedc479a2674c809"))
+                                                            key = NCBI_key))
                     Sys.sleep(1)
                     tax_id_all <- c(tax_id_all, tax_id_chunk)
                     success <- TRUE
@@ -228,7 +235,7 @@ metascope_id <- function(bam_file, aligner = "subread",
             }
         }
     } else suppressMessages(tax_id_all <- taxize::genbank2uid(id = accessions,
-                                                              key = "01d22876be34df5c28f4aedc479a2674c809"))
+                                                              key = NCBI_key))
 
     taxids <- vapply(tax_id_all, function(x) x[1], character(1))
     unique_taxids <- unique(taxids)
