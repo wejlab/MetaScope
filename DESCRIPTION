@@ -37,7 +37,8 @@ Suggests:
     BiocStyle,
     knitr,
     rmarkdown,
-    testthat
+    testthat,
+    biomformat
 biocViews:
     MicrobiomeData,
     ReproducibleResearch,

@@ -7,6 +7,7 @@
 metascope_id(
   bam_file,
   aligner = "subread",
+  NCBI_key = "01d22876be34df5c28f4aedc479a2674c809",
   out_file = paste(tools::file_path_sans_ext(bam_file), ".metascope_id.csv", sep = ""),
   EMconv = 1/10000,
   EMmaxIts = 25,
@@ -19,6 +20,11 @@ needs removal of ambiguity.}
 
 \item{aligner}{The aligner which was used to create the bam file. Default is 
 "subread" but can also be set to "bowtie" or "other"}
+
+\item{NCBI_key}{See taxize::use_entrez(). Due to the high number of
+requests made to NCBI, this function will be less prone to errors
+if you obtain an NCBI key.
+You may enter the string as an input or set it as ENTREZ_KEY in .Renviron.}
 
 \item{out_file}{The name of the .csv output file. Defaults to the bam_file
 basename plus ".metascope_id.csv".}
