@@ -111,7 +111,8 @@ locations <- function(which_taxid, which_genome,
 #' needs removal of ambiguity.
 #' @param aligner The aligner which was used to create the bam file. Default is 
 #' "subread" but can also be set to "bowtie" or "other"
-#' @param NCBI_key See taxize::use_entrez(). Due to the high number of
+#' @param NCBI_key (character) NCBI Entrez API key. optional.
+#' See taxize::use_entrez(). Due to the high number of
 #' requests made to NCBI, this function will be less prone to errors
 #' if you obtain an NCBI key.
 #' You may enter the string as an input or set it as ENTREZ_KEY in .Renviron.
@@ -167,8 +168,7 @@ locations <- function(which_taxid, which_genome,
 #' 
 
 
-metascope_id <- function(bam_file, aligner = "subread",
-                         NCBI_key = "01d22876be34df5c28f4aedc479a2674c809",
+metascope_id <- function(bam_file, aligner = "subread", NCBI_key = NULL,
                          out_file = paste(tools::file_path_sans_ext(bam_file),
                                           ".metascope_id.csv", sep = ""),
                          EMconv = 1/10000, EMmaxIts = 25,
