@@ -72,6 +72,7 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
     # The Eukaryota superkingdom is not a folder on the NCBI FTP site.
     # Instead grab the corresponding kingdom as some eukaryota kingdoms
     # are folders on the FTP site
+    
     if (identical(parent_kingdom, "Eukaryota")){
         parent_kingdom <- classification.table$name[classification.table$rank
                                                     == "kingdom"]
@@ -81,7 +82,14 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
         # have a corresponding folder on the FTP site. If not one of these
         # two kingdoms then forced to search all the eukaryota folders on the
         # site
-        if (!(parent_kingdom %in% c("Viridiplantae", "Fungi"))){
+        if (length(parent_kingdom) != 0){
+            if (!(parent_kingdom %in% c("Viridiplantae", "Fungi"))){
+                parent_kingdom <- classification.table$name[classification.table$rank
+                                                            == "superkingdom"]
+                parent_rank <- "Superkingdom"
+            }
+        }
+        else{
             parent_kingdom <- classification.table$name[classification.table$rank
                                                         == "superkingdom"]
             parent_rank <- "Superkingdom"
@@ -124,12 +132,12 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
         refseq_link_3 <- paste("ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/",
                                "invertebrate", "/assembly_summary.txt",
                                sep = "")
-        refseq_table_3 <- utils::read.table(refseq_link_2, header = TRUE,
+        refseq_table_3 <- utils::read.table(refseq_link_3, header = TRUE,
                                             sep = "\t", comment.char = "",
                                             quote = "", skip = 1)
         refseq_link_4 <- paste("ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/",
                                "protozoa", "/assembly_summary.txt", sep = "")
-        refseq_table_4 <- utils::read.table(refseq_link_2, header = TRUE,
+        refseq_table_4 <- utils::read.table(refseq_link_4, header = TRUE,
                                             sep = "\t", comment.char = "",
                                             quote = "", skip = 1)
         refseq_table <- rbind(refseq_table_1, refseq_table_2,
