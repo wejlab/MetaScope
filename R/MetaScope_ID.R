@@ -86,7 +86,7 @@ locations <- function(which_taxid, which_genome,
     coverage <- round(mean(seq_len(338099) %in% unique(
         reads[[1]]$pos[map2bam_acc])), 3)
     # Plotting
-    dfplot <- tibble(x = reads[[1]]$pos[map2bam_acc])
+    dfplot <- dplyr::tibble(x = reads[[1]]$pos[map2bam_acc])
     ggplot2::ggplot(dfplot, aes(x)) + 
         ggplot2::geom_histogram(bins = 30) +
         ggplot2::labs(main = paste("Positions of reads mapped to", use_name),
