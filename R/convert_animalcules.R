@@ -111,10 +111,10 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #' assays for the counts ("MGX"), log counts, CPM, and log CPM.
 #' @export
 #' @examples 
-#' \donotrun{
-#' all_files <- list.files("~/decamp/analysis/aodom/Novartis_COPD/MetaScope_run/Output", pattern = "*.filtered.metascope_id.csv", full.names = TRUE)
-#' out <- convert_animalcules(meta_counts = all_files, annot_path = "~/decamp/analysis/aodom/Novartis_COPD/Data/DECAMP_patho_annotation.csv", end_string = ".filtered.metascope_id.csv", which_annot_col = "DECAMP_ID")
-#' }
+#' #donotrun{
+#' #all_files <- list.files("~/decamp/analysis/aodom/Novartis_COPD/MetaScope_run/Output", pattern = "*.filtered.metascope_id.csv", full.names = TRUE)
+#' #out <- convert_animalcules(meta_counts = all_files, annot_path = "~/decamp/analysis/aodom/Novartis_COPD/Data/DECAMP_patho_annotation.csv", end_string = ".filtered.metascope_id.csv", which_annot_col = "DECAMP_ID")
+#' #}
 #'  # coming soon - this is from Aubrey
 #'  
 

@@ -87,7 +87,7 @@ locations <- function(which_taxid, which_genome,
         reads[[1]]$pos[map2bam_acc])), 3)
     # Plotting
     dfplot <- dplyr::tibble(x = reads[[1]]$pos[map2bam_acc])
-    ggplot2::ggplot(dfplot, aes(x)) + 
+    ggplot2::ggplot(dfplot, ggplot2::aes(x)) + 
         ggplot2::geom_histogram(bins = 30) +
         ggplot2::labs(main = paste("Positions of reads mapped to", use_name),
                       xlab = "Leftmost position in genome",
