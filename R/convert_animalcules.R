@@ -16,10 +16,10 @@ create_qiime_biom <- function(se_colData, taxonomy_table, which_annot_col,
   # Formatting
   alt_col <- se_colData %>% dplyr::as_tibble() %>%
     dplyr::mutate(`#SampleID` = se_colData[, which_annot_col],
-           # Sample Column: alphanumeric characters and periods ONLY
-           `#SampleID` = stringr::str_replace_all(
-      `#SampleID`, c("-" = "\\.", "_" = "\\.", " " = "\\.")),
-      `#SampleID` = stringr::str_remove_all(`#SampleID`, "[^[:alnum:].]")) %>%
+                  # Sample Column: alphanumeric characters and periods ONLY
+                  `#SampleID` = stringr::str_replace_all(
+                    `#SampleID`, c("-" = "\\.", "_" = "\\.", " " = "\\.")),
+                  `#SampleID` = stringr::str_remove_all(`#SampleID`, "[^[:alnum:].]")) %>%
     # Metadata columns: Only alphanumeric and [_.-+% ;:,/] characters
     apply(., 2, function(x) stringr::str_remove_all(
       x, "[^[:alnum:] _.\\-+%;/:,]")) %>%
@@ -55,6 +55,9 @@ create_MAE <- function(annot_path, which_annot_col, combined_list,
   rownames(se_colData) <- se_colData[, which_annot_col]
   se_mgx <- counts_table %>% base::data.matrix() %>%
     S4Vectors::SimpleList() %>% magrittr::set_names("MGX")
+  # Reorder colData according to se_mgx
+  ind <- match(rownames(se_colData), colnames(se_mgx$MGX))
+  se_colData <- se_colData[order(ind), ]
   se_rowData <- taxonomy_table %>% base::data.frame() %>%
     dplyr::mutate_all(as.character) %>% S4Vectors::DataFrame()
   microbe_se <- SummarizedExperiment::SummarizedExperiment(
@@ -125,15 +128,19 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
   combined_list <- data.table::rbindlist(
     lapply(all_files, read_in_id, end_string = end_string,
            which_annot_col = which_annot_col)) %>%
-    tidyr::pivot_wider(., id_cols = c("sample", "TaxonomyID"),
-                       names_from = "sample", values_from = "read_count",
-                       values_fill = 0)
+    ungroup() %>%
+    as.data.frame() %>%
+    select(read_count, TaxonomyID, sample) %>%
+    tidyr::pivot_wider(., id_cols = c(TaxonomyID), names_from = sample,
+                       values_from = read_count, values_fill = 0)
   # Create taxonomy, counts tables
   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
                    "family", "genus", "species", "strain")
   all_ncbi <- taxize::classification(combined_list$TaxonomyID, db = "ncbi",
                                      max_tries = 4)
-  taxonomy_table <- as.data.frame(t(sapply(all_ncbi, mk_table, taxon_ranks)))
+  taxonomy_table <- as.data.frame(t(dplyr::bind_rows(lapply(all_ncbi,
+                                                            mk_table,
+                                                            taxon_ranks))))
   colnames(taxonomy_table) <- taxon_ranks
   counts_table <- combined_list %>% dplyr::select(-TaxonomyID) %>% 
     as.data.frame()
@@ -151,6 +158,6 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
                                                    " ", "_")
   rownames(counts_table) <- rownames(taxonomy_table) 
   MAE <- create_MAE(annot_path, which_annot_col, combined_list, counts_table,
-             taxonomy_table, path_to_write, qiime_biom_out)
+                    taxonomy_table, path_to_write, qiime_biom_out)
   return(MAE)
 }

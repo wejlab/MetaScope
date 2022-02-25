@@ -11,7 +11,8 @@ mk_table <- function (intable, taxon_ranks) {
       dplyr::right_join(., dplyr::tibble(rank = taxon_ranks), 
                         by = "rank") %>% 
       dplyr::arrange(factor(rank, levels = taxon_ranks)) %>% 
-      dplyr::select(name) %>% unlist
+      dplyr::select(name) %>% 
+      .[seq_along(taxon_ranks), ]
   }
 }
 
@@ -45,7 +46,9 @@ generate_taxonomy_table <- function() {
   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
                    "family", "genus", "species", "strain")
   all_ncbi <- taxize::classification(tax_id, db = 'ncbi', max_tries = 3)
-  taxonomy_table <- as.data.frame(t(sapply(all_ncbi, mk_table, taxon_ranks)))
+  taxonomy_table <- as.data.frame(t(dplyr::bind_rows(lapply(all_ncbi,
+                                          mk_table,
+                                          taxon_ranks))))
   colnames(taxonomy_table) <- taxon_ranks
   save(taxonomy_table, file = "data/taxonomy_table.rda")
 }
