@@ -144,6 +144,8 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
   colnames(taxonomy_table) <- taxon_ranks
   counts_table <- combined_list %>% dplyr::select(-TaxonomyID) %>% 
     as.data.frame()
+  # Remove any brackets
+  taxonomy_table$species <- gsub("\\[|\\]", "", taxonomy_table$species)
   # Remove duplicated species
   if (sum(duplicated(taxonomy_table$species)) > 0) {
     dup_sp <- taxonomy_table$species[which(duplicated(taxonomy_table$species))]

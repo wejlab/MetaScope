@@ -41,8 +41,7 @@ generate_taxonomy_table <- function() {
     "ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
   tax_id <- read.table(refseq_link, header = T, sep = "\t",
                        comment.char = "", quote = "", skip = 1) %>%
-    dplyr::distinct(taxid) %>%
-    unlist %>% unname
+    dplyr::distinct(taxid) %>% unlist %>% unname
   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
                    "family", "genus", "species", "strain")
   all_ncbi <- taxize::classification(tax_id, db = 'ncbi', max_tries = 3)
