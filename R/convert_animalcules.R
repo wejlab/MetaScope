@@ -6,12 +6,12 @@ create_qiime_biom <- function(se_colData, taxonomy_table, which_annot_col,
                               counts_table, path_to_write) {
   # Consolidate counts based on genus
   counts_table_g <- counts_table %>%
-    mutate(genus = taxonomy_table$genus) %>% group_by(genus) %>%
-    summarise(across(.fns = sum)) %>% as.data.frame()
+    dplyr::mutate(genus = taxonomy_table$genus) %>% dplyr::group_by(genus) %>%
+    dplyr::summarise(across(.fns = sum)) %>% as.data.frame()
   rownames(counts_table_g) <- counts_table_g$genus
-  counts_table_g %<>% select(-`genus`)
+  counts_table_g %<>% dplyr::select(-`genus`)
   # Match Indices
-  ind <- match(se_colData[, which_annot_col], colnames(counts_table_g))
+  ind <- base::match(se_colData[, which_annot_col], colnames(counts_table_g))
   counts_table_match <- counts_table_g[, c(ind)]
   # Formatting
   alt_col <- se_colData %>% dplyr::as_tibble() %>%
@@ -61,9 +61,9 @@ create_MAE <- function(annot_path, which_annot_col, combined_list,
   se_rowData <- taxonomy_table %>% base::data.frame() %>%
     dplyr::mutate_all(as.character) %>% S4Vectors::DataFrame()
   microbe_se <- SummarizedExperiment::SummarizedExperiment(
-    assays = se_mgx, colData = se_colData, rowData = se_rowData) %>%
-    TBSignatureProfiler::mkAssay(., input_name = "MGX", log = TRUE,
-                                 output_name = "rawcounts")
+    assays = se_mgx, colData = se_colData, rowData = se_rowData) #%>%
+    #TBSignatureProfiler::mkAssay(., input_name = "MGX", log = TRUE,
+    #                             output_name = "rawcounts")
   MAE <- MultiAssayExperiment::MultiAssayExperiment(
     experiments = S4Vectors::SimpleList(MicrobeGenetics = microbe_se),
     colData = se_colData)
@@ -128,9 +128,9 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
   combined_list <- data.table::rbindlist(
     lapply(all_files, read_in_id, end_string = end_string,
            which_annot_col = which_annot_col)) %>%
-    ungroup() %>%
+    dplyr::ungroup() %>%
     as.data.frame() %>%
-    select(read_count, TaxonomyID, sample) %>%
+    dplyr::select(read_count, TaxonomyID, sample) %>%
     tidyr::pivot_wider(., id_cols = c(TaxonomyID), names_from = sample,
                        values_from = read_count, values_fill = 0)
   # Create taxonomy, counts tables
