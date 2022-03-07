@@ -12,7 +12,8 @@ filter_host_bowtie(
   output = paste(tools::file_path_sans_ext(reads_bam), "filtered", "bam", sep = "."),
   bowtie2_options = NULL,
   threads = 8,
-  overwrite = FALSE
+  overwrite = FALSE,
+  maxMemory = 512
 )
 }
 \arguments{
@@ -42,6 +43,10 @@ Default is 8 threads.}
 
 \item{overwrite}{Whether existing files should be overwritten. 
 Default is FALSE.}
+
+\item{maxMemory}{The number of MB of RAM that the sortBAM function can use.
+The smaller the number, the more temporary files will be produced, which will
+hopefully save memory usage. The default is 512 MB.}
 }
 \value{
 The name of a filtered, sorted .bam file written to the user's

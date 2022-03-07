@@ -1,4 +1,18 @@
 globalVariables(c("align_details"))
+
+#' Helper function for filter_host_bowtie to write chunks into fastq
+write_chunks <- function(bf, to, maxMemory) {
+    chunk <- Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(
+        what = c("seq", "qual","qname"), maxMemory = maxMemory))
+    fq <- ShortRead::ShortReadQ(chunk[[1]]$seq, chunk[[1]]$qual,
+                                Biostrings::BStringSet(chunk[[1]]$qname))
+    uniqFilter <- ShortRead::srFilter(function(x){!duplicated(x@id)},
+                                      name = "FirstOccuranceReads")
+    fq <- fq[uniqFilter(fq)]
+    ShortRead::writeFastq(fq, to, "a", compress = TRUE)
+    return(length(fq))
+}
+
 #' Helper function to remove reads matched to filter libraries
 #'
 #' Within the \code{filter_host()} function, we align our sequencing sample to all
@@ -137,19 +151,6 @@ filter_host <- function(reads_bam, libs, lib_dir = NULL,
     return(output)
 }
 
-#' Helper function for filter_host_bowtie to write chunks into fastq
-write_chunks <- function(bf, to) {
-    chunk <- Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(
-        what = c("seq", "qual","qname")))
-    fq <- ShortRead::ShortReadQ(chunk[[1]]$seq, chunk[[1]]$qual,
-                                Biostrings::BStringSet(chunk[[1]]$qname))
-    uniqFilter <- ShortRead::srFilter(function(x){!duplicated(x@id)},
-                                      name = "FirstOccuranceReads")
-    fq <- fq[uniqFilter(fq)]
-    ShortRead::writeFastq(fq, to, "a", compress = TRUE)
-    return(length(fq))
-}
-
 #' Align reads against one or more filter libraries and subsequently
 #' remove mapped reads
 #' 
@@ -180,6 +181,9 @@ write_chunks <- function(bf, to) {
 #' Default is 8 threads.
 #' @param overwrite Whether existing files should be overwritten. 
 #' Default is FALSE.
+#' @param maxMemory The number of MB of RAM that the sortBAM function can use.
+#' The smaller the number, the more temporary files will be produced, which will
+#' hopefully save memory usage. The default is 512 MB.
 #' 
 #' @return The name of a filtered, sorted .bam file written to the user's
 #' current working directory.
@@ -225,7 +229,8 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs,
                                    tools::file_path_sans_ext(reads_bam),
                                    "filtered", "bam", sep = "."),
                                bowtie2_options = NULL, threads = 8,
-                               overwrite = FALSE) {
+                               overwrite = FALSE,
+                               maxMemory = 512) {
 
     suppressPackageStartupMessages(library(ShortRead)) # Error occurs within function below otherwise
     # If no optional parameters are passed then use default parameters else use user parameters 
@@ -234,13 +239,14 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs,
                                  "--score-min L,20,1.0", "--threads", threads)
     } else bowtie2_options <- paste(bowtie2_options,"--threads", threads)
     # Convert reads_bam into fastq (Default 1,000,000,000 read chunks) 
-    message("Creating Intermediate Fastq File")
+    message("Reading Bam File")
     bf <- Rsamtools::BamFile(reads_bam, yieldSize = 1000000000)
     open(bf)
     read_loc <- file.path(dirname(reads_bam), "intermediate.fastq")
     # Write chunks to fastq and break when no reads left to write
+    message("Writing Intermediate Fastq file chunks")
     while (TRUE) {
-        len <- write_chunks(bf, read_loc)
+        len <- write_chunks(bf, read_loc, maxMemory)
         if(identical(len, 0L)) break
     }
     message("Finished Creating Intermediate Fastq File")

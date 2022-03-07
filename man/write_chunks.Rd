@@ -4,7 +4,7 @@
 \alias{write_chunks}
 \title{Helper function for filter_host_bowtie to write chunks into fastq}
 \usage{
-write_chunks(bf, to)
+write_chunks(bf, to, maxMemory)
 }
 \description{
 Helper function for filter_host_bowtie to write chunks into fastq
