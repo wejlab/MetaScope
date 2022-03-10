@@ -1,16 +1,34 @@
 globalVariables(c("align_details"))
 
-#' Helper function for filter_host_bowtie to write chunks into fastq
-write_chunks <- function(bf, to, maxMemory) {
-    chunk <- Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(
-        what = c("seq", "qual","qname"), maxMemory = maxMemory))
-    fq <- ShortRead::ShortReadQ(chunk[[1]]$seq, chunk[[1]]$qual,
-                                Biostrings::BStringSet(chunk[[1]]$qname))
-    uniqFilter <- ShortRead::srFilter(function(x){!duplicated(x@id)},
-                                      name = "FirstOccuranceReads")
-    fq <- fq[uniqFilter(fq)]
-    ShortRead::writeFastq(fq, to, "a", compress = TRUE)
-    return(length(fq))
+#' Helper function for filter_host_bowtie to write interim fastq file
+mk_interim_fastq <- function(bf, read_loc, maxMemory) {
+    message("Creating Intermediate Fastq file")
+    # Obtain read names
+    open(bf)
+    innames <- Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(
+        what = c("qname")), maxMemory = maxMemory) %>% .[[1]] %>%
+        unlist(.$qnames) %>% unname()
+    # Remove repeated reads from subsequent pulled info
+    ind <- !duplicated(innames)
+    # Read in quality scores
+    open(bf)
+    inqual <- Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(
+        what = c("qual")), maxMemory = maxMemory) %>% .[[1]] %>%
+        .$qual %>% as.character() %>% .[ind]
+    # Appending sequences without saving (to conserve memory)
+    open(bf)
+    Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(
+        what = c("seq")), maxMemory = maxMemory) %>% .[[1]] %>% .$seq %>%
+        as.character() %>% .[ind] %>% dplyr::tibble(
+            Header = innames[ind], Sequence = ., Quality = inqual) %>%
+        # Keep first occurrences of reads
+        dplyr::mutate(Plus = "+", Header = str_c("@", .data$Header)) %>%
+        dplyr::select(.data$Header, .data$Sequence, .data$Plus,
+                      .data$Quality) %>%
+        as.matrix() %>% t() %>% as.character() %>% dplyr::as_tibble() %>%
+        data.table::fwrite(., file = read_loc, compress = "gzip",
+                           col.names = F, quote = F)
+    message("Finished Creating Intermediate Fastq File")
 }
 
 #' Helper function to remove reads matched to filter libraries
@@ -58,7 +76,7 @@ remove_matches <- function(reads_bam, read_names, name_out) {
     # define logical vector of which reads to keep, based on query names
     filter_which <- !(target_reads %in% filter_reads)
     # create BamFile instance to set yieldSize
-    bf <- Rsamtools::BamFile(reads_bam, yieldSize = length(filter_which))
+    bf <- Rsamtools::BamFile(reads_bam, yieldSize = length(target_reads))
     filtered_bam <- Rsamtools::filterBam(
         bf, destination = name_out, index = bam_index,
         indexDestination = FALSE, filter = filter_which,
@@ -229,8 +247,7 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs,
                                    tools::file_path_sans_ext(reads_bam),
                                    "filtered", "bam", sep = "."),
                                bowtie2_options = NULL, threads = 8,
-                               overwrite = FALSE,
-                               maxMemory = 512) {
+                               overwrite = FALSE, maxMemory = 512) {
 
     suppressPackageStartupMessages(library(ShortRead)) # Error occurs within function below otherwise
     # If no optional parameters are passed then use default parameters else use user parameters 
@@ -239,17 +256,10 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs,
                                  "--score-min L,20,1.0", "--threads", threads)
     } else bowtie2_options <- paste(bowtie2_options,"--threads", threads)
     # Convert reads_bam into fastq (Default 1,000,000,000 read chunks) 
-    message("Reading Bam File")
     bf <- Rsamtools::BamFile(reads_bam, yieldSize = 1000000000)
-    open(bf)
     read_loc <- file.path(dirname(reads_bam), "intermediate.fastq")
-    # Write chunks to fastq and break when no reads left to write
-    message("Writing Intermediate Fastq file chunks")
-    while (TRUE) {
-        len <- write_chunks(bf, read_loc, maxMemory)
-        if(identical(len, 0L)) break
-    }
-    message("Finished Creating Intermediate Fastq File")
+    # Make Intermediate Fastq file
+    mk_interim_fastq(bf, read_loc, maxMemory)
     read_names <- vector(mode = "list", length(libs)) # Init list of names
     for (i in seq_along(libs)) {
         # Create output file name for BAM
