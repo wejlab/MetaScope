@@ -1,11 +1,11 @@
 Package: MetaScope
 Type: Package
-Title: Tools and functions for preprocessing microbiome data
+Title: Tools and functions for preprocessing 16S and metagenomic sequencing microbiome data
 Version: 0.0.99
 Authors@R:
   c(person(given = "W. Evan", family = "Johnson", role = c("aut", "cre"),
            email = "wej@bu.edu"),
-    person(given = "Aubrey R.", family = "Odom", role = c("aut"),
+    person(given = "Aubrey R.", family = "Odom-Mabey", role = c("aut"),
            email = "aodom@bu.edu"),
     person(given = "Rahul", family = "Varki", role = c("aut"),
            email = "rvarki@bu.edu"))
@@ -42,6 +42,9 @@ biocViews:
     MicrobiomeData,
     ReproducibleResearch,
     SequencingData
+URL:
+  https://github.com/compbiomed/metascope
+  https://compbiomed.github.io/metascope-docs/
 VignetteBuilder: knitr
 RoxygenNote: 7.1.2
 BugReports: https://github.com/compbiomed/MetaScope/issues

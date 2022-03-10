@@ -1,0 +1,49 @@
+template:
+  bootstrap: 5
+  params:
+    bootswatch: solar
+    
+reference:
+- title: "All functions"
+  desc: Functions for usage in preprocessing
+  contents:
+  - filter_host_bowtie
+  - align_details
+  - align_target
+  - align_target_bowtie
+  - bam_reheader_R
+  - combined_header
+  - convert_animalcules
+  - count_matches
+  - demultiplex
+  - download_refseq
+  - extractReads
+  - filter_host
+  - filter_unmapped_reads
+  - generate_taxonomy_table
+  - get_children
+  - locations
+  - merge_bam_files
+  - metascope_id
+  - mk_bowtie_index
+  - mk_interim_fastq
+  - mk_subread_index
+  - mk_table
+  - remove_matches
+  - taxonomy_table
+  
+navbar:
+  title: "MetaScope"
+  left: 
+    - text: "Home"
+      href: index.html
+    - text: "Tutorial"
+      href: articles/rmd/MetaScope_Vignette.html
+    - text: "Reference"
+      href: reference/index.html
+    - text: "News"
+      href: news/index.html
+  right:
+    - icon: fa-github
+      href: https://github.com/compbiomed/MetaScope
+      

@@ -1,7 +1,7 @@
 ---
 title: "Introduction to MetaScope"
 author: 
-- name: Aubrey Odom
+- name: Aubrey Odom-Mabey
   affiliation: 
   - Program in Bioinformatics, Boston University, Boston, MA
   email: aodom@bu.edu
@@ -219,7 +219,7 @@ Prior to the last step in the analysis, we will look at the primary alignments o
 
 ```{R bam primary alignment, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
 
-bamFile <- BamFile(final_map)
+bamFile <- Rsamtools::BamFile(final_map)
 
 param <-
   Rsamtools::ScanBamParam(
@@ -255,7 +255,7 @@ We can also look at the secondary alignments of the mapped reads within our filt
 
 ```{R bam secondary alignment, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
 
-bamFile <- BamFile(final_map)
+bamFile <- Rsamtools::BamFile(final_map)
 
 param <-
   Rsamtools::ScanBamParam(

@@ -2,3 +2,6 @@
 ^\.Rproj\.user$
 ^.gitignore$
 ^.git$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
