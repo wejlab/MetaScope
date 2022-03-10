@@ -31,8 +31,7 @@ Imports:
     rlang,
     data.table,
     Rbowtie2,
-    magrittr,
-    ShortRead
+    magrittr
 Suggests:
     BiocStyle,
     knitr,

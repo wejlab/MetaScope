@@ -248,8 +248,6 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs,
                                    "filtered", "bam", sep = "."),
                                bowtie2_options = NULL, threads = 8,
                                overwrite = FALSE, maxMemory = 512) {
-
-    suppressPackageStartupMessages(library(ShortRead)) # Error occurs within function below otherwise
     # If no optional parameters are passed then use default parameters else use user parameters 
     if (missing(bowtie2_options)) {
         bowtie2_options <- paste("--very-sensitive-local -k 100",
