@@ -1,6 +1,6 @@
 # MetaScope 
 
-## What is the TBSignatureProfiler?
+## What is MetaScope?
 
 MetaScope is a complete R-based 16S, metagenomic, and metatranscriptomic profiling package that can accurately identify the composition of microbes at a strain-level resolution within a sample. MetaScope can be considered as an updated and expanded R translation of [PathoScope 2.0](https://microbiomejournal.biomedcentral.com/articles/10.1186/2049-2618-2-33), a Python-based metagenomic profiling package also created by our lab. 
 
