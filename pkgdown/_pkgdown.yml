@@ -1,49 +1,76 @@
+url: https://compbiomed.github.io/metascope-docs/
+
 template:
   bootstrap: 5
-  params:
-    bootswatch: solar
+  bootswatch: cosmo
     
 reference:
-- title: "All functions"
-  desc: Functions for usage in preprocessing
-  contents:
-  - filter_host_bowtie
-  - align_details
-  - align_target
-  - align_target_bowtie
-  - bam_reheader_R
-  - combined_header
-  - convert_animalcules
-  - count_matches
-  - demultiplex
-  - download_refseq
-  - extractReads
-  - filter_host
-  - filter_unmapped_reads
-  - generate_taxonomy_table
-  - get_children
-  - locations
-  - merge_bam_files
-  - metascope_id
-  - mk_bowtie_index
-  - mk_interim_fastq
-  - mk_subread_index
-  - mk_table
-  - remove_matches
-  - taxonomy_table
-  
+ - title: "Reference Genome Library"
+   desc: "Start here to download reference genomes for processing."
+   contents:
+   - taxonomy_table
+   - download_refseq
+ - title: "Demultiplex"
+   desc: "Preprocessing for 16S data."
+   contents:
+   - demultiplex
+ - title: "Index Creation"
+   desc: "Create compatible indexes from downloaded reference genomes."
+   contents:
+     - mk_bowtie_index
+     - mk_subread_index
+ - title: "Alignment with Reference Libraries"
+   desc: "Mapping sequencing reads to the target & filter libraries."
+   contents:
+     - align_target
+     - align_target_bowtie
+     - align_details
+     - filter_host_bowtie
+     - filter_host
+ - title: "Genome Identification"
+   desc: "Identify which genomes are most likely to be represented in the sample."
+   contents:
+     - metascope_id
+ - title: "Downstream Analysis with animalcules"
+   desc: "Convert MetaScope output to be compatible with the animalcules R package."
+   contents:
+     - convert_animalcules
+ - title: "Helper Functions"
+   desc: "These functions were developed to aid in carrying out other primary functions."
+   contents:
+    - remove_matches
+    - mk_table
+    - combined_header
+    - bam_reheader_R
+    - get_children
+    - merge_bam_files
+    - count_matches
+    - mk_interim_fastq
+    - extractReads
+    - generate_taxonomy_table
+    - locations
+    - filter_unmapped_reads
+
 navbar:
+  bg: dark
   title: "MetaScope"
   left: 
     - text: "Home"
       href: index.html
     - text: "Tutorial"
-      href: articles/rmd/MetaScope_Vignette.html
-    - text: "Reference"
+      href: articles/MetaScope_vignette.html
+    - text: "Function Reference"
       href: reference/index.html
-    - text: "News"
+    - text: "Package News"
       href: news/index.html
   right:
     - icon: fa-github
       href: https://github.com/compbiomed/MetaScope
+      
+authors:
+  footer:
+    roles: [cre]
+    text: "Site created by"
+  sidebar:
+    roles: [aut, ctb]
       

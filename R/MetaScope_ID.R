@@ -99,7 +99,7 @@ locations <- function(which_taxid, which_genome,
                     device = "png")
 }
 
-#' MetaScope ID
+#' Identify which genomes are represented in a sample
 #'
 #' This function will read in a .bam file, annotate the taxonomy and genome
 #' names, reduce the mapping ambiguity using a mixture model, and output a

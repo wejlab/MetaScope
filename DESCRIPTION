@@ -3,12 +3,12 @@ Type: Package
 Title: Tools and functions for preprocessing 16S and metagenomic sequencing microbiome data
 Version: 0.0.99
 Authors@R:
-  c(person(given = "W. Evan", family = "Johnson", role = c("aut", "cre"),
-           email = "wej@bu.edu"),
-    person(given = "Aubrey R.", family = "Odom-Mabey", role = c("aut"),
-           email = "aodom@bu.edu"),
+  c(person(given = "Aubrey", family = "Odom-Mabey", role = c("aut", "cre"), email = "aodom@bu.edu",
+           comment = c(ORCID = "0000-0001-7113-7598")),
     person(given = "Rahul", family = "Varki", role = c("aut"),
-           email = "rvarki@bu.edu"))
+           email = "rvarki@bu.edu"),
+    person(given = "W. Evan", family = "Johnson", role = c("aut"),
+           email = "wej@bu.edu"))
 Description: This package contains the tools and methods for preprocessing microbiome data.
     It contains tools for library generation, demultiplexing, alignment, and microbe identification.
     Is is essentially an R translation of PathoScope 2.0, or MetaScope.

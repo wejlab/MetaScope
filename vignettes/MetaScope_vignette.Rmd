@@ -5,14 +5,14 @@ author:
   affiliation: 
   - Program in Bioinformatics, Boston University, Boston, MA
   email: aodom@bu.edu
-- name: W. Evan Johnson
-  affiliation:
-  - The Section of Computational Biomedicine, Boston University School of Medicine, Boston, MA
-  email: wej@bu.edu
 - name: Rahul Varki
   affiliation:
   - Research Assistant in Johnson Lab, Boston University School of Medicine, Boston, MA
   email: rvarki@bu.edu
+- name: W. Evan Johnson
+  affiliation:
+  - The Section of Computational Biomedicine, Boston University School of Medicine, Boston, MA
+  email: wej@bu.edu
 date: '`r format(Sys.Date(), "%B %e, %Y")`'
 package: MetaScope
 output: 

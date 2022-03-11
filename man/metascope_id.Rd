@@ -2,7 +2,7 @@
 % Please edit documentation in R/MetaScope_ID.R
 \name{metascope_id}
 \alias{metascope_id}
-\title{MetaScope ID}
+\title{Identify which genomes are represented in a sample}
 \usage{
 metascope_id(
   bam_file,
