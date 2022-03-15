@@ -127,6 +127,9 @@ locations <- function(which_taxid, which_genome,
 #' @param num_species_plot The number of genome coverage plots to be saved.
 #' Default is \code{NULL}, which saves coverage plots for the ten most
 #' highly abundant species.
+#' @param deprecated_ind Logical. If you aligned using an old bowtie index, the bam
+#' qnames may be different, and the function will not run without setting
+#' this parameter to \code{TRUE}.
 #' 
 #' @return
 #' This function returns a .csv file with annotated read counts to genomes with
@@ -172,7 +175,8 @@ metascope_id <- function(bam_file, aligner = "subread", NCBI_key = NULL,
                          out_file = paste(tools::file_path_sans_ext(bam_file),
                                           ".metascope_id.csv", sep = ""),
                          EMconv = 1/10000, EMmaxIts = 25,
-                         num_species_plot = NULL) {
+                         num_species_plot = NULL,
+                         deprecated_ind = FALSE) {
 
     # Check to make sure valid aligner is specified
     if (aligner != "bowtie" && aligner != "subread" && aligner != "other")
@@ -192,7 +196,15 @@ metascope_id <- function(bam_file, aligner = "subread", NCBI_key = NULL,
 
     reads <- Rsamtools::scanBam(bam_file, param = params)
     unmapped <- is.na(reads[[1]]$rname)
-    mapped_qname <- reads[[1]]$qname[!unmapped]
+    if (deprecated_ind) {
+        mapped_rname <- reads[[1]]$rname[!unmapped] %>%
+            stringr::str_split(., pattern = "ref\\|", n = 2) %>%
+            sapply(., function(x) x[2]) %>%
+            stringr::str_split(., pattern = "\\|", n = 2) %>%
+            sapply(., function(x) x[1])
+    } else {
+        mapped_rname <- reads[[1]]$rname[!unmapped]
+    }
     mapped_rname <- reads[[1]]$rname[!unmapped]
     mapped_cigar <- reads[[1]]$cigar[!unmapped]
     mapped_qwidth <- reads[[1]]$qwidth[!unmapped]
@@ -319,7 +331,7 @@ metascope_id <- function(bam_file, aligner = "subread", NCBI_key = NULL,
         pi_old <- pi_new
         print(c(it, conv))
     }
-    message("\tDONE! Converged in ", it, " interations.")
+    message("\tDONE! Converged in ", it, " iterations.")
 
     # Collect results
     hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which

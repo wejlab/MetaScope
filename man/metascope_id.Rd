@@ -11,7 +11,8 @@ metascope_id(
   out_file = paste(tools::file_path_sans_ext(bam_file), ".metascope_id.csv", sep = ""),
   EMconv = 1/10000,
   EMmaxIts = 25,
-  num_species_plot = NULL
+  num_species_plot = NULL,
+  deprecated_ind = FALSE
 )
 }
 \arguments{
@@ -41,6 +42,10 @@ file 'as is'}
 \item{num_species_plot}{The number of genome coverage plots to be saved.
 Default is \code{NULL}, which saves coverage plots for the ten most
 highly abundant species.}
+
+\item{deprecated_ind}{Logical. If you aligned using an old bowtie index, the bam
+qnames may be different, and the function will not run without setting
+this parameter to \code{TRUE}.}
 }
 \value{
 This function returns a .csv file with annotated read counts to genomes with
