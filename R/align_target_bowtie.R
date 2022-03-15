@@ -89,8 +89,8 @@ align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir,
                       paste(basename(tools::file_path_sans_ext(read1)),
                             ".", libs[i], sep = ""))
 
-        message("Attempting to perform Bowtie2 alignment on ",
-                libs[i], " index")
+        message("Attempting to perform Bowtie2 alignment on ", libs[i],
+                " index")
         Rbowtie2::bowtie2_samtools(bt2Index = file.path(lib_dir, libs[i]),
                                    output = bam_files[i], outputType = "bam",
                                    seq1 = read1, seq2 = read2,
@@ -105,7 +105,7 @@ align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir,
     bam_files <- paste0(bam_files, ".bam")
     # If more than one libraries were aligned to then combine the bam files
     if (length(bam_files) > 1) {
-        message("Merging the bam files into ",align_file,".bam")
+        message("Merging the bam files into ", align_file, ".bam")
         merge_bam_files(bam_files, tools::file_path_sans_ext(outputFile))
     } else file.rename(bam_files, outputFile)
     
