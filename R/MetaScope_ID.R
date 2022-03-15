@@ -205,7 +205,7 @@ metascope_id <- function(bam_file, aligner = "subread", NCBI_key = NULL,
     } else {
         mapped_rname <- reads[[1]]$rname[!unmapped]
     }
-    mapped_rname <- reads[[1]]$rname[!unmapped]
+    mapped_qname <- reads[[1]]$qname[!unmapped]
     mapped_cigar <- reads[[1]]$cigar[!unmapped]
     mapped_qwidth <- reads[[1]]$qwidth[!unmapped]
 
