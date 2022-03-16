@@ -196,12 +196,23 @@ metascope_id <- function(bam_file, aligner = "subread", NCBI_key = NULL,
 
     reads <- Rsamtools::scanBam(bam_file, param = params)
     unmapped <- is.na(reads[[1]]$rname)
+    # Account for potential index issues
     if (deprecated_ind) {
-        mapped_rname <- reads[[1]]$rname[!unmapped] %>%
+        # 2015
+        mapped_2015 <- reads[[1]]$rname[!unmapped] %>%
             stringr::str_split(., pattern = "ref\\|", n = 2) %>%
             sapply(., function(x) x[2]) %>%
             stringr::str_split(., pattern = "\\|", n = 2) %>%
             sapply(., function(x) x[1])
+        # 2018
+        mapped_2018 <- reads[[1]]$rname[!unmapped] %>%
+            stringr::str_split(., pattern = "ion\\|", n = 2) %>%
+            sapply(., function(x) x[2])
+        # Select_best
+        ind <- sum(is.na(mapped_2015)) < sum(is.na(mapped_2018))
+        if (ind) {
+            mapped_rname <- mapped_2015
+        } else mapped_rname <- mapped_2018
     } else {
         mapped_rname <- reads[[1]]$rname[!unmapped]
     }
