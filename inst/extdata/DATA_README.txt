@@ -13,11 +13,13 @@ download_refseq(taxon = "Staphylococcus epidermidis RP62A", representative = FAL
 mv Staphylococcus\ aureus\ RF122.fasta Staphylococcus_aureus_RF122.fasta
 mv Staphylococcus\ epidermidis\ RP62A.fasta Staphylococcus_epidermidis_RP62A.fasta
 wgsim -N 1000 -1 250 -2 250 -S 32 Staphylococcus_aureus_RF122.fasta read1.fq read2.fq 
-wgsim -N 500 -1 250 -2 250 -S 32 Bacillus_cereus_AH1237.fasta read3.fq read4.fq  
+wgsim -N 500 -1 250 -2 250 -S 32 Staphylococcus_epidermidis_RP62A.fasta read3.fq read4.fq  
 
 cat read1.fq read3.fq > reads.fastq
 
 Files created: reads.fastq
+
+# -----------------------------------------------------------------------------
 
 The target fasta file is created by merging the following strains into one fasta file: Staphylococcus aureus strain RF122, Staphylococcus aureus strain ST398, Staphylococcus aureus strain N315, Staphylococcus aureus strain Mu50, Staphylococcus aureus strain Mu3, and Staphylococcus aureus strain Newman
 
@@ -39,21 +41,22 @@ cat *.fasta > target.fasta
 
 Files created: target.fasta
 
+# -----------------------------------------------------------------------------
+
 The filter fasta file is the fasta file of Bacillus cereus strain AH1273. 
 
 Below are the steps to recreate the filter fasta file.
 
 ## Inside R
 
-download_refseq(taxon = "Staphylococcus epidermidis RP62A", representative = FALSE, reference = FALSE, compress = FALSE)
+download_refseq(taxon = "Bacillus cereus AH1237", representative = FALSE, reference = FALSE, 
+compress = FALSE)
 
 ## Outside R
 
-mv Staphylococcus\ epidermidis\ RP62A.fasta filter.fasta
+mv Bacillus\ cereus\ AH1237.fasta filter.fasta
 
 Files created: filter.fasta
-
-
 
 
 
