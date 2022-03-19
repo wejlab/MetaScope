@@ -264,6 +264,8 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs,
         # Create output file name for BAM
         lib_file <- paste(tools::file_path_sans_ext(reads_bam),".",
                           libs[i], ".bam", sep = "")
+        message("Attempting to perform Bowtie2 alignment on ", libs[i],
+                " index")
         # Align reads to lib and generate new filter BAM file
         Rbowtie2::bowtie2_samtools(
             bt2Index = file.path(lib_dir,libs[i]),
