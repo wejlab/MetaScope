@@ -29,6 +29,7 @@ globalVariables(c("align_details"))
 #'
 
 filter_unmapped_reads <- function(bamfile) {
+    message("Filtering unmapped reads")
     # sort bam file
     sorted_bamfile <- Rsamtools::sortBam(
         bamfile, paste(tools::file_path_sans_ext(bamfile),
@@ -145,6 +146,7 @@ combined_header <- function(bam_files, header_file = "header_tmp.sam") {
 bam_reheader_R <- function(head, old_bam,
                            new_bam = paste(tools::file_path_sans_ext(old_bam),
                                            "h.bam", sep = "")) {
+    message("Reheading bam file")
     # system(paste('samtools reheader ' , head, ' ', old_bam,' > ',
     # new_bam, sep=''))
     new_sam <- paste(tools::file_path_sans_ext(new_bam), ".sam", sep = "")
@@ -209,6 +211,7 @@ bam_reheader_R <- function(head, old_bam,
 merge_bam_files <- function(bam_files, destination,
                             head_file = paste(destination, "_header.sam",
                                               sep = "")) {
+    message("Combining headers")
     com_head <- combined_header(bam_files, header_file = head_file)
     message("Merging and sorting .bam files")
     bam_files_h <- sam_files_h <- NULL
@@ -230,6 +233,7 @@ merge_bam_files <- function(bam_files, destination,
     for (i in bam_files_h) {
         file.remove(i)
     }
+    message("Sorting merged bam file")
     # sort merged bam file
     merged_bam_sorted <- Rsamtools::sortBam(merged_bam, destination)
     file.remove(merged_bam)
@@ -400,7 +404,7 @@ align_target <- function(reads, libs, lib_dir=NULL,
 align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir,
                                 align_file, bowtie2_options = NULL,
                                 threads = 8, overwrite = FALSE) {
-    
+
     # Convert user specified paths to absolute paths for debugging purposes
     lib_dir <- tools::file_path_as_absolute(lib_dir)
     align_dir <- tools::file_path_as_absolute(align_dir)
@@ -411,7 +415,7 @@ align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir,
             "--very-sensitive-local -k 100 --score-min L,20,1.0", "--threads",
             threads)
     } else bowtie2_options <- paste(bowtie2_options, "--threads", threads)
-    
+
     bam_files <- numeric(length(libs))
     for (i in seq_along(libs)) {
         # Do not attach the .bam extension because Rbowtie2 does this already
@@ -430,7 +434,7 @@ align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir,
         # Attach .bam extension to bam files in order to call this function
         filter_unmapped_reads(paste0(bam_files[i], ".bam"))
     }
-    
+    message("Library alignment complete")
     # Create variable names for files
     outputFile <- file.path(align_dir, paste0(align_file, ".bam"))
     bam_files <- paste0(bam_files, ".bam")
@@ -439,7 +443,7 @@ align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir,
         message("Merging the bam files into ", align_file, ".bam")
         merge_bam_files(bam_files, tools::file_path_sans_ext(outputFile))
     } else file.rename(bam_files, outputFile)
-    
+
     message("DONE! Alignments written to ", outputFile)
     return(outputFile)
 }

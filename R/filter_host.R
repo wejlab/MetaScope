@@ -67,6 +67,7 @@ mk_interim_fastq <- function(bf, read_loc, maxMemory) {
 #'
 
 remove_matches <- function(reads_bam, read_names, name_out) {
+    message("Removing reads mapped to host indices")
     # Note: reads_BAM and filter-aligned files are already sorted by chromosome
     # index bam file
     bam_index <- Rsamtools::indexBam(reads_bam)
