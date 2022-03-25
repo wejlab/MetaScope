@@ -8,7 +8,7 @@ globalVariables(c("align_details"))
 #' another library. This will remove any unmapped entries and leave all
 #' reference mapped lines in the .bam file. 
 #' 
-#' It is not intended for use by package users.
+#' It is not intended for direct use.
 #'
 #' @param bamfile Location for the .bam file to filter & remove all unmapped
 #' reads
@@ -30,22 +30,10 @@ globalVariables(c("align_details"))
 
 filter_unmapped_reads <- function(bamfile) {
     message("Filtering unmapped reads")
-    # sort bam file
-    sorted_bamfile <- Rsamtools::sortBam(
-        bamfile, paste(tools::file_path_sans_ext(bamfile),
-                       ".sorted", sep = ""))
-    # index bam file
-    bam_index <- Rsamtools::indexBam(sorted_bamfile)
-    # filter umapped reads
     filtered_bam <- Rsamtools::filterBam(
         sorted_bamfile, destination = bamfile,
-        index = bam_index, indexDestination = FALSE,
         param = Rsamtools::ScanBamParam(flag = Rsamtools::scanBamFlag(
             isUnmappedQuery = FALSE)))
-    # clean up
-    file.remove(sorted_bamfile)
-    file.remove(bam_index)
-    # return filtered file name
     return(filtered_bam)
 }
 
@@ -213,7 +201,7 @@ merge_bam_files <- function(bam_files, destination,
                                               sep = "")) {
     message("Combining headers")
     com_head <- combined_header(bam_files, header_file = head_file)
-    message("Merging and sorting .bam files")
+    message("Merging .bam files")
     bam_files_h <- sam_files_h <- NULL
     for (i in seq_along(bam_files)) {
         new_bam_h <- bam_reheader_R(com_head, bam_files[i])
@@ -404,12 +392,10 @@ align_target <- function(reads, libs, lib_dir=NULL,
 align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir,
                                 align_file, bowtie2_options = NULL,
                                 threads = 8, overwrite = FALSE) {
-
     # Convert user specified paths to absolute paths for debugging purposes
     lib_dir <- tools::file_path_as_absolute(lib_dir)
     align_dir <- tools::file_path_as_absolute(align_dir)
-    # If user does not specify their own parameters then use default
-    # PathoScope parameters
+    # If user does not specify parameters, default to PathoScope parameters
     if (missing(bowtie2_options)) {
         bowtie2_options <- paste(
             "--very-sensitive-local -k 100 --score-min L,20,1.0", "--threads",
@@ -418,12 +404,11 @@ align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir,
 
     bam_files <- numeric(length(libs))
     for (i in seq_along(libs)) {
-        # Do not attach the .bam extension because Rbowtie2 does this already
+        # Don't attach .bam extension - Rbowtie2 does this already
         bam_files[i] <- 
             file.path(align_dir,
                       paste(basename(tools::file_path_sans_ext(read1)),
                             ".", libs[i], sep = ""))
-        
         message("Attempting to perform Bowtie2 alignment on ", libs[i],
                 " index")
         Rbowtie2::bowtie2_samtools(bt2Index = file.path(lib_dir, libs[i]),
@@ -431,19 +416,17 @@ align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir,
                                    seq1 = read1, seq2 = read2,
                                    overwrite = overwrite,
                                    ... = bowtie2_options)
-        # Attach .bam extension to bam files in order to call this function
+        # Attach .bam extension to bam files to call function
         filter_unmapped_reads(paste0(bam_files[i], ".bam"))
     }
     message("Library alignment complete")
-    # Create variable names for files
     outputFile <- file.path(align_dir, paste0(align_file, ".bam"))
     bam_files <- paste0(bam_files, ".bam")
-    # If more than one libraries were aligned to then combine the bam files
+    # If more than one library was aligned, then combine bam files
     if (length(bam_files) > 1) {
         message("Merging the bam files into ", align_file, ".bam")
         merge_bam_files(bam_files, tools::file_path_sans_ext(outputFile))
     } else file.rename(bam_files, outputFile)
-
     message("DONE! Alignments written to ", outputFile)
     return(outputFile)
 }

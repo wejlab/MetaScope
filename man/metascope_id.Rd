@@ -20,6 +20,9 @@ metascope_id(
 \arguments{
 \item{input_file}{The .bam or .rds file that needs to be identified.}
 
+\item{input_type}{Extension of file input. Should be either "bam" or "rds".
+Default is "bam".}
+
 \item{aligner}{The aligner which was used to create the bam file. Default is 
 "subread" but can also be set to "bowtie" or "other"}
 

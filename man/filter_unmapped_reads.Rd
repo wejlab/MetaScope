@@ -24,7 +24,7 @@ another library. This will remove any unmapped entries and leave all
 reference mapped lines in the .bam file.
 }
 \details{
-It is not intended for use by package users.
+It is not intended for direct use.
 }
 \examples{
 

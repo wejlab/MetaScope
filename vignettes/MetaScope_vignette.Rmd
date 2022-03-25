@@ -301,7 +301,6 @@ MetaScope::metascope_id(bam_file = final_map, aligner = "bowtie", num_species_pl
 We will now look at the read reassignment results reported in the output CSV file.
 
 ```{R CSV summary, eval = TRUE, warning = FALSE, message = FALSE, echo = FALSE}
-
 relevant_col <- read.csv(paste(tools::file_path_sans_ext(final_map),
                                           ".metascope_id.csv", sep = ""))[,2:4]
 relevant_col[,1] <- gsub(',.*', '', relevant_col[,1])
@@ -311,7 +310,6 @@ relevant_col[,1] <- gsub("(Newman).*", "\\1", relevant_col[,1])
 relevant_col[,1] <- gsub("(Mu3).*", "\\1", relevant_col[,1])
 relevant_col[,1] <- gsub("(RF122).*", "\\1", relevant_col[,1])
 knitr::kable(relevant_col)
-
 ```
 
 We can see that the read reassignment function has reassigned the majority of the ambiguous alignments back to the Staphylococcus aureus RF122 strain, the correct strain of origin.
