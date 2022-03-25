@@ -31,7 +31,7 @@ globalVariables(c("align_details"))
 filter_unmapped_reads <- function(bamfile) {
     message("Filtering unmapped reads")
     filtered_bam <- Rsamtools::filterBam(
-        sorted_bamfile, destination = bamfile,
+        bamfile, destination = bamfile,
         param = Rsamtools::ScanBamParam(flag = Rsamtools::scanBamFlag(
             isUnmappedQuery = FALSE)))
     return(filtered_bam)
