@@ -1,6 +1,61 @@
 globalVariables(c("qname", "rname"))
 
-#Testing new changes made to ID function. Score changes, unique indicator change (I think unique indicator could be issue with 0 masking unique reads) 
+obtain_reads <- function(input_file, input_type, aligner){
+    if (input_type == "bam") {
+        message("Reading .bam file: ", input_file)
+        to_pull <- c("qname", "rname", "cigar","qwidth", "pos")
+        if (identical(aligner, "bowtie")) {
+            params <- Rsamtools::ScanBamParam(what = to_pull, tag = c("AS"))
+        } else if (identical(aligner, "subread")) {
+            params <- Rsamtools::ScanBamParam(what = to_pull, tag = c("NM"))
+        } else if (identical(aligner, "other")) {
+            params <- Rsamtools::ScanBamParam(what = to_pull)
+        }
+        reads <- Rsamtools::scanBam(input_file, param = params)
+    } else if (input_type == "rds") {
+        reads <- list(as.list(readRDS(input_file)))
+        if (identical(aligner, "bowtie")) {
+            reads[[1]]$tag <- list("AS" = reads[[1]]$AS)
+            reads[[1]]$AS <- NULL
+        } else if (identical(aligner, "subread")) {
+            reads[[1]]$tag <- list("NM" = reads[[1]]$NM)
+            reads[[1]]$NM <- NULL
+        }
+    }
+    return(reads)
+}
+
+find_accessions <- function(accessions, NCBI_key) {
+    # Convert accessions to taxids and get genome names
+    message("Obtaining taxonomy and genome names")
+    # If URI length is greater than 2500 characters then split accession list
+    URI_length <- nchar(paste(accessions, collapse = "+"))
+    if (URI_length > 2500){
+        chunks <- split(accessions, ceiling(seq_along(accessions) / 100))
+        tax_id_all <- c()
+        message(paste("Accession list broken into", length(chunks), "chunks"))
+        for (i in 1:length(chunks)) {
+            success <- FALSE
+            attempt <- 0
+            # Attempt to get taxid up to three times for each chunk
+            while (!success) {
+                try({
+                    attempt <- attempt + 1
+                    if (attempt > 1) message("Attempt #", attempt, " Chunk #", i)
+                    suppressMessages(
+                        tax_id_chunk <- taxize::genbank2uid(id = chunks[[i]],
+                                                            key = NCBI_key))
+                    Sys.sleep(1)
+                    tax_id_all <- c(tax_id_all, tax_id_chunk)
+                    success <- TRUE
+                })
+            }
+        }
+    } else suppressMessages(tax_id_all <- taxize::genbank2uid(id = accessions,
+                                                              key = NCBI_key))
+    return(tax_id_all)
+}
+
 
 #' Count the number of base lengths in a CIGAR string for a given operation
 #' 
@@ -66,14 +121,14 @@ count_matches <- function(x, char = "M") {
 #' @param which_genome Which genome to plot
 #' @param accessions List of accessions from \code{metascope_id()}
 #' @param taxids List of accessions from \code{metascope_id()}
-#' @param reads List of reads from bam file
-#' @param bam_file The path to the bam file
+#' @param reads List of reads from input file
+#' @param input_file The path to the input file
 #' 
 #' @return A plot of the read coverage for a given genome
 
 locations <- function(which_taxid, which_genome,
-                      accessions, taxids, reads, bam_file) {
-    plots_save <- paste(stringr::str_split(tools::file_path_sans_ext(bam_file),
+                      accessions, taxids, reads, input_file) {
+    plots_save <- paste(stringr::str_split(tools::file_path_sans_ext(input_file),
                                            "\\.")[[1]][1],
                         "coverage", sep = "_")
     # map back to accessions
@@ -101,14 +156,15 @@ locations <- function(which_taxid, which_genome,
 
 #' Identify which genomes are represented in a sample
 #'
-#' This function will read in a .bam file, annotate the taxonomy and genome
+#' This function will read in a .bam or .rds file, annotate the taxonomy and genome
 #' names, reduce the mapping ambiguity using a mixture model, and output a
 #' .csv file with the results. Currently, it assumes that the genome
 #' library/.bam files use NCBI accession names for reference names (rnames in
 #' .bam file). 
 #'
-#' @param bam_file The .bam file that needs to be summarized, annotated, and
-#' needs removal of ambiguity.
+#' @param input_file The .bam or .rds file that needs to be identified.
+#' @param input_type Extension of file input. Should be either "bam" or "rds".
+#' Default is "bam".
 #' @param aligner The aligner which was used to create the bam file. Default is 
 #' "subread" but can also be set to "bowtie" or "other"
 #' @param NCBI_key (character) NCBI Entrez API key. optional.
@@ -116,7 +172,7 @@ locations <- function(which_taxid, which_genome,
 #' requests made to NCBI, this function will be less prone to errors
 #' if you obtain an NCBI key.
 #' You may enter the string as an input or set it as ENTREZ_KEY in .Renviron.
-#' @param out_file The name of the .csv output file. Defaults to the bam_file
+#' @param out_file The name of the .csv output file. Defaults to the input_file
 #' basename plus ".metascope_id.csv".
 #' @param EMconv The convergence parameter of the EM algorithm. Default set at
 #' \code{1/10000}.
@@ -149,7 +205,7 @@ locations <- function(which_taxid, which_genome,
 #' package = "MetaScope")
 #' 
 #' ## Run metascope id with the aligner option set to subread
-#' metascope_id(bam_file = bamPath, aligner = "subread")
+#' metascope_id(input_file = bamPath, aligner = "subread")
 #' 
 #' ## Bowtie aligned bam file 
 #' 
@@ -158,7 +214,7 @@ locations <- function(which_taxid, which_genome,
 #' package = "MetaScope")
 #' 
 #' ## Run metascope id with the aligner option set to bowtie
-#' metascope_id(bam_file = bamPath, aligner = "bowtie")
+#' metascope_id(input_file = bamPath, aligner = "bowtie")
 #' 
 #' ## Different or unknown aligned bam file
 #' 
@@ -167,12 +223,12 @@ locations <- function(which_taxid, which_genome,
 #' package = "MetaScope")
 #' 
 #' ## Run metascope id with the aligner option set to other 
-#' metascope_id(bam_file = bamPath, aligner = "other")
+#' metascope_id(input_file = bamPath, aligner = "other")
 #' 
 
-
-metascope_id <- function(bam_file, aligner = "subread", NCBI_key = NULL,
-                         out_file = paste(tools::file_path_sans_ext(bam_file),
+metascope_id <- function(input_file, input_type = "bam", aligner = "subread",
+                         NCBI_key = NULL,
+                         out_file = paste(tools::file_path_sans_ext(input_file),
                                           ".metascope_id.csv", sep = ""),
                          EMconv = 1/10000, EMmaxIts = 25,
                          num_species_plot = NULL,
@@ -182,19 +238,7 @@ metascope_id <- function(bam_file, aligner = "subread", NCBI_key = NULL,
     if (aligner != "bowtie" && aligner != "subread" && aligner != "other")
         stop("Please make sure aligner is set to either 'bowtie', 'subread',",
              " or 'other'")
-
-    message("Reading .bam file: ", bam_file)
-
-    to_pull <- c("qname", "rname", "cigar","qwidth", "pos")
-    if (identical(aligner,"bowtie")) {
-        params <- Rsamtools::ScanBamParam(what = to_pull, tag = c("AS"))
-    } else if (identical(aligner,"subread")) {
-        params <- Rsamtools::ScanBamParam(what = to_pull, tag = c("NM"))
-    } else if (identical(aligner,"other")) {
-        params <- Rsamtools::ScanBamParam(what = to_pull)
-    }
-
-    reads <- Rsamtools::scanBam(bam_file, param = params)
+    reads <- obtain_reads(input_file, input_type, aligner)
     unmapped <- is.na(reads[[1]]$rname)
     # Account for potential index issues
     if (deprecated_ind) {
@@ -227,39 +271,9 @@ metascope_id <- function(bam_file, aligner = "subread", NCBI_key = NULL,
 
     read_names <- unique(mapped_qname)
     accessions <- as.character(unique(mapped_rname))
-
     message("\tFound ", length(read_names), " reads aligned to ",
             length(accessions), " NCBI accessions")
-
-    # Convert accessions to taxids and get genome names
-    message("Obtaining taxonomy and genome names")
-
-    # If URI length is greater than 2500 characters then split accession list
-    URI_length <- nchar(paste(accessions, collapse = "+"))
-    if (URI_length > 2500){
-        chunks <- split(accessions, ceiling(seq_along(accessions) / 100))
-        tax_id_all <- c()
-        message(paste("Accession list broken into", length(chunks), "chunks"))
-        for (i in 1:length(chunks)) {
-            success <- FALSE
-            attempt <- 0
-            # Attempt to get taxid up to three times for each chunk
-            while (!success) {
-                try({
-                    attempt <- attempt + 1
-                    if (attempt > 1) message("Attempt #", attempt, " Chunk #", i)
-                    suppressMessages(
-                        tax_id_chunk <- taxize::genbank2uid(id = chunks[[i]],
-                                                            key = NCBI_key))
-                    Sys.sleep(1)
-                    tax_id_all <- c(tax_id_all, tax_id_chunk)
-                    success <- TRUE
-                })
-            }
-        }
-    } else suppressMessages(tax_id_all <- taxize::genbank2uid(id = accessions,
-                                                              key = NCBI_key))
-
+    tax_id_all <- find_accessions(accessions, NCBI_key)
     taxids <- vapply(tax_id_all, function(x) x[1], character(1))
     unique_taxids <- unique(taxids)
     taxid_inds <- match(taxids, unique_taxids)
@@ -372,7 +386,7 @@ metascope_id <- function(bam_file, aligner = "subread", NCBI_key = NULL,
                function(x) locations(as.numeric(results$TaxonomyID)[x],
                                      which_genome = results$Genome[x],
                                      accessions, taxids, reads,
-                                     bam_file))
+                                     input_file))
     }
     utils::write.csv(results, file = out_file, row.names = FALSE)
     message("Results written to ", out_file)

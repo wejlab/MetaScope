@@ -4,7 +4,7 @@
 \alias{locations}
 \title{Helper Function for MetaScope ID}
 \usage{
-locations(which_taxid, which_genome, accessions, taxids, reads, bam_file)
+locations(which_taxid, which_genome, accessions, taxids, reads, input_file)
 }
 \arguments{
 \item{which_taxid}{Which taxid to plot}
@@ -15,9 +15,9 @@ locations(which_taxid, which_genome, accessions, taxids, reads, bam_file)
 
 \item{taxids}{List of accessions from \code{metascope_id()}}
 
-\item{reads}{List of reads from bam file}
+\item{reads}{List of reads from input file}
 
-\item{bam_file}{The path to the bam file}
+\item{input_file}{The path to the input file}
 }
 \value{
 A plot of the read coverage for a given genome

@@ -1,24 +1,24 @@
 globalVariables(c("align_details"))
 
 #' Helper function for filter_host_bowtie to write interim fastq file
-mk_interim_fastq <- function(bf, read_loc, maxMemory) {
+mk_interim_fastq <- function(bf, read_loc) {
     message("Creating Intermediate Fastq file")
     # Obtain read names
     open(bf)
     innames <- Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(
-        what = c("qname")), maxMemory = maxMemory) %>% .[[1]] %>%
+        what = c("qname"))) %>% .[[1]] %>%
         unlist(.$qnames) %>% unname()
     # Remove repeated reads from subsequent pulled info
     ind <- !duplicated(innames)
     # Read in quality scores
     open(bf)
     inqual <- Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(
-        what = c("qual")), maxMemory = maxMemory) %>% .[[1]] %>%
+        what = c("qual"))) %>% .[[1]] %>%
         .$qual %>% as.character() %>% .[ind]
     # Appending sequences without saving (to conserve memory)
     open(bf)
     Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(
-        what = c("seq")), maxMemory = maxMemory) %>% .[[1]] %>% .$seq %>%
+        what = c("seq"))) %>% .[[1]] %>% .$seq %>%
         as.character() %>% .[ind] %>% dplyr::tibble(
             Header = innames[ind], Sequence = ., Quality = inqual) %>%
         # Keep first occurrences of reads
@@ -38,7 +38,7 @@ mk_interim_fastq <- function(bf, read_loc, maxMemory) {
 #' filter libraries of interest. The \code{remove_matches()} function allows
 #' for removal of any target reads that are also aligned to filter libraries.
 #'
-#' This function is not intended for use by users.
+#' This function is not intended for direct use.
 #'
 #' @param reads_bam The name of a merged, sorted .bam file that has previously
 #' been aligned to a reference library. Likely, the output from running an
@@ -48,6 +48,9 @@ mk_interim_fastq <- function(bf, read_loc, maxMemory) {
 #' element should be a vector of read names.
 #' @param name_out The name of the .bam file that to which the filtered alignments
 #' will be written.
+#' @inheritParams filter_host_bowtie
+#' @param threads The number of threads to be used in filtering the bam file.
+#' @param aligner The aligner which was used to create the bam file. 
 #'
 #' @return The name of a filtered, sorted .bam file written to the user's
 #' current working directory.
@@ -66,7 +69,36 @@ mk_interim_fastq <- function(bf, read_loc, maxMemory) {
 #' # remove_matches(readPath, read_names, out)
 #'
 
-remove_matches <- function(reads_bam, read_names, name_out) {
+remove_matches <- function(reads_bam, read_names, name_out,
+                           YS, threads, aligner) {
+    message("Removing reads mapped to host indices")
+    filter_names <- unique(unlist(read_names))
+    bf <- Rsamtools::BamFile(reads_bam, yieldSize = YS)
+    YIELD <- function(x) {
+        if (identical(aligner, "bowtie")) {
+            Rsamtools::scanBam(x, param = Rsamtools::ScanBamParam(
+                what = c("qname", "rname", "cigar","qwidth", "pos"),
+                tag = c("AS")))[[1]] |> as.data.frame()
+        } else if (identical(aligner, "subread")) {
+            Rsamtools::scanBam(x, param = Rsamtools::ScanBamParam(
+                what = c("qname", "rname", "cigar","qwidth", "pos"),
+                tag = c("NM")))[[1]] |> as.data.frame()
+        }
+    }
+    MAP <- function(value) return(value[!(value$qname %in% filter_names), ])
+    REDUCE <- function(x, y, iterate = true) dplyr::bind_rows(x, y)
+    DONE <- function(value) nrow(value) == 0
+    start <- Sys.time()
+    BiocParallel::register(BiocParallel::MulticoreParam(threads))
+    suppressWarnings(GenomicFiles::reduceByYield(bf, YIELD, MAP, REDUCE, DONE,
+                                parallel = TRUE)) %>%
+        saveRDS(., output_RDS)
+    print(Sys.time() - start)
+    return(output_RDS)
+}
+
+# Could make this a function that actually outputs BAM file
+remove_matches_bam <- function(reads_bam, read_names, name_out) {
     message("Removing reads mapped to host indices")
     # Note: reads_BAM and filter-aligned files are already sorted by chromosome
     # index bam file
@@ -97,15 +129,10 @@ remove_matches <- function(reads_bam, read_names, name_out) {
 #' sorted .bam file with any reads that match the filter libraries removed.
 #' This resulting .bam file may be used upstream for further analysis.
 #'
-#' @param reads_bam The name of a merged, sorted .bam file that has previously
-#' been aligned to a reference library. Likely, the output from running an
-#' instance of \code{align_target()}.
-#' @param output The desired name of the output .bam file. Default is
-#' the basename of \code{reads_bam} + \code{.filtered.bam}.
+#' @inheritParams filter_host_bowtie
 #' @inheritParams align_target
-#'
-#' @return The name of a filtered, sorted .bam file written to the user's
-#' current working directory.
+#' @return The name of an RDS file of filtered reads written to the user's
+#' directory of choice.
 #' 
 #' @export
 #' 
@@ -128,12 +155,16 @@ remove_matches <- function(reads_bam, read_names, name_out) {
 #'
 #' ## Filter bam file 
 #' filter_host(readPath, libs = "filter")
-#'
+#' 
 
 filter_host <- function(reads_bam, libs, lib_dir = NULL,
                         output = paste(tools::file_path_sans_ext(reads_bam),
                                        "filtered", "bam", sep = "."),
-                        settings = align_details) {
+                        settings = align_details,
+                        output_rds = paste(
+                            tools::file_path_sans_ext(reads_bam),
+                            "filtered", "rds", sep = "."),
+                        YS = 1000000, threads = 8) {
     # Initialize list of names
     read_names <- vector(mode = "list", length(libs))
 
@@ -153,22 +184,25 @@ filter_host <- function(reads_bam, libs, lib_dir = NULL,
                         phredOffset = settings[["phredOffset"]],
                         unique = settings[["unique"]],
                         nBestLocations = settings[["nBestLocations"]])
+        ##sort BAM file and remove umapped reads (package helper function)
+        ##filter_unmapped_reads(lib_file)
+        ##read_names[[i]] <- Rsamtools::scanBam(lib_file)[[1]]$qname
 
-        # sort BAM file and remove umapped reads (package helper function)
-        filter_unmapped_reads(lib_file)
         # Extract target query names from mapped BAM file
-        read_names[[i]] <- Rsamtools::scanBam(lib_file)[[1]]$qname
+        read_names[[i]] <- Rsamtools::scanBam(
+            lib_file, param = Rsamtools::ScanBamParam(
+                what = c("qname"),
+                flag = Rsamtools::scanBamFlag(isUnmappedQuery = FALSE)))
         # Throw away BAM, vcf file
         file.remove(lib_file)
         file.remove(paste(lib_file, ".indel.vcf", sep = ""))
         file.remove(paste(lib_file, ".summary", sep = ""))
     }
-
-    # helper function to sort headers and filter BAM file
-    remove_matches(reads_bam, read_names, output)
+    # helper function to obtain final host-filtered read names
+    remove_matches(reads_bam, read_names, output_RDS, YS, threads, "subread")
     # output final filtered BAM file
-    message("DONE! Alignments written to ", output)
-    return(output)
+    message("DONE! Alignments written to ", output_RDS)
+    return(output_RDS)
 }
 
 #' Align reads against one or more filter libraries and subsequently
@@ -190,6 +224,8 @@ filter_host <- function(reads_bam, libs, lib_dir = NULL,
 #' (without .bt2 or .bt2l extension)
 #' @param output The desired name of the output .bam file. Default is
 #' the basename of \code{unfiltered_bam} + \code{.filtered.bam}.
+#' @param output_rds The desired name of the output .rds file. Default is
+#' the basename of \code{unfiltered_bam} + \code{.filtered.rds}.
 #' @param bowtie2_options Optional: Additional parameters that can be passed to
 #' the filter_host_bowtie() function. To see all the available parameters
 #' use Rbowtie2::bowtie2_usage(). Default parameters are the parameters are the 
@@ -197,17 +233,16 @@ filter_host <- function(reads_bam, libs, lib_dir = NULL,
 #' parameters as one string and if optional parameters are given then the user 
 #' is responsible for entering all the parameters to be used by Bowtie2. NOTE:
 #' The only parameters that should NOT be specified here is the threads.
+#' @param YS yieldSize, an integer. The number of alignments to be read in from
+#' the bam file at once. Default is 1000000.
 #' @param threads The amount of threads available for the function.
 #' Default is 8 threads.
 #' @param overwrite Whether existing files should be overwritten. 
 #' Default is FALSE.
-#' @param maxMemory The number of MB of RAM that the sortBAM function can use.
-#' The smaller the number, the more temporary files will be produced, which will
-#' hopefully save memory usage. The default is 512 MB.
-#' 
+#'
 #' @return The name of a filtered, sorted .bam file written to the user's
 #' current working directory.
-#' 
+#'
 #' @export
 #' 
 #' @examples
@@ -248,8 +283,11 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs,
                                output = paste(
                                    tools::file_path_sans_ext(reads_bam),
                                    "filtered", "bam", sep = "."),
-                               bowtie2_options = NULL, threads = 8,
-                               overwrite = FALSE, maxMemory = 512) {
+                               output_rds = paste(
+                                   tools::file_path_sans_ext(reads_bam),
+                                   "filtered", "rds", sep = "."),
+                               bowtie2_options = NULL, YS = 1000000,
+                               threads = 8, overwrite = FALSE) {
     # If no optional parameters are passed then use default parameters else use user parameters 
     if (missing(bowtie2_options)) {
         bowtie2_options <- paste("--very-sensitive-local -k 100",
@@ -259,7 +297,7 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs,
     bf <- Rsamtools::BamFile(reads_bam, yieldSize = 1000000000)
     read_loc <- file.path(dirname(reads_bam), "intermediate.fastq")
     # Make Intermediate Fastq file
-    mk_interim_fastq(bf, read_loc, maxMemory)
+    mk_interim_fastq(bf, read_loc)
     read_names <- vector(mode = "list", length(libs)) # Init list of names
     for (i in seq_along(libs)) {
         # Create output file name for BAM
@@ -273,18 +311,23 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs,
             output = tools::file_path_sans_ext(lib_file),
             outputType = "bam", seq1 = read_loc, ... = bowtie2_options,
             overwrite = overwrite)
-        # sort BAM file and remove umapped reads (package helper function)
-        filter_unmapped_reads(lib_file)
+        ##sort BAM file and remove umapped reads (package helper function)
+        ##filter_unmapped_reads(lib_file)
+        ##read_names[[i]] <- Rsamtools::scanBam(lib_file)[[1]]$qname
+
         # Extract target query names from mapped BAM file
-        read_names[[i]] <- Rsamtools::scanBam(lib_file)[[1]]$qname
+        read_names[[i]] <- Rsamtools::scanBam(
+            lib_file, param = Rsamtools::ScanBamParam(
+                what = c("qname"),
+                flag = Rsamtools::scanBamFlag(isUnmappedQuery = FALSE)))
         # Throw away BAM file
         file.remove(lib_file)
     }
     # remove intermediate fastq file
     file.remove(read_loc)
-    # helper function to sort headers and filter BAM file
-    remove_matches(reads_bam, read_names, output)
+    # helper function to obtain final host-filtered read names
+    remove_matches(reads_bam, read_names, output_RDS, YS, threads, "bowtie")
     # output final filtered BAM file
-    message("DONE! Alignments written to ", output)
-    return(output)
+    message("DONE! Alignments written to ", output_RDS)
+    return(output_RDS)
 }

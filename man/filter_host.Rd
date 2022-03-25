@@ -10,22 +10,26 @@ filter_host(
   libs,
   lib_dir = NULL,
   output = paste(tools::file_path_sans_ext(reads_bam), "filtered", "bam", sep = "."),
-  settings = align_details
+  settings = align_details,
+  output_rds = paste(tools::file_path_sans_ext(reads_bam), "filtered", "rds", sep =
+    "."),
+  YS = 1e+06,
+  threads = 8
 )
 }
 \arguments{
 \item{reads_bam}{The name of a merged, sorted .bam file that has previously
 been aligned to a reference library. Likely, the output from running an
-instance of \code{align_target()}.}
+instance of \code{align_target_bowtie()}.}
 
-\item{libs}{A vector of character strings giving the basenames of the
-Subread index files for alignment. These should be located in the same
-directory and the current directory if lib_dir=NULL.}
+\item{libs}{The basename of the filter libraries 
+(without .bt2 or .bt2l extension)}
 
-\item{lib_dir}{path to the library index files (all libraries should be here)}
+\item{lib_dir}{Path to the directory that contains the filter Bowtie2 index
+files.}
 
 \item{output}{The desired name of the output .bam file. Default is
-the basename of \code{reads_bam} + \code{.filtered.bam}.}
+the basename of \code{unfiltered_bam} + \code{.filtered.bam}.}
 
 \item{settings}{A named \code{list} specifying alignment parameters for
 the \code{Rsubread::align()} function, which is
@@ -34,10 +38,19 @@ Elements should include type, nthreads, maxMismatches, nsubreads,
 phredOffset, unique, and nBestLocations. Descriptions of these parameters
 are available under \code{?Rsubread::align}. Defaults to the global
 \code{align_details} object.}
+
+\item{output_rds}{The desired name of the output .rds file. Default is
+the basename of \code{unfiltered_bam} + \code{.filtered.rds}.}
+
+\item{YS}{yieldSize, an integer. The number of alignments to be read in from
+the bam file at once. Default is 1000000.}
+
+\item{threads}{The amount of threads available for the function.
+Default is 8 threads.}
 }
 \value{
-The name of a filtered, sorted .bam file written to the user's
-current working directory.
+The name of an RDS file of filtered reads written to the user's
+directory of choice.
 }
 \description{
 After a sample is aligned to a target library with \code{align_target()},

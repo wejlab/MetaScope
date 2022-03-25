@@ -5,10 +5,12 @@
 \title{Identify which genomes are represented in a sample}
 \usage{
 metascope_id(
-  bam_file,
+  input_file,
+  input_type = "bam",
   aligner = "subread",
   NCBI_key = NULL,
-  out_file = paste(tools::file_path_sans_ext(bam_file), ".metascope_id.csv", sep = ""),
+  out_file = paste(tools::file_path_sans_ext(input_file), ".metascope_id.csv", sep =
+    ""),
   EMconv = 1/10000,
   EMmaxIts = 25,
   num_species_plot = NULL,
@@ -16,8 +18,7 @@ metascope_id(
 )
 }
 \arguments{
-\item{bam_file}{The .bam file that needs to be summarized, annotated, and
-needs removal of ambiguity.}
+\item{input_file}{The .bam or .rds file that needs to be identified.}
 
 \item{aligner}{The aligner which was used to create the bam file. Default is 
 "subread" but can also be set to "bowtie" or "other"}
@@ -28,7 +29,7 @@ requests made to NCBI, this function will be less prone to errors
 if you obtain an NCBI key.
 You may enter the string as an input or set it as ENTREZ_KEY in .Renviron.}
 
-\item{out_file}{The name of the .csv output file. Defaults to the bam_file
+\item{out_file}{The name of the .csv output file. Defaults to the input_file
 basename plus ".metascope_id.csv".}
 
 \item{EMconv}{The convergence parameter of the EM algorithm. Default set at
@@ -52,7 +53,7 @@ This function returns a .csv file with annotated read counts to genomes with
 mapped reads. The function itself returns the output .csv file name.
 }
 \description{
-This function will read in a .bam file, annotate the taxonomy and genome
+This function will read in a .bam or .rds file, annotate the taxonomy and genome
 names, reduce the mapping ambiguity using a mixture model, and output a
 .csv file with the results. Currently, it assumes that the genome
 library/.bam files use NCBI accession names for reference names (rnames in
@@ -70,7 +71,7 @@ bamPath <- system.file("extdata","subread_target.filtered.bam",
 package = "MetaScope")
 
 ## Run metascope id with the aligner option set to subread
-metascope_id(bam_file = bamPath, aligner = "subread")
+metascope_id(input_file = bamPath, aligner = "subread")
 
 ## Bowtie aligned bam file 
 
@@ -79,7 +80,7 @@ bamPath <- system.file("extdata","bowtie_target.filtered.bam",
 package = "MetaScope")
 
 ## Run metascope id with the aligner option set to bowtie
-metascope_id(bam_file = bamPath, aligner = "bowtie")
+metascope_id(input_file = bamPath, aligner = "bowtie")
 
 ## Different or unknown aligned bam file
 
@@ -88,6 +89,6 @@ bamPath <- system.file("extdata","subread_target.filtered.bam",
 package = "MetaScope")
 
 ## Run metascope id with the aligner option set to other 
-metascope_id(bam_file = bamPath, aligner = "other")
+metascope_id(input_file = bamPath, aligner = "other")
 
 }

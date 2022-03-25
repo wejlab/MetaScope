@@ -10,10 +10,12 @@ filter_host_bowtie(
   lib_dir,
   libs,
   output = paste(tools::file_path_sans_ext(reads_bam), "filtered", "bam", sep = "."),
+  output_rds = paste(tools::file_path_sans_ext(reads_bam), "filtered", "rds", sep =
+    "."),
   bowtie2_options = NULL,
+  YS = 1e+06,
   threads = 8,
-  overwrite = FALSE,
-  maxMemory = 512
+  overwrite = FALSE
 )
 }
 \arguments{
@@ -30,6 +32,9 @@ files.}
 \item{output}{The desired name of the output .bam file. Default is
 the basename of \code{unfiltered_bam} + \code{.filtered.bam}.}
 
+\item{output_rds}{The desired name of the output .rds file. Default is
+the basename of \code{unfiltered_bam} + \code{.filtered.rds}.}
+
 \item{bowtie2_options}{Optional: Additional parameters that can be passed to
 the filter_host_bowtie() function. To see all the available parameters
 use Rbowtie2::bowtie2_usage(). Default parameters are the parameters are the 
@@ -38,15 +43,14 @@ parameters as one string and if optional parameters are given then the user
 is responsible for entering all the parameters to be used by Bowtie2. NOTE:
 The only parameters that should NOT be specified here is the threads.}
 
+\item{YS}{yieldSize, an integer. The number of alignments to be read in from
+the bam file at once. Default is 1000000.}
+
 \item{threads}{The amount of threads available for the function.
 Default is 8 threads.}
 
 \item{overwrite}{Whether existing files should be overwritten. 
 Default is FALSE.}
-
-\item{maxMemory}{The number of MB of RAM that the sortBAM function can use.
-The smaller the number, the more temporary files will be produced, which will
-hopefully save memory usage. The default is 512 MB.}
 }
 \value{
 The name of a filtered, sorted .bam file written to the user's

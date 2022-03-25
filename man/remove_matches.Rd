@@ -4,7 +4,7 @@
 \alias{remove_matches}
 \title{Helper function to remove reads matched to filter libraries}
 \usage{
-remove_matches(reads_bam, read_names, name_out)
+remove_matches(reads_bam, read_names, name_out, YS, threads, aligner)
 }
 \arguments{
 \item{reads_bam}{The name of a merged, sorted .bam file that has previously
@@ -17,6 +17,13 @@ element should be a vector of read names.}
 
 \item{name_out}{The name of the .bam file that to which the filtered alignments
 will be written.}
+
+\item{YS}{yieldSize, an integer. The number of alignments to be read in from
+the bam file at once. Default is 1000000.}
+
+\item{threads}{The number of threads to be used in filtering the bam file.}
+
+\item{aligner}{The aligner which was used to create the bam file.}
 }
 \value{
 The name of a filtered, sorted .bam file written to the user's
@@ -28,7 +35,7 @@ filter libraries of interest. The \code{remove_matches()} function allows
 for removal of any target reads that are also aligned to filter libraries.
 }
 \details{
-This function is not intended for use by users.
+This function is not intended for direct use.
 }
 \examples{
 
