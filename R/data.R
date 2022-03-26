@@ -10,7 +10,7 @@
 #' \code{nthreads = 8}, \code{maxMismatches = 3}, \code{nsubreads = 10},
 #' \code{phredOffset = 33}, \code{unique = FALSE}, and
 #' \code{nBestLocations = 16}. Full descriptions of these parameters can be
-#' read by acessing \code{?Rsubread::align}.
+#' read by accessing \code{?Rsubread::align}.
 #'
 #' @keywords datasets
 #'
@@ -21,10 +21,12 @@
 
 
 #' Taxonomy table
-#' 
+#'
+#' This is a taxonomy table to be used in \code{download_refseq()}.
+#'
 #' @keywords datasets
-#' 
+#'
 #' @examples
 #' data("taxonomy_table")
-#' 
+#'
 "taxonomy_table"

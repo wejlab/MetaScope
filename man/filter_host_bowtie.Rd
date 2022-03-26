@@ -26,7 +26,7 @@ instance of \code{align_target_bowtie()}.}
 \item{lib_dir}{Path to the directory that contains the filter Bowtie2 index
 files.}
 
-\item{libs}{The basename of the filter libraries 
+\item{libs}{The basename of the filter libraries
 (without .bt2 or .bt2l extension)}
 
 \item{output}{The desired name of the output .bam file. Default is
@@ -37,9 +37,9 @@ the basename of \code{unfiltered_bam} + \code{.filtered.rds}.}
 
 \item{bowtie2_options}{Optional: Additional parameters that can be passed to
 the filter_host_bowtie() function. To see all the available parameters
-use Rbowtie2::bowtie2_usage(). Default parameters are the parameters are the 
+use Rbowtie2::bowtie2_usage(). Default parameters are the parameters are the
 default parameters that PathoScope 2.0 uses. NOTE: Users should pass all their
-parameters as one string and if optional parameters are given then the user 
+parameters as one string and if optional parameters are given then the user
 is responsible for entering all the parameters to be used by Bowtie2. NOTE:
 The only parameters that should NOT be specified here is the threads.}
 
@@ -49,7 +49,7 @@ the bam file at once. Default is 1000000.}
 \item{threads}{The amount of threads available for the function.
 Default is 8 threads.}
 
-\item{overwrite}{Whether existing files should be overwritten. 
+\item{overwrite}{Whether existing files should be overwritten.
 Default is FALSE.}
 }
 \value{
@@ -59,7 +59,7 @@ current working directory.
 \description{
 After a sample is aligned to a target library with \code{align_target_bowtie()},
 we may use \code{filter_host_bowtie()} to remove unwelcome host contamination using
-filter reference libraries. This function takes as input the name of the .bam 
+filter reference libraries. This function takes as input the name of the .bam
 file produced via \code{align_target_bowtie()}, and produces a
 sorted .bam file with any reads that match the filter libraries removed.
 This resulting .bam file may be used downstream for further analysis.
@@ -81,13 +81,13 @@ dir.create(lib_temp)
 align_temp <- tempfile()
 dir.create(align_temp)
 
-## Create object with path to previously created bam file 
+## Create object with path to previously created bam file
 bamPath <- system.file("extdata", "bowtie_target.bam", package = "MetaScope")
 
 ## Create object with path to the filter library
 refPath <- system.file("extdata","filter.fasta", package = "MetaScope")
 
-## Move the filter library to the temporary reference directory 
+## Move the filter library to the temporary reference directory
 file.copy(from = refPath, to = file.path(ref_temp, "filter.fasta"))
 
 ## Create the bowtie index files in the temporary index directory

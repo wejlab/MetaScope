@@ -31,12 +31,14 @@ Imports:
     rlang,
     data.table,
     Rbowtie2,
-    magrittr
+    magrittr,
+    GenomicFiles
 Suggests:
+    spelling,
     BiocStyle,
     knitr,
     rmarkdown,
-    testthat,
+    testthat (>= 3.0.0),
     biomformat
 biocViews:
     MicrobiomeData,
@@ -49,3 +51,4 @@ VignetteBuilder: knitr
 RoxygenNote: 7.1.2
 BugReports: https://github.com/compbiomed/MetaScope/issues
 Language: en-US
+Config/testthat/edition: 3

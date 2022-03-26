@@ -24,7 +24,7 @@ This function merges .bam files and combines them into a single file.
 The function also outputs the new .bam filename.
 }
 \description{
-This function merges .bam files. It first used the combined_header funtion
+This function merges .bam files. It first used the combined_header function
 to generate a combined header for all the files, reheaders the files, and
 then merges and sorts the .bam files. This is similar to the
 'samtools merge' function, but it allows the .bam files to have different

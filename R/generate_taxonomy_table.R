@@ -1,4 +1,4 @@
-#' Helper function to create a taxonomy table
+# Helper function to create a taxonomy table
 mk_table <- function (intable, taxon_ranks) {
   this_t <- as.data.frame(intable)
   if (!identical(this_t$rank, character(0))) {
@@ -7,11 +7,11 @@ mk_table <- function (intable, taxon_ranks) {
       this_t$rank[t_n] <- "strain"
     }
     this_t %>%
-      dplyr::filter(rank %in% taxon_ranks) %>% 
-      dplyr::right_join(., dplyr::tibble(rank = taxon_ranks), 
-                        by = "rank") %>% 
-      dplyr::arrange(factor(rank, levels = taxon_ranks)) %>% 
-      dplyr::select(name) %>% 
+      dplyr::filter(rank %in% taxon_ranks) %>%
+      dplyr::right_join(., dplyr::tibble(rank = taxon_ranks),
+                        by = "rank") %>%
+      dplyr::arrange(factor(rank, levels = taxon_ranks)) %>%
+      dplyr::select(name) %>%
       .[seq_along(taxon_ranks), ]
   }
 }
@@ -22,10 +22,10 @@ mk_table <- function (intable, taxon_ranks) {
 #' available NCBI genomes. Each column is a taxonomic rank or indication of a
 #' strain; each row is a taxonomic classification for an unique species or
 #' strain.
-#' 
+#'
 #' @importFrom magrittr %>%
 #'
-#' @return table of taxonomic relationships for all species or strains with
+#' @return A table of taxonomic relationships for all species or strains with
 #' NCBI genomes.
 #'
 #' @examples
@@ -33,13 +33,14 @@ mk_table <- function (intable, taxon_ranks) {
 #' \dontrun{
 #' generate_taxonomy_table()
 #' }
+#'
 
 generate_taxonomy_table <- function() {
   # Download the updated refseq table from NCBI
   # This table contains all species/strains with an available genome
   refseq_link <-
     "ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt"
-  tax_id <- read.table(refseq_link, header = T, sep = "\t",
+  tax_id <- read.table(refseq_link, header = TRUE, sep = "\t",
                        comment.char = "", quote = "", skip = 1) %>%
     dplyr::distinct(taxid) %>% unlist %>% unname
   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",

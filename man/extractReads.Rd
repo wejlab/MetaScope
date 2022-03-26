@@ -32,7 +32,7 @@ barcode sequence for each header in the sequence slot}
 headers and order as the index file, but contains the read sequences and
 their quality scores}
 
-\item{location}{A directory location to store the demuliplexed read files.
+\item{location}{A directory location to store the demultiplexed read files.
 Defaults to generate a new subdirectory at './demultiplex_fastq'}
 
 \item{rcBarcodes}{Should the barcode indexes in the barcodes list be
@@ -53,7 +53,7 @@ e.g. './demultiplex_fastq/SampleName1_GGAATTATCGGT.fastq.gz'
 }
 \description{
 Helper function for demultiplexing sequencing reads, designed in a way to
-allow for parallelization accross barcodes (parallel extraction of reads
+allow for parallelization across barcodes (parallel extraction of reads
 by barcode). This function takes a specific barcode (numeric index) from
 lists of sample names/barcodes, a Biostrings::DNAStringSet of barcodes by
 sequence header, and a Biostrings::QualityScaledXStringSet of reads
@@ -86,10 +86,10 @@ more_results <- lapply(1:6, extractReads, bcFile[, 2], bcFile[, 1], inds,
 
 ## BiocParallel application
 multicoreParam <- BiocParallel::MulticoreParam(workers = 3)
-parallel_results <- BiocParallel::bplapply(1:6, extractReads, bcFile[, 2], 
-                                           bcFile[, 1], inds, reads, 
-                                           rcBarcodes = FALSE, 
-                                           location = ".", 
+parallel_results <- BiocParallel::bplapply(1:6, extractReads, bcFile[, 2],
+                                           bcFile[, 1], inds, reads,
+                                           rcBarcodes = FALSE,
+                                           location = ".",
                                            BPPARAM = multicoreParam)
-                                            
+
 }

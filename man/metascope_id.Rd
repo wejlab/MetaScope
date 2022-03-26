@@ -23,7 +23,7 @@ metascope_id(
 \item{input_type}{Extension of file input. Should be either "bam" or "rds".
 Default is "bam".}
 
-\item{aligner}{The aligner which was used to create the bam file. Default is 
+\item{aligner}{The aligner which was used to create the bam file. Default is
 "subread" but can also be set to "bowtie" or "other"}
 
 \item{NCBI_key}{(character) NCBI Entrez API key. optional.
@@ -46,10 +46,6 @@ file 'as is'}
 \item{num_species_plot}{The number of genome coverage plots to be saved.
 Default is \code{NULL}, which saves coverage plots for the ten most
 highly abundant species.}
-
-\item{deprecated_ind}{Logical. If you aligned using an old bowtie index, the bam
-qnames may be different, and the function will not run without setting
-this parameter to \code{TRUE}.}
 }
 \value{
 This function returns a .csv file with annotated read counts to genomes with
@@ -69,29 +65,32 @@ library/.bam files use NCBI accession names for reference names (rnames in
 
 ## Subread aligned bam file
 
-## Create object with path to filtered subread bam file 
+## Create object with path to filtered subread bam file
 bamPath <- system.file("extdata","subread_target.filtered.bam",
 package = "MetaScope")
 
 ## Run metascope id with the aligner option set to subread
-metascope_id(input_file = bamPath, aligner = "subread")
+metascope_id(input_file = bamPath, aligner = "subread",
+             num_species_plot = 0)
 
-## Bowtie aligned bam file 
+## Bowtie aligned bam file
 
-## Create object with path to filtered subread bam file 
+## Create object with path to filtered subread bam file
 bamPath <- system.file("extdata","bowtie_target.filtered.bam",
-package = "MetaScope")
+                       package = "MetaScope")
 
 ## Run metascope id with the aligner option set to bowtie
-metascope_id(input_file = bamPath, aligner = "bowtie")
+metascope_id(input_file = bamPath, aligner = "bowtie",
+             num_species_plot = 0)
 
 ## Different or unknown aligned bam file
 
-## Create object with path to unknown origin bam file 
+## Create object with path to unknown origin bam file
 bamPath <- system.file("extdata","subread_target.filtered.bam",
-package = "MetaScope")
+                       package = "MetaScope")
 
-## Run metascope id with the aligner option set to other 
-metascope_id(input_file = bamPath, aligner = "other")
+## Run metascope id with the aligner option set to other
+metascope_id(input_file = bamPath, aligner = "other",
+             num_species_plot = 0)
 
 }

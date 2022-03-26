@@ -11,7 +11,7 @@ get_children(input_taxon, input_rank, data = taxonomy_table)
 
 \item{input_rank}{The taxonomic rank of the input taxon.}
 
-\item{data}{A dataframe of orgnism classification information.
+\item{data}{A dataframe of organism classification information.
 At minimum, should have a column indicating "strain", and and all others
 should be taxonomic ranks. Each row should be a taxonomic relationship.
 This defaults to the `taxonomy_table` object.}
@@ -21,7 +21,7 @@ Returns a vector of all the child species and/or strains of the
 input taxon.
 }
 \description{
-This function will utilize a organism classification table to obtain all 
+This function will utilize a organism classification table to obtain all
 chidren species and/or strains with available NCBI reference sequences given
 a parent taxon and its rank.
 }
@@ -29,10 +29,10 @@ a parent taxon and its rank.
 ## Get all child species and strains in bacteria superkingdom
 get_children('Bacteria','superkingdom')
 
-## Get all child species and strains in fungi kingdom 
+## Get all child species and strains in fungi kingdom
 get_children('Fungi', 'kingdom')
 
-## Get all child species in primate order 
+## Get all child species in primate order
 get_children('Primates', 'order')
 
 }

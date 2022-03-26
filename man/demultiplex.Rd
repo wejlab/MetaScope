@@ -30,7 +30,7 @@ to the \code{indexFile}.}
 complemented to match the sequences in the \code{indexFile}?
 Defaults to \code{TRUE}.}
 
-\item{location}{A directory location to store the demuliplexed read files.
+\item{location}{A directory location to store the demultiplexed read files.
 Defaults to generate a new subdirectory at './demultiplex_fastq'}
 
 \item{cores}{The number of cores to use for parallelization (BiocParallel).
@@ -66,7 +66,7 @@ indexPath <- system.file("extdata", "virus_example_index.fastq",
                          package = "MetaScope")
 readPath <- system.file("extdata", "virus_example.fastq",
                          package = "MetaScope")
-                         
+
 ## Get barcode, index, and read data locations
 demult <- demultiplex(barcodePath, indexPath, readPath, rcBarcodes = FALSE,
                       hammingDist = 2)

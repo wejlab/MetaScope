@@ -27,7 +27,7 @@ create_qiime_biom <- function(se_colData, taxonomy_table, which_annot_col,
     ifelse(. == "<NA>", NA, .) # Change " " to NA
   # Remove unecessary columns
   ind <- colnames(alt_col) == which_annot_col
-  alt_col2 <- alt_col[, -ind] %>% dplyr::as_tibble() %>% 
+  alt_col2 <- alt_col[, -ind] %>% dplyr::as_tibble() %>%
     dplyr::mutate(BarcodeSequence = "-", LinkerPrimerSequence = "-",
                   Description = "-") %>%
     dplyr::relocate(`#SampleID`, BarcodeSequence, LinkerPrimerSequence)
@@ -47,7 +47,7 @@ create_qiime_biom <- function(se_colData, taxonomy_table, which_annot_col,
 create_MAE <- function(annot_path, which_annot_col, combined_list,
                        counts_table, taxonomy_table, path_to_write,
                        qiime_biom_out) {
-  annot_dat <- readr::read_csv(annot_path, show_col_types = FALSE) 
+  annot_dat <- readr::read_csv(annot_path, show_col_types = FALSE)
   se_colData <- annot_dat %>% # Only keep present samples in annotation data
     dplyr::mutate(sampcol = unlist(annot_dat[, which_annot_col])) %>%
     dplyr::filter(sampcol %in% colnames(combined_list)) %>%
@@ -90,7 +90,7 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #' Upon completion of the MetaScope pipeline, users can analyze and visualize
 #' abundances in their samples using the animalcules package. This function
 #' allows interoperability of metascope_id output with both animalcules and
-#' QIIME. 
+#' QIIME.
 #'
 #' @param meta_counts A vector of filepaths to the counts ID CSVs output
 #' by MetaScope
@@ -113,16 +113,18 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #' The multi-assay experiment will have
 #' assays for the counts ("MGX"), log counts, CPM, and log CPM.
 #' @export
-#' @examples 
+#' @examples
 #' #donotrun{
-#' #all_files <- list.files("~/decamp/analysis/aodom/Novartis_COPD/MetaScope_run/Output", pattern = "*.filtered.metascope_id.csv", full.names = TRUE)
+#' #all_files <- list.files("~/decamp/analysis/aodom/Novartis_COPD/MetaScope_run/Output",
+#' #                         pattern = "*.filtered.metascope_id.csv",
+#' #                         full.names = TRUE)
 #' #out <- convert_animalcules(meta_counts = all_files, annot_path = "~/decamp/analysis/aodom/Novartis_COPD/Data/DECAMP_patho_annotation.csv", end_string = ".filtered.metascope_id.csv", which_annot_col = "DECAMP_ID")
 #' #}
-#'  # coming soon - this is from Aubrey
-#'  
+#'  # coming soon!
+#'
 
 convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
-                                end_string = ".filtered.metascope_id.csv", 
+                                end_string = ".filtered.metascope_id.csv",
                                 qiime_biom_out = FALSE,
                                 path_to_write = ".") {
   combined_list <- data.table::rbindlist(
@@ -142,7 +144,7 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
                                                             mk_table,
                                                             taxon_ranks))))
   colnames(taxonomy_table) <- taxon_ranks
-  counts_table <- combined_list %>% dplyr::select(-TaxonomyID) %>% 
+  counts_table <- combined_list %>% dplyr::select(-TaxonomyID) %>%
     as.data.frame()
   # Remove any brackets
   taxonomy_table$species <- gsub("\\[|\\]", "", taxonomy_table$species)
@@ -158,7 +160,7 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
   }
   rownames(taxonomy_table) <- stringr::str_replace(taxonomy_table$species,
                                                    " ", "_")
-  rownames(counts_table) <- rownames(taxonomy_table) 
+  rownames(counts_table) <- rownames(taxonomy_table)
   MAE <- create_MAE(annot_path, which_annot_col, combined_list, counts_table,
                     taxonomy_table, path_to_write, qiime_biom_out)
   return(MAE)

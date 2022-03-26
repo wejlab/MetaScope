@@ -22,7 +22,7 @@ filter_host(
 been aligned to a reference library. Likely, the output from running an
 instance of \code{align_target_bowtie()}.}
 
-\item{libs}{The basename of the filter libraries 
+\item{libs}{The basename of the filter libraries
 (without .bt2 or .bt2l extension)}
 
 \item{lib_dir}{Path to the directory that contains the filter Bowtie2 index
@@ -77,7 +77,7 @@ mk_subread_index('filter.fasta')
 ## Create object with path to the previously aligned bam file
 readPath <- system.file("extdata", "subread_target.bam", package = "MetaScope")
 
-## Filter bam file 
+## Filter bam file
 filter_host(readPath, libs = "filter")
 
 }

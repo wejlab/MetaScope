@@ -60,7 +60,7 @@ genomes.
 \examples{
 #### Align example reads to an example reference library using Rbowtie2
 
-## Create a temporary directory to store reference library 
+## Create a temporary directory to store reference library
 ref_temp <- tempfile()
 dir.create(ref_temp)
 
@@ -75,7 +75,7 @@ dir.create(align_temp)
 ## Create object with path to example reference library
 refPath <- system.file("extdata","target.fasta", package = "MetaScope")
 
-## Copy the reference library to the temporary directory 
+## Copy the reference library to the temporary directory
 file.copy(from = refPath, to = file.path(ref_temp, "target.fasta"))
 
 ## Create the bowtie index files in the temporary index library directory

@@ -33,7 +33,7 @@ Defaults to \code{FALSE}.}
 }
 \value{
 Returns a .fasta or .fasta.gz file of the desired RefSeq genomes.
-This file is named after the kindom selectd and saved to the current
+This file is named after the kingdom selected and saved to the current
 directory (e.g. 'bacteria.fasta.gz'). Currently, this function also returns
 a .fasta file formatted for PathoScope as well
 (e.g. bacteria.pathoscope.fasta.gz') if \code{path_out = TRUE}.
@@ -62,7 +62,7 @@ download_refseq('morbillivirus', reference = FALSE)
 download_refseq('Bacilli', reference = TRUE,
                 representative = FALSE, compress = FALSE)
 
-## Download RefSeq Escherichia coli IAI1 strain 
+## Download RefSeq Escherichia coli IAI1 strain
 download_refseq('Escherichia coli IAI1', reference = FALSE, compress = FALSE)
 
 }

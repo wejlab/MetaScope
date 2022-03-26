@@ -7,7 +7,7 @@
 generate_taxonomy_table()
 }
 \value{
-table of taxonomic relationships for all species or strains with
+A table of taxonomic relationships for all species or strains with
 NCBI genomes.
 }
 \description{
@@ -21,4 +21,5 @@ strain.
 \dontrun{
 generate_taxonomy_table()
 }
+
 }

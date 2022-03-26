@@ -18,7 +18,7 @@ would like to reheader.}
 
 \item{new_bam}{A file name for the new .bam file with a replaced header.
 Defaults to the same base filename plus 'h.bam'. For example, 'example.bam'
-will be written as 'exampleh.bam'  .}
+will be written as 'exampleh.bam'.}
 }
 \value{
 This function will return a new .bam file with a replaced header.
@@ -26,7 +26,7 @@ The function also outputs the new .bam filename.
 }
 \description{
 This function replaces the header from one .bam file with a header from a
-different .sam file. This function mimicks the function of the 'reheader'
+different .sam file. This function mimics the function of the 'reheader'
 function in samtools. It is not intended for use by users.
 }
 \examples{

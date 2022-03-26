@@ -14,28 +14,28 @@ mk_bowtie_index(
 )
 }
 \arguments{
-\item{ref_dir}{The path to the directory that contains the reference files 
-either uncompressed or compressed (.gz). NOTE: This directory should contain 
+\item{ref_dir}{The path to the directory that contains the reference files
+either uncompressed or compressed (.gz). NOTE: This directory should contain
 only the reference fasta files to be indexed.}
 
-\item{lib_dir}{The path to the directory where the Bowtie2 index files 
+\item{lib_dir}{The path to the directory where the Bowtie2 index files
 should be created.}
 
 \item{lib_name}{The basename of the index file to be created (without the
 .bt2 or .bt2l extension)}
 
-\item{bowtie2_build_options}{Optional: Options that can be passed to the 
-mk_bowtie_index() function. All options should be passed as one string. 
-To see all the available options that can be passed to the function 
+\item{bowtie2_build_options}{Optional: Options that can be passed to the
+mk_bowtie_index() function. All options should be passed as one string.
+To see all the available options that can be passed to the function
 use Rbowtie2::bowtie2_build_usage(). NOTE: Do not specify threads here.}
 
-\item{threads}{The number of threads available to the function. 
+\item{threads}{The number of threads available to the function.
 Default is 8 threads.}
 
 \item{overwrite}{Whether existing files should be overwritten. Default is FALSE.}
 }
 \value{
-Creates the Bowtie2 indexes of the supplied reference .fasta files. 
+Creates the Bowtie2 indexes of the supplied reference .fasta files.
 Returns the path to the directory containing these files.
 }
 \description{
@@ -44,7 +44,6 @@ It will create either small (.bt2) or large Bowtie2 indexes (.bt2l) depending
 on the combined size of the reference fasta files.
 }
 \examples{
- 
 #### Create a bowtie index from the example reference library
 
 ## Create a temporary directory to store the reference library
@@ -54,10 +53,10 @@ dir.create(ref_temp)
 ## Create object with path to the example reference library
 refPath <- system.file("extdata","target.fasta", package = "MetaScope")
 
-## Copy the example reference library to the temporary directory 
+## Copy the example reference library to the temporary directory
 file.copy(from = refPath, to = file.path(ref_temp, "target.fasta"))
 
 ## Create the reference library index files in the current directory
-mk_bowtie_index(ref_dir = ref_temp, lib_dir = ".", lib_name = "target", 
+mk_bowtie_index(ref_dir = ref_temp, lib_dir = ".", lib_name = "target",
 threads = 4, overwrite=FALSE)
 }

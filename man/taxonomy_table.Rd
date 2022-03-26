@@ -11,7 +11,7 @@ An object of class \code{data.frame} with 71624 rows and 9 columns.
 taxonomy_table
 }
 \description{
-Taxonomy table
+This is a taxonomy table to be used in \code{download_refseq()}.
 }
 \examples{
 data("taxonomy_table")

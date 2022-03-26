@@ -18,7 +18,7 @@ an integer number representing the total number of alignment
 operations for the read that was summarized by the input CIGAR string.
 }
 \description{
-The ‘CIGAR’ (Compact Idiosyncratic Gapped Alignment Report) string is how
+The 'CIGAR' (Compact Idiosyncratic Gapped Alignment Report) string is how
 the SAM/BAM format represents spliced alignments. This function will accept
 a CIGAR string for a single read and a single character indicating the
 operation to be parsed in the string. An operation is a type of column that

@@ -3,7 +3,7 @@ globalVariables(c("qname", "rname"))
 obtain_reads <- function(input_file, input_type, aligner){
     if (input_type == "bam") {
         message("Reading .bam file: ", input_file)
-        to_pull <- c("qname", "rname", "cigar","qwidth", "pos")
+        to_pull <- c("qname", "rname", "cigar", "qwidth", "pos")
         if (identical(aligner, "bowtie")) {
             params <- Rsamtools::ScanBamParam(what = to_pull, tag = c("AS"))
         } else if (identical(aligner, "subread")) {
@@ -30,7 +30,7 @@ find_accessions <- function(accessions, NCBI_key) {
     message("Obtaining taxonomy and genome names")
     # If URI length is greater than 2500 characters then split accession list
     URI_length <- nchar(paste(accessions, collapse = "+"))
-    if (URI_length > 2500){
+    if (URI_length > 2500) {
         chunks <- split(accessions, ceiling(seq_along(accessions) / 100))
         tax_id_all <- c()
         message(paste("Accession list broken into", length(chunks), "chunks"))
@@ -58,8 +58,8 @@ find_accessions <- function(accessions, NCBI_key) {
 
 
 #' Count the number of base lengths in a CIGAR string for a given operation
-#' 
-#' The ‘CIGAR’ (Compact Idiosyncratic Gapped Alignment Report) string is how
+#'
+#' The 'CIGAR' (Compact Idiosyncratic Gapped Alignment Report) string is how
 #' the SAM/BAM format represents spliced alignments. This function will accept
 #' a CIGAR string for a single read and a single character indicating the
 #' operation to be parsed in the string. An operation is a type of column that
@@ -68,29 +68,29 @@ find_accessions <- function(accessions, NCBI_key) {
 #' will identify all occurrences of the operator in the string input, add them,
 #' and return an integer number representing the total number of operations
 #' for the read that was summarized by the input CIGAR string.
-#' 
+#'
 #' This function is best used on a vector of CIGAR strings using an apply
 #' function (see examples).
-#' 
+#'
 #' @param x Character. A CIGAR string for a read to be parsed. Examples of
 #' possible operators include "M", "D", "I", "S", "H", "=", "P", and "X".
 #' @param char A single letter representing the operation to total for the
 #' given string.
-#' 
+#'
 #' @return an integer number representing the total number of alignment
 #' operations for the read that was summarized by the input CIGAR string.
-#' 
+#'
 #' @export
-#' 
-#' @examples 
+#'
+#' @examples
 #' # A single cigar string: 3M + 3M + 5M
 #' cigar1 <- "3M1I3M1D5M"
 #' count_matches(cigar1, char = "M")
-#' 
+#'
 #' # Parse with operator "P": 2P
 #' cigar2 <- "4M1I2P9M"
 #' count_matches(cigar2, char = "P")
-#' 
+#'
 #' # Apply to multiple strings: 1I + 1I + 5I
 #' cigar3 <- c("3M1I3M1D5M", "4M1I1P9M", "76M13M5I")
 #' sapply(cigar3, count_matches, char = "I")
@@ -103,7 +103,7 @@ count_matches <- function(x, char = "M") {
     } else if (length(x) != 1) {
         stop("Please provide a single CIGAR string to be parsed.")
     }
-    pattern <- paste("\\d+", char , sep = "")
+    pattern <- paste("\\d+", char, sep = "")
     ind <- gregexpr(pattern, x)[[1]]
     start <- as.numeric(ind)
     end <- start + attr(ind, "match.length") - 2
@@ -114,16 +114,16 @@ count_matches <- function(x, char = "M") {
 }
 
 #' Helper Function for MetaScope ID
-#' 
+#'
 #' Used to create plots of genome coverage for any number of accession numbers
-#' 
+#'
 #' @param which_taxid Which taxid to plot
 #' @param which_genome Which genome to plot
 #' @param accessions List of accessions from \code{metascope_id()}
 #' @param taxids List of accessions from \code{metascope_id()}
 #' @param reads List of reads from input file
 #' @param input_file The path to the input file
-#' 
+#'
 #' @return A plot of the read coverage for a given genome
 
 locations <- function(which_taxid, which_genome,
@@ -142,7 +142,7 @@ locations <- function(which_taxid, which_genome,
         reads[[1]]$pos[map2bam_acc])), 3)
     # Plotting
     dfplot <- dplyr::tibble(x = reads[[1]]$pos[map2bam_acc])
-    ggplot2::ggplot(dfplot, ggplot2::aes(x)) + 
+    ggplot2::ggplot(dfplot, ggplot2::aes(x)) +
         ggplot2::geom_histogram(bins = 30) +
         ggplot2::labs(main = paste("Positions of reads mapped to", use_name),
                       xlab = "Leftmost position in genome",
@@ -160,12 +160,12 @@ locations <- function(which_taxid, which_genome,
 #' names, reduce the mapping ambiguity using a mixture model, and output a
 #' .csv file with the results. Currently, it assumes that the genome
 #' library/.bam files use NCBI accession names for reference names (rnames in
-#' .bam file). 
+#' .bam file).
 #'
 #' @param input_file The .bam or .rds file that needs to be identified.
 #' @param input_type Extension of file input. Should be either "bam" or "rds".
 #' Default is "bam".
-#' @param aligner The aligner which was used to create the bam file. Default is 
+#' @param aligner The aligner which was used to create the bam file. Default is
 #' "subread" but can also be set to "bowtie" or "other"
 #' @param NCBI_key (character) NCBI Entrez API key. optional.
 #' See taxize::use_entrez(). Due to the high number of
@@ -183,10 +183,7 @@ locations <- function(which_taxid, which_genome,
 #' @param num_species_plot The number of genome coverage plots to be saved.
 #' Default is \code{NULL}, which saves coverage plots for the ten most
 #' highly abundant species.
-#' @param deprecated_ind Logical. If you aligned using an old bowtie index, the bam
-#' qnames may be different, and the function will not run without setting
-#' this parameter to \code{TRUE}.
-#' 
+#'
 #' @return
 #' This function returns a .csv file with annotated read counts to genomes with
 #' mapped reads. The function itself returns the output .csv file name.
@@ -195,42 +192,45 @@ locations <- function(which_taxid, which_genome,
 #'
 #' @examples
 #' #### Align reads to reference library and then apply metascope_id()
-#' 
+#'
 #' ## Assuming filtered bam files already exist
-#' 
+#'
 #' ## Subread aligned bam file
-#' 
-#' ## Create object with path to filtered subread bam file 
+#'
+#' ## Create object with path to filtered subread bam file
 #' bamPath <- system.file("extdata","subread_target.filtered.bam",
 #' package = "MetaScope")
-#' 
+#'
 #' ## Run metascope id with the aligner option set to subread
-#' metascope_id(input_file = bamPath, aligner = "subread")
-#' 
-#' ## Bowtie aligned bam file 
-#' 
-#' ## Create object with path to filtered subread bam file 
+#' metascope_id(input_file = bamPath, aligner = "subread",
+#'              num_species_plot = 0)
+#'
+#' ## Bowtie aligned bam file
+#'
+#' ## Create object with path to filtered subread bam file
 #' bamPath <- system.file("extdata","bowtie_target.filtered.bam",
-#' package = "MetaScope")
-#' 
+#'                        package = "MetaScope")
+#'
 #' ## Run metascope id with the aligner option set to bowtie
-#' metascope_id(input_file = bamPath, aligner = "bowtie")
-#' 
+#' metascope_id(input_file = bamPath, aligner = "bowtie",
+#'              num_species_plot = 0)
+#'
 #' ## Different or unknown aligned bam file
-#' 
-#' ## Create object with path to unknown origin bam file 
+#'
+#' ## Create object with path to unknown origin bam file
 #' bamPath <- system.file("extdata","subread_target.filtered.bam",
-#' package = "MetaScope")
-#' 
-#' ## Run metascope id with the aligner option set to other 
-#' metascope_id(input_file = bamPath, aligner = "other")
-#' 
+#'                        package = "MetaScope")
+#'
+#' ## Run metascope id with the aligner option set to other
+#' metascope_id(input_file = bamPath, aligner = "other",
+#'              num_species_plot = 0)
+#'
 
 metascope_id <- function(input_file, input_type = "bam", aligner = "subread",
                          NCBI_key = NULL,
                          out_file = paste(tools::file_path_sans_ext(input_file),
                                           ".metascope_id.csv", sep = ""),
-                         EMconv = 1/10000, EMmaxIts = 25,
+                         EMconv = 1 / 10000, EMmaxIts = 25,
                          num_species_plot = NULL,
                          deprecated_ind = FALSE) {
 
@@ -241,25 +241,19 @@ metascope_id <- function(input_file, input_type = "bam", aligner = "subread",
     reads <- obtain_reads(input_file, input_type, aligner)
     unmapped <- is.na(reads[[1]]$rname)
     # Account for potential index issues
-    if (deprecated_ind) {
-        # 2015
-        mapped_2015 <- reads[[1]]$rname[!unmapped] %>%
-            stringr::str_split(., pattern = "ref\\|", n = 2) %>%
-            sapply(., function(x) x[2]) %>%
-            stringr::str_split(., pattern = "\\|", n = 2) %>%
-            sapply(., function(x) x[1])
-        # 2018
-        mapped_2018 <- reads[[1]]$rname[!unmapped] %>%
-            stringr::str_split(., pattern = "ion\\|", n = 2) %>%
-            sapply(., function(x) x[2])
-        # Select_best
-        ind <- sum(is.na(mapped_2015)) < sum(is.na(mapped_2018))
-        if (ind) {
-            mapped_rname <- mapped_2015
-        } else mapped_rname <- mapped_2018
-    } else {
-        mapped_rname <- reads[[1]]$rname[!unmapped]
-    }
+    mapped_2015 <- reads[[1]]$rname[!unmapped] %>%
+        stringr::str_split(., pattern = "ref\\|", n = 2) %>%
+        sapply(., function(x) x[2]) %>%
+        stringr::str_split(., pattern = "\\|", n = 2) %>%
+        sapply(., function(x) x[1])
+    mapped_2018 <- reads[[1]]$rname[!unmapped] %>%
+        stringr::str_split(., pattern = "ion\\|", n = 2) %>%
+        sapply(., function(x) x[2])
+    mapped_2021 <- reads[[1]]$rname[!unmapped]
+    # Identify least number of NA's
+    ind <- which.min(c(sum(is.na(mapped_2015)), sum(is.na(mapped_2018)),
+                     sum(is.na(mapped_2021))))
+    mapped_rname <- list(mapped_2015, mapped_2018, mapped_2021)[[ind]]
     mapped_qname <- reads[[1]]$qname[!unmapped]
     mapped_cigar <- reads[[1]]$cigar[!unmapped]
     mapped_qwidth <- reads[[1]]$qwidth[!unmapped]
@@ -309,7 +303,7 @@ metascope_id <- function(input_file, input_type = "bam", aligner = "subread",
         relative_alignment_scores <- alignment_scores - min(alignment_scores)
         exp_alignment_scores <- exp(relative_alignment_scores * scaling_factor)
     } else if (identical(aligner, "bowtie")) {
-        # Bowtie2 alignment scores: AS value + read length (qwidths) 
+        # Bowtie2 alignment scores: AS value + read length (qwidths)
         alignment_scores <- scores + qwidths
         scaling_factor <- 100.0 / max(alignment_scores)
         relative_alignment_scores <- alignment_scores - min(alignment_scores)
@@ -326,7 +320,7 @@ metascope_id <- function(input_file, input_type = "bam", aligner = "subread",
     rname_tax_inds_2 <- input_distinct$rname
     scores_2 <- input_distinct$scores
     non_unique_read_ind <- unique(combined[[1]][(
-        duplicated(input_distinct[,1]) | duplicated(input_distinct[, 1],
+        duplicated(input_distinct[, 1]) | duplicated(input_distinct[, 1],
                                                     fromLast = TRUE))])
     # 1 if read is multimapping, 0 if read is unique
     y_ind_2 <- as.numeric(unique(input_distinct[[1]]) %in% non_unique_read_ind)
@@ -335,7 +329,6 @@ metascope_id <- function(input_file, input_type = "bam", aligner = "subread",
     pi_new <- theta_new <- Matrix::colMeans(gammas)
     conv <- max(abs(pi_new - pi_old) / pi_old)
     it <- 0
-
     message("Starting EM iterations")
     while (conv > EMconv & it < EMmaxIts) {
         # Expectation Step: Estimate expected value for each read to ea genome
@@ -357,8 +350,6 @@ metascope_id <- function(input_file, input_type = "bam", aligner = "subread",
         print(c(it, conv))
     }
     message("\tDONE! Converged in ", it, " iterations.")
-
-    # Collect results
     hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which
     best_hit <- Matrix::colSums(hit_which)
     names(best_hit) <- seq_along(best_hit)

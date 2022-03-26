@@ -1,18 +1,18 @@
 #' Make a Subread index
 #'
 #' This function is a wrapper for the \code{Rsubread::buildindex} function.
-#' It will
-#' generate one or more Subread indexes from a .fasta file. If the library is
+#' It will generate one or more Subread indexes from a .fasta file.
+#' If the library is
 #' too large (default >4GB) it will automatically be split into multiple
 #' indexes, with _1, _2, etc at the end of the ref_lib basename.
 #'
 #' @param ref_lib The name/location of the reference library file, in
-#' (uncompressed) .fasta format
+#' (uncompressed) .fasta format.
 #' @param split The maximum allowed size of the genome file (in GB). If the
 #' ref_lib file is larger than this, the function will split the library into
-#' multiple parts
+#' multiple parts.
 #' @param mem The maximum amount of memory (in MB) that can be used by the
-#' index generation process (used by the Rsubread::buildindex function)
+#' index generation process (used by the Rsubread::buildindex function).
 #'
 #' @return Creates one or more Subread indexes for the supplied reference
 #' .fasta file. If multiple indexes are created, the libraries will be
@@ -23,31 +23,29 @@
 #'
 #' @examples
 #' #### Create a subread index from the example reference library
-#' 
+#'
 #' ## Create object with path to example reference library
 #' refPath <- system.file("extdata","target.fasta", package = "MetaScope")
-#' 
+#'
 #' ## Copy the example reference library to the current directory
 #' file.copy(from = refPath, to = file.path(".", "target.fasta"))
-#' 
+#'
 #' ## Make subread index of reference library
 #' mk_subread_index('target.fasta')
-#' 
-#' 
+#'
 #' #### Create multiple subread indexes from the example reference library
 #'
 #' ## Create object with path to example reference library
 #' refPath <- system.file("extdata","target.fasta", package = "MetaScope")
-#' 
+#'
 #' ## Copy the example reference library to the current directory
 #' file.copy(from = refPath, to = file.path(".", "target.fasta"))
-#' 
+#'
 #' ## Make multiple subread indexes of reference library
 #' mk_subread_index('target.fasta', split = .02)
-#' 
+#'
 
 mk_subread_index <- function(ref_lib, split = 4, mem = 8000) {
-
     GB <- 1073741824
     ref_size <- file.info(ref_lib)$size
     split_libs <- ceiling(ref_size / (split * GB))
