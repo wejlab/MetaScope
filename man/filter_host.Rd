@@ -9,6 +9,7 @@ filter_host(
   reads_bam,
   libs,
   lib_dir = NULL,
+  make_bam = FALSE,
   output = paste(tools::file_path_sans_ext(reads_bam), "filtered", "bam", sep = "."),
   settings = align_details,
   output_rds = paste(tools::file_path_sans_ext(reads_bam), "filtered", "rds", sep =
@@ -27,6 +28,9 @@ instance of \code{align_target_bowtie()}.}
 
 \item{lib_dir}{Path to the directory that contains the filter Bowtie2 index
 files.}
+
+\item{make_bam}{Logical, whether to also output a bam file with host reads
+filtered out. An rds file will be created regardless. Default is FALSE.}
 
 \item{output}{The desired name of the output .bam file. Default is
 the basename of \code{unfiltered_bam} + \code{.filtered.bam}.}
@@ -78,6 +82,6 @@ mk_subread_index('filter.fasta')
 readPath <- system.file("extdata", "subread_target.bam", package = "MetaScope")
 
 ## Filter bam file
-filter_host(readPath, libs = "filter")
+filter_host(readPath, libs = "filter", threads = 1)
 
 }

@@ -9,6 +9,7 @@ filter_host_bowtie(
   reads_bam,
   lib_dir,
   libs,
+  make_bam = FALSE,
   output = paste(tools::file_path_sans_ext(reads_bam), "filtered", "bam", sep = "."),
   output_rds = paste(tools::file_path_sans_ext(reads_bam), "filtered", "rds", sep =
     "."),
@@ -28,6 +29,9 @@ files.}
 
 \item{libs}{The basename of the filter libraries
 (without .bt2 or .bt2l extension)}
+
+\item{make_bam}{Logical, whether to also output a bam file with host reads
+filtered out. An rds file will be created regardless. Default is FALSE.}
 
 \item{output}{The desired name of the output .bam file. Default is
 the basename of \code{unfiltered_bam} + \code{.filtered.bam}.}
@@ -92,9 +96,10 @@ file.copy(from = refPath, to = file.path(ref_temp, "filter.fasta"))
 
 ## Create the bowtie index files in the temporary index directory
 mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "filter",
-overwrite=FALSE)
+                overwrite=FALSE)
 
 ## Filter reads from the bam file that align to the filter library
-filter_host_bowtie(reads_bam = bamPath, lib_dir = lib_temp, libs = "filter")
+filter_host_bowtie(reads_bam = bamPath, lib_dir = lib_temp,
+                   libs = "filter", threads = 1)
 
 }

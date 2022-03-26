@@ -4,7 +4,7 @@
 \alias{mk_interim_fastq}
 \title{Helper function for filter_host_bowtie to write interim fastq file}
 \usage{
-mk_interim_fastq(bf, read_loc)
+mk_interim_fastq(reads_bam, read_loc, YS, threads)
 }
 \description{
 Helper function for filter_host_bowtie to write interim fastq file

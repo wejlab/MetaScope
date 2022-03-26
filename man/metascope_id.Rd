@@ -13,8 +13,7 @@ metascope_id(
     ""),
   EMconv = 1/10000,
   EMmaxIts = 25,
-  num_species_plot = NULL,
-  deprecated_ind = FALSE
+  num_species_plot = NULL
 )
 }
 \arguments{

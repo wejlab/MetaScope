@@ -48,6 +48,7 @@ This function is not intended for direct use.
 # read_names <- list(qnames[1:10], qnames[30:40])
 # out <- "subread_target.filtered.bam"
 
-# remove_matches(readPath, read_names, out)
+# remove_matches(readPath, read_names, out, YS = 1000, threads = 1,
+                 aligner = "subread")
 
 }

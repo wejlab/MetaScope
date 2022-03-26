@@ -231,8 +231,7 @@ metascope_id <- function(input_file, input_type = "bam", aligner = "subread",
                          out_file = paste(tools::file_path_sans_ext(input_file),
                                           ".metascope_id.csv", sep = ""),
                          EMconv = 1 / 10000, EMmaxIts = 25,
-                         num_species_plot = NULL,
-                         deprecated_ind = FALSE) {
+                         num_species_plot = NULL) {
 
     # Check to make sure valid aligner is specified
     if (aligner != "bowtie" && aligner != "subread" && aligner != "other")

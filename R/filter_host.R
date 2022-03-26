@@ -1,31 +1,32 @@
 globalVariables(c("align_details"))
 
 #' Helper function for filter_host_bowtie to write interim fastq file
-mk_interim_fastq <- function(bf, read_loc) {
+mk_interim_fastq <- function(reads_bam, read_loc, YS, threads) {
     message("Creating Intermediate Fastq file")
-    # Obtain read names
-    open(bf)
-    innames <- Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(
-        what = c("qname"))) %>% .[[1]] %>%
-        unlist(.$qnames) %>% unname()
-    # Remove repeated reads from subsequent pulled info
-    ind <- !duplicated(innames)
-    # Read in quality scores
-    open(bf)
-    inqual <- Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(
-        what = c("qual"))) %>% .[[1]] %>%
-        .$qual %>% as.character() %>% .[ind]
-    # Appending sequences without saving (to conserve memory)
-    open(bf)
-    Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(
-        what = c("seq"))) %>% .[[1]] %>% .$seq %>%
-        as.character() %>% .[ind] %>% dplyr::tibble(
-            Header = innames[ind], Sequence = ., Quality = inqual) %>%
-        # Keep first occurrences of reads
-        dplyr::mutate(Plus = "+",
-                      Header = stringr::str_c("@", .data$Header)) %>%
-        dplyr::select(.data$Header, .data$Sequence, .data$Plus,
-                      .data$Quality) %>%
+    bf <- Rsamtools::BamFile(reads_bam, yieldSize = YS)
+    # Define functions
+    YIELD <- function(x) {
+        to_pull <- c("qname", "qual", "seq")
+        value <- Rsamtools::scanBam(x, param = Rsamtools::ScanBamParam(
+            what = to_pull))[[1]] 
+    }
+    MAP <- function(value) {
+        dplyr::tibble(Header = value$qname |> unname(unlist()),
+                      Sequence = as.character(value$seq),
+                      Quality = as.character(value$qual)) %>%
+            dplyr::distinct(Header, .keep_all = TRUE) %>%
+            dplyr::mutate(Plus = "+",
+                          Header = stringr::str_c("@", .data$Header)) %>%
+            dplyr::select(.data$Header, .data$Sequence, .data$Plus,
+                          .data$Quality) 
+    }
+    REDUCE <- function(x, y, iterate = TRUE) dplyr::bind_rows(x, y) %>%
+        dplyr::distinct(Header, .keep_all = TRUE)
+    DONE <- function(value) length(value$qname) == 0
+    # Create and write interim fastq file
+    BiocParallel::register(BiocParallel::MulticoreParam(threads))
+    suppressWarnings(GenomicFiles::reduceByYield(
+        bf, YIELD, MAP, REDUCE, DONE, parallel = TRUE)) %>%
         as.matrix() %>% t() %>% as.character() %>% dplyr::as_tibble() %>%
         data.table::fwrite(., file = read_loc, compress = "gzip",
                            col.names = FALSE, quote = FALSE)
@@ -66,7 +67,8 @@ mk_interim_fastq <- function(bf, read_loc) {
 #' # read_names <- list(qnames[1:10], qnames[30:40])
 #' # out <- "subread_target.filtered.bam"
 #'
-#' # remove_matches(readPath, read_names, out)
+#' # remove_matches(readPath, read_names, out, YS = 1000, threads = 1,
+#'                  aligner = "subread")
 #'
 
 remove_matches <- function(reads_bam, read_names, name_out,
@@ -98,7 +100,7 @@ remove_matches <- function(reads_bam, read_names, name_out,
 
 # Could make this a function that actually outputs BAM file
 remove_matches_bam <- function(reads_bam, read_names, name_out) {
-    message("Removing reads mapped to host indices")
+    message("Removing reads mapped to host indices for bam file output")
     # Note: reads_BAM and filter-aligned files are already sorted by chromosome
     # index bam file
     bam_index <- Rsamtools::indexBam(reads_bam)
@@ -153,10 +155,11 @@ remove_matches_bam <- function(reads_bam, read_names, name_out) {
 #' readPath <- system.file("extdata", "subread_target.bam", package = "MetaScope")
 #'
 #' ## Filter bam file
-#' filter_host(readPath, libs = "filter")
+#' filter_host(readPath, libs = "filter", threads = 1)
 #'
 
 filter_host <- function(reads_bam, libs, lib_dir = NULL,
+                        make_bam = FALSE,
                         output = paste(tools::file_path_sans_ext(reads_bam),
                                        "filtered", "bam", sep = "."),
                         settings = align_details,
@@ -199,7 +202,10 @@ filter_host <- function(reads_bam, libs, lib_dir = NULL,
     }
     # helper function to obtain final host-filtered read names
     remove_matches(reads_bam, read_names, output_rds, YS, threads, "subread")
-    # output final filtered BAM file
+    if(make_bam) {
+        remove_matches_bam(reads_bam, read_names, name_out = output)
+        message("Aligned bam file written to ", output)
+    }
     message("DONE! Alignments written to ", output_rds)
     return(output_rds)
 }
@@ -221,6 +227,8 @@ filter_host <- function(reads_bam, libs, lib_dir = NULL,
 #' files.
 #' @param libs The basename of the filter libraries
 #' (without .bt2 or .bt2l extension)
+#' @param make_bam Logical, whether to also output a bam file with host reads
+#' filtered out. An rds file will be created regardless. Default is FALSE.
 #' @param output The desired name of the output .bam file. Default is
 #' the basename of \code{unfiltered_bam} + \code{.filtered.bam}.
 #' @param output_rds The desired name of the output .rds file. Default is
@@ -272,13 +280,15 @@ filter_host <- function(reads_bam, libs, lib_dir = NULL,
 #'
 #' ## Create the bowtie index files in the temporary index directory
 #' mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "filter",
-#' overwrite=FALSE)
+#'                 overwrite=FALSE)
 #'
 #' ## Filter reads from the bam file that align to the filter library
-#' filter_host_bowtie(reads_bam = bamPath, lib_dir = lib_temp, libs = "filter")
+#' filter_host_bowtie(reads_bam = bamPath, lib_dir = lib_temp,
+#'                    libs = "filter", threads = 1)
 #'
 
 filter_host_bowtie <- function(reads_bam, lib_dir, libs,
+                               make_bam = FALSE,
                                output = paste(
                                    tools::file_path_sans_ext(reads_bam),
                                    "filtered", "bam", sep = "."),
@@ -292,11 +302,9 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs,
         bowtie2_options <- paste("--very-sensitive -k 100 --score-min",
                                  "L,-0.2,-0.2 --threads", threads)
     } else bowtie2_options <- paste(bowtie2_options, "--threads", threads)
-    # Convert reads_bam into fastq (Default 1,000,000,000 read chunks)
-    bf <- Rsamtools::BamFile(reads_bam, yieldSize = 1000000000)
+    # Convert reads_bam into fastq (parallelized)
     read_loc <- file.path(dirname(reads_bam), "intermediate.fastq")
-    # Make Intermediate Fastq file
-    mk_interim_fastq(bf, read_loc)
+    mk_interim_fastq(reads_bam, read_loc, YS, threads)
     read_names <- vector(mode = "list", length(libs)) # Init list of names
     for (i in seq_along(libs)) {
         # Create output file name for BAM
@@ -327,7 +335,10 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs,
     # helper function to obtain final host-filtered read names
     remove_matches(reads_bam, read_names, name_out = output_rds,
                    YS, threads, "bowtie")
-    # output final filtered BAM file
+    if(make_bam) {
+        remove_matches_bam(reads_bam, read_names, name_out = output)
+        message("Aligned bam file written to ", output)
+    }
     message("DONE! Alignments written to ", output_rds)
     return(output_rds)
 }
