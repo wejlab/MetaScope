@@ -25,6 +25,24 @@ obtain_reads <- function(input_file, input_type, aligner){
     return(reads)
 }
 
+identify_rnames <- function(reads, unmapped) {
+    # Account for potential index issues
+    mapped_2015 <- reads[[1]]$rname[!unmapped] %>%
+        stringr::str_split(., pattern = "ref\\|", n = 2) %>%
+        sapply(., function(x) x[2]) %>%
+        stringr::str_split(., pattern = "\\|", n = 2) %>%
+        sapply(., function(x) x[1])
+    mapped_2018 <- reads[[1]]$rname[!unmapped] %>%
+        stringr::str_split(., pattern = "ion\\|", n = 2) %>%
+        sapply(., function(x) x[2])
+    mapped_2021 <- reads[[1]]$rname[!unmapped]
+    # Identify least number of NA's
+    ind <- which.min(c(sum(is.na(mapped_2015)), sum(is.na(mapped_2018)),
+                       sum(is.na(mapped_2021))))
+    mapped_rname <- list(mapped_2015, mapped_2018, mapped_2021)[[ind]]
+    return(mapped_rname)
+}
+
 find_accessions <- function(accessions, NCBI_key) {
     # Convert accessions to taxids and get genome names
     message("Obtaining taxonomy and genome names")
@@ -56,6 +74,85 @@ find_accessions <- function(accessions, NCBI_key) {
     return(tax_id_all)
 }
 
+get_alignscore <- function(aligner, cigar_strings, count_matches, scores,
+                           qwidths) {
+    
+    #Subread alignment scores: CIGAR string matches - edit score
+    if (identical(aligner, "subread")) {
+        num_match <- unlist(vapply(cigar_strings, count_matches,
+                                   USE.NAMES = FALSE, double(1)))
+        alignment_scores <- num_match - scores
+        scaling_factor <- 100.0 / max(alignment_scores)
+        relative_alignment_scores <- alignment_scores - min(alignment_scores)
+        exp_alignment_scores <- exp(relative_alignment_scores * scaling_factor)
+    } else if (identical(aligner, "bowtie")) {
+        # Bowtie2 alignment scores: AS value + read length (qwidths)
+        alignment_scores <- scores + qwidths
+        scaling_factor <- 100.0 / max(alignment_scores)
+        relative_alignment_scores <- alignment_scores - min(alignment_scores)
+        exp_alignment_scores <- exp(relative_alignment_scores * scaling_factor)
+    } else if (identical(aligner, "other")) {
+        # Other alignment scores: No assumptions
+        exp_alignment_scores <- 1
+    }
+    return(exp_alignment_scores)
+}
+
+get_assignments <- function(combined, EMconv, EMmaxIts, unique_taxids,
+                            unique_genome_names) {
+    input_distinct <- dplyr::distinct(combined, qname, rname, .keep_all = TRUE)
+    qname_inds_2 <- input_distinct$qname
+    rname_tax_inds_2 <- input_distinct$rname
+    scores_2 <- input_distinct$scores
+    non_unique_read_ind <- unique(combined[[1]][(
+        duplicated(input_distinct[, 1]) | duplicated(input_distinct[, 1],
+                                                     fromLast = TRUE))])
+    # 1 if read is multimapping, 0 if read is unique
+    y_ind_2 <- as.numeric(unique(input_distinct[[1]]) %in% non_unique_read_ind)
+    gammas <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2, x = scores_2)
+    pi_old <- rep(1 / nrow(gammas), ncol(gammas))
+    pi_new <- theta_new <- Matrix::colMeans(gammas)
+    conv <- max(abs(pi_new - pi_old) / pi_old)
+    it <- 0
+    message("Starting EM iterations")
+    while (conv > EMconv & it < EMmaxIts) {
+        # Expectation Step: Estimate expected value for each read to ea genome
+        pi_mat <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2,
+                                       x = pi_new[rname_tax_inds_2])
+        theta_mat <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2,
+                                          x = theta_new[rname_tax_inds_2])
+        weighted_gamma <- gammas * pi_mat * theta_mat
+        weighted_gamma_sums <- Matrix::rowSums(weighted_gamma)
+        gammas_new <- weighted_gamma / weighted_gamma_sums
+        # Maximization step: proportion of reads to each genome
+        pi_new <- Matrix::colMeans(gammas_new)
+        theta_new_num <- (Matrix::colSums(y_ind_2 * gammas_new) + 1)
+        theta_new <- theta_new_num / (nrow(gammas_new) + 1)
+        # Check convergence
+        it <- it + 1
+        conv <- max(abs(pi_new - pi_old) / pi_old, na.rm = TRUE)
+        pi_old <- pi_new
+        print(c(it, conv))
+    }
+    message("\tDONE! Converged in ", it, " iterations.")
+    hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which
+    best_hit <- Matrix::colSums(hit_which)
+    names(best_hit) <- seq_along(best_hit)
+    best_hit <- best_hit[best_hit != 0]
+    hits_ind <- as.numeric(names(best_hit))
+    final_taxids <- unique_taxids[hits_ind]
+    final_genomes <- unique_genome_names[hits_ind]
+    proportion <- best_hit / sum(best_hit)
+    gammasums <- Matrix::colSums(gammas_new)
+    EMreads <- round(gammasums[hits_ind], 1)
+    EMprop <- gammasums[hits_ind] / sum(gammas_new)
+    results <- cbind(TaxonomyID = final_taxids, Genome = final_genomes,
+                     read_count = best_hit, Proportion = proportion,
+                     EMreads = EMreads, EMProportion = EMprop)
+    results <- as.data.frame(results[order(best_hit, decreasing = TRUE), ])
+    message("Found reads for ", length(best_hit), " genomes")
+    return(results)
+}
 
 #' Count the number of base lengths in a CIGAR string for a given operation
 #'
@@ -232,36 +329,21 @@ metascope_id <- function(input_file, input_type = "bam", aligner = "subread",
                                           ".metascope_id.csv", sep = ""),
                          EMconv = 1 / 10000, EMmaxIts = 25,
                          num_species_plot = NULL) {
-
     # Check to make sure valid aligner is specified
     if (aligner != "bowtie" && aligner != "subread" && aligner != "other")
         stop("Please make sure aligner is set to either 'bowtie', 'subread',",
              " or 'other'")
     reads <- obtain_reads(input_file, input_type, aligner)
     unmapped <- is.na(reads[[1]]$rname)
-    # Account for potential index issues
-    mapped_2015 <- reads[[1]]$rname[!unmapped] %>%
-        stringr::str_split(., pattern = "ref\\|", n = 2) %>%
-        sapply(., function(x) x[2]) %>%
-        stringr::str_split(., pattern = "\\|", n = 2) %>%
-        sapply(., function(x) x[1])
-    mapped_2018 <- reads[[1]]$rname[!unmapped] %>%
-        stringr::str_split(., pattern = "ion\\|", n = 2) %>%
-        sapply(., function(x) x[2])
-    mapped_2021 <- reads[[1]]$rname[!unmapped]
-    # Identify least number of NA's
-    ind <- which.min(c(sum(is.na(mapped_2015)), sum(is.na(mapped_2018)),
-                     sum(is.na(mapped_2021))))
-    mapped_rname <- list(mapped_2015, mapped_2018, mapped_2021)[[ind]]
+    mapped_rname <- identify_rnames(reads, unmapped)
     mapped_qname <- reads[[1]]$qname[!unmapped]
     mapped_cigar <- reads[[1]]$cigar[!unmapped]
     mapped_qwidth <- reads[[1]]$qwidth[!unmapped]
-
     if (aligner == "bowtie") {
-        mapped_alignment <- reads[[1]][["tag"]][["AS"]][!unmapped]
-    } else if (aligner == "subread")
-        mapped_edit <- reads[[1]][["tag"]][["NM"]][!unmapped]
-
+        # mapped alignments used
+        map_edit_or_align <- reads[[1]][["tag"]][["AS"]][!unmapped]
+    } else if (aligner == "subread") map_edit_or_align <-
+        reads[[1]][["tag"]][["NM"]][!unmapped] # mapped edits used
     read_names <- unique(mapped_qname)
     accessions <- as.character(unique(mapped_rname))
     message("\tFound ", length(read_names), " reads aligned to ",
@@ -274,111 +356,41 @@ metascope_id <- function(input_file, input_type = "bam", aligner = "subread",
                            character(1))
     unique_genome_names <- genome_names[!duplicated(taxid_inds)]
     message("\tFound ", length(unique_taxids), " unique NCBI taxonomy IDs")
-
     # Make an aligment matrix (rows: reads, cols: unique taxids)
     message("Setting up the EM algorithm")
     qname_inds <- match(mapped_qname, read_names)
     rname_inds <- match(mapped_rname, accessions)
     rname_tax_inds <- taxid_inds[rname_inds] #accession to taxid
-
     # Order based on read names
     rname_tax_inds <- rname_tax_inds[order(qname_inds)]
     cigar_strings <- mapped_cigar[order(qname_inds)]
     qwidths <- mapped_qwidth[order(qname_inds)]
-
     if (aligner == "bowtie") {
-        scores <- mapped_alignment[order(qname_inds)]
+        # mapped alignments used
+        scores <- map_edit_or_align[order(qname_inds)]
     } else if (aligner == "subread") {
-        scores <- mapped_edit[order(qname_inds)]
+        # mapped edits used
+        scores <- map_edit_or_align[order(qname_inds)]
     } else if (aligner == "other") scores <- 1
     qname_inds <- sort(qname_inds)
-
-    #Subread alignment scores: CIGAR string matches - edit score
-    if (identical(aligner, "subread")) {
-        num_match <- unlist(vapply(cigar_strings, count_matches,
-                                   USE.NAMES = FALSE, double(1)))
-        alignment_scores <- num_match - scores
-        scaling_factor <- 100.0 / max(alignment_scores)
-        relative_alignment_scores <- alignment_scores - min(alignment_scores)
-        exp_alignment_scores <- exp(relative_alignment_scores * scaling_factor)
-    } else if (identical(aligner, "bowtie")) {
-        # Bowtie2 alignment scores: AS value + read length (qwidths)
-        alignment_scores <- scores + qwidths
-        scaling_factor <- 100.0 / max(alignment_scores)
-        relative_alignment_scores <- alignment_scores - min(alignment_scores)
-        exp_alignment_scores <- exp(relative_alignment_scores * scaling_factor)
-    } else if (identical(aligner, "other")) {
-        # Other alignment scores: No assumptions
-        exp_alignment_scores <- 1
-    }
+    exp_alignment_scores <- get_alignscore(aligner, cigar_strings,
+                                           count_matches, scores, qwidths)
     combined <- dplyr::bind_cols("qname" = qname_inds,
                                  "rname" = rname_tax_inds,
                                  "scores" = exp_alignment_scores)
-    input_distinct <- dplyr::distinct(combined, qname, rname, .keep_all = TRUE)
-    qname_inds_2 <- input_distinct$qname
-    rname_tax_inds_2 <- input_distinct$rname
-    scores_2 <- input_distinct$scores
-    non_unique_read_ind <- unique(combined[[1]][(
-        duplicated(input_distinct[, 1]) | duplicated(input_distinct[, 1],
-                                                    fromLast = TRUE))])
-    # 1 if read is multimapping, 0 if read is unique
-    y_ind_2 <- as.numeric(unique(input_distinct[[1]]) %in% non_unique_read_ind)
-    gammas <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2, x = scores_2)
-    pi_old <- rep(1 / nrow(gammas), ncol(gammas))
-    pi_new <- theta_new <- Matrix::colMeans(gammas)
-    conv <- max(abs(pi_new - pi_old) / pi_old)
-    it <- 0
-    message("Starting EM iterations")
-    while (conv > EMconv & it < EMmaxIts) {
-        # Expectation Step: Estimate expected value for each read to ea genome
-        pi_mat <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2,
-                                       x = pi_new[rname_tax_inds_2])
-        theta_mat <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2,
-                                          x = theta_new[rname_tax_inds_2])
-        weighted_gamma <- gammas * pi_mat * theta_mat
-        weighted_gamma_sums <- Matrix::rowSums(weighted_gamma)
-        gammas_new <- weighted_gamma / weighted_gamma_sums
-        # Maximization step: proportion of reads to each genome
-        pi_new <- Matrix::colMeans(gammas_new)
-        theta_new_num <- (Matrix::colSums(y_ind_2 * gammas_new) + 1)
-        theta_new <- theta_new_num / (nrow(gammas_new) + 1)
-        # Check convergence
-        it <- it + 1
-        conv <- max(abs(pi_new - pi_old) / pi_old, na.rm = TRUE)
-        pi_old <- pi_new
-        print(c(it, conv))
-    }
-    message("\tDONE! Converged in ", it, " iterations.")
-    hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which
-    best_hit <- Matrix::colSums(hit_which)
-    names(best_hit) <- seq_along(best_hit)
-    best_hit <- best_hit[best_hit != 0]
-    hits_ind <- as.numeric(names(best_hit))
-    final_taxids <- unique_taxids[hits_ind]
-    final_genomes <- unique_genome_names[hits_ind]
-    proportion <- best_hit / sum(best_hit)
-    gammasums <- Matrix::colSums(gammas_new)
-    EMreads <- round(gammasums[hits_ind], 1)
-    EMprop <- gammasums[hits_ind] / sum(gammas_new)
-    results <- cbind(TaxonomyID = final_taxids, Genome = final_genomes,
-                     read_count = best_hit, Proportion = proportion,
-                     EMreads = EMreads, EMProportion = EMprop)
-    results <- as.data.frame(results[order(best_hit, decreasing = TRUE), ])
-    message("Found reads for ", length(best_hit), " genomes")
-
-    # PLotting of genome locations
-    if (is.null(num_species_plot)){
-        num_species_plot <- min(length(final_taxids), 10)
-    }
-    if (num_species_plot > 0) {
-        message("Creating coverage plots")
-        sapply(seq_along(results$TaxonomyID)[1:num_species_plot],
-               function(x) locations(as.numeric(results$TaxonomyID)[x],
-                                     which_genome = results$Genome[x],
-                                     accessions, taxids, reads,
-                                     input_file))
-    }
+    results <- get_assignments(combined, EMconv, EMmaxIts, unique_taxids,
+                               unique_genome_names)
     utils::write.csv(results, file = out_file, row.names = FALSE)
     message("Results written to ", out_file)
+    # PLotting genome locations
+    num_plot <- num_species_plot
+    if (is.null(num_plot)) num_plot <- min(nrow(results), 10)
+    if (num_plot > 0) {
+        message("Creating coverage plots")
+        sapply(seq_along(results$TaxonomyID)[seq_len(num_species_plot)],
+               function(x) locations(as.numeric(results$TaxonomyID)[x],
+                                     which_genome = results$Genome[x],
+                                     accessions, taxids, reads, input_file))
+    } else message("No coverage plots created")
     return(results)
 }
