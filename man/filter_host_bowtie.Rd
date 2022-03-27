@@ -10,9 +10,7 @@ filter_host_bowtie(
   lib_dir,
   libs,
   make_bam = FALSE,
-  output = paste(tools::file_path_sans_ext(reads_bam), "filtered", "bam", sep = "."),
-  output_rds = paste(tools::file_path_sans_ext(reads_bam), "filtered", "rds", sep =
-    "."),
+  output = paste(tools::file_path_sans_ext(reads_bam), "filtered", sep = "."),
   bowtie2_options = NULL,
   YS = 1e+06,
   threads = 8,
@@ -31,13 +29,12 @@ files.}
 (without .bt2 or .bt2l extension)}
 
 \item{make_bam}{Logical, whether to also output a bam file with host reads
-filtered out. An rds file will be created regardless. Default is FALSE.}
+filtered out. An rds file will be created instead if \code{FALSE}.
+Default is \code{FALSE}.}
 
-\item{output}{The desired name of the output .bam file. Default is
-the basename of \code{unfiltered_bam} + \code{.filtered.bam}.}
-
-\item{output_rds}{The desired name of the output .rds file. Default is
-the basename of \code{unfiltered_bam} + \code{.filtered.rds}.}
+\item{output}{The desired name of the output .bam or .rds file. Extension
+is automatically defined by whether \code{make_bam = TRUE.} Default is
+the basename of \code{unfiltered_bam} + \code{.filtered} + extension.}
 
 \item{bowtie2_options}{Optional: Additional parameters that can be passed to
 the filter_host_bowtie() function. To see all the available parameters
@@ -58,7 +55,9 @@ Default is FALSE.}
 }
 \value{
 The name of a filtered, sorted .bam file written to the user's
-current working directory.
+current working directory. Or, if \code{make_bam = FALSE}, an RDS file
+containing a data frame of only requisite information to run
+\code{metascope_id()}.
 }
 \description{
 After a sample is aligned to a target library with \code{align_target_bowtie()},
@@ -67,6 +66,11 @@ filter reference libraries. This function takes as input the name of the .bam
 file produced via \code{align_target_bowtie()}, and produces a
 sorted .bam file with any reads that match the filter libraries removed.
 This resulting .bam file may be used downstream for further analysis.
+}
+\details{
+Alternatively, an RDS data frame can be output for a smaller output file
+that is created more efficiently (through parallelization) and is still
+compatible with \code{metascope_id()}.
 }
 \examples{
 #### Filter reads from bam file that align to any of the filter libraries

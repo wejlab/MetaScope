@@ -4,7 +4,7 @@
 \alias{remove_matches}
 \title{Helper function to remove reads matched to filter libraries}
 \usage{
-remove_matches(reads_bam, read_names, name_out, YS, threads, aligner)
+remove_matches(reads_bam, read_names, output, YS, threads, aligner, make_bam)
 }
 \arguments{
 \item{reads_bam}{The name of a merged, sorted .bam file that has previously
@@ -15,8 +15,9 @@ instance of \code{align_target()}.}
 that have also aligned to a filter reference library. Each \code{list}
 element should be a vector of read names.}
 
-\item{name_out}{The name of the .bam file that to which the filtered alignments
-will be written.}
+\item{output}{The desired name of the output .bam or .rds file. Extension
+is automatically defined by whether \code{make_bam = TRUE.} Default is
+the basename of \code{unfiltered_bam} + \code{.filtered} + extension.}
 
 \item{YS}{yieldSize, an integer. The number of alignments to be read in from
 the bam file at once. Default is 1000000.}
@@ -24,10 +25,19 @@ the bam file at once. Default is 1000000.}
 \item{threads}{The number of threads to be used in filtering the bam file.}
 
 \item{aligner}{The aligner which was used to create the bam file.}
+
+\item{make_bam}{Logical, whether to also output a bam file with host reads
+filtered out. An rds file will be created instead if \code{FALSE}.
+Default is \code{FALSE}.}
+
+\item{name_out}{The name of the .bam or .rds file that to which the filtered
+alignments will be written.}
 }
 \value{
-The name of a filtered, sorted .bam file written to the user's
-current working directory.
+Depending on input \code{make_bam}, either the name of a filtered,
+sorted .bam file written to the user's current working directory, or
+an RDS file containing a data frame of only requisite information to run
+\code{metascope_id()}.
 }
 \description{
 Within the \code{filter_host()} function, we align our sequencing sample to all
@@ -48,7 +58,7 @@ This function is not intended for direct use.
 # read_names <- list(qnames[1:10], qnames[30:40])
 # out <- "subread_target.filtered.bam"
 
-# remove_matches(readPath, read_names, out, YS = 1000, threads = 1,
-                 aligner = "subread")
+# remove_matches_bam(readPath, read_names, out, YS = 1000, threads = 1,
+                 aligner = "subread", make_bam = FALSE)
 
 }

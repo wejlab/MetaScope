@@ -10,10 +10,8 @@ filter_host(
   libs,
   lib_dir = NULL,
   make_bam = FALSE,
-  output = paste(tools::file_path_sans_ext(reads_bam), "filtered", "bam", sep = "."),
+  output = paste(tools::file_path_sans_ext(reads_bam), "filtered", sep = "."),
   settings = align_details,
-  output_rds = paste(tools::file_path_sans_ext(reads_bam), "filtered", "rds", sep =
-    "."),
   YS = 1e+06,
   threads = 8
 )
@@ -30,10 +28,12 @@ instance of \code{align_target_bowtie()}.}
 files.}
 
 \item{make_bam}{Logical, whether to also output a bam file with host reads
-filtered out. An rds file will be created regardless. Default is FALSE.}
+filtered out. An rds file will be created instead if \code{FALSE}.
+Default is \code{FALSE}.}
 
-\item{output}{The desired name of the output .bam file. Default is
-the basename of \code{unfiltered_bam} + \code{.filtered.bam}.}
+\item{output}{The desired name of the output .bam or .rds file. Extension
+is automatically defined by whether \code{make_bam = TRUE.} Default is
+the basename of \code{unfiltered_bam} + \code{.filtered} + extension.}
 
 \item{settings}{A named \code{list} specifying alignment parameters for
 the \code{Rsubread::align()} function, which is
@@ -43,9 +43,6 @@ phredOffset, unique, and nBestLocations. Descriptions of these parameters
 are available under \code{?Rsubread::align}. Defaults to the global
 \code{align_details} object.}
 
-\item{output_rds}{The desired name of the output .rds file. Default is
-the basename of \code{unfiltered_bam} + \code{.filtered.rds}.}
-
 \item{YS}{yieldSize, an integer. The number of alignments to be read in from
 the bam file at once. Default is 1000000.}
 
@@ -53,8 +50,10 @@ the bam file at once. Default is 1000000.}
 Default is 8 threads.}
 }
 \value{
-The name of an RDS file of filtered reads written to the user's
-directory of choice.
+The name of a filtered, sorted .bam file written to the user's
+current working directory. Or, if \code{make_bam = FALSE}, an RDS file
+containing a data frame of only requisite information to run
+\code{metascope_id()}.
 }
 \description{
 After a sample is aligned to a target library with \code{align_target()},
