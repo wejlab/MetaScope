@@ -12,7 +12,7 @@ filter_host(
   make_bam = FALSE,
   output = paste(tools::file_path_sans_ext(reads_bam), "filtered", sep = "."),
   settings = align_details,
-  YS = 1e+06,
+  YS = 5e+05,
   threads = 8
 )
 }
@@ -42,9 +42,6 @@ Elements should include type, nthreads, maxMismatches, nsubreads,
 phredOffset, unique, and nBestLocations. Descriptions of these parameters
 are available under \code{?Rsubread::align}. Defaults to the global
 \code{align_details} object.}
-
-\item{YS}{yieldSize, an integer. The number of alignments to be read in from
-the bam file at once. Default is 1000000.}
 
 \item{threads}{The amount of threads available for the function.
 Default is 8 threads.}

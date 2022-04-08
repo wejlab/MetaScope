@@ -12,7 +12,8 @@ filter_host_bowtie(
   make_bam = FALSE,
   output = paste(tools::file_path_sans_ext(reads_bam), "filtered", sep = "."),
   bowtie2_options = NULL,
-  YS = 1e+06,
+  YS_1 = 1e+06,
+  YS_2 = 1e+05,
   threads = 8,
   overwrite = FALSE
 )
@@ -44,8 +45,15 @@ parameters as one string and if optional parameters are given then the user
 is responsible for entering all the parameters to be used by Bowtie2. NOTE:
 The only parameters that should NOT be specified here is the threads.}
 
-\item{YS}{yieldSize, an integer. The number of alignments to be read in from
-the bam file at once. Default is 1000000.}
+\item{YS_1}{yieldSize, an integer. The number of alignments to be read in from
+the bam file at once for the creation of an intermediate fastq file.
+Default is 1000000.}
+
+\item{YS_2}{yieldSize, am integer. The number of alignments to be read in from
+the bam file at once for the creation of a filtered bam file. Smaller
+chunks are generally needed for this step, which is why it is a better idea to
+keep YS_2 smaller than YS_1 to conserve memory.
+Default is 100000.}
 
 \item{threads}{The amount of threads available for the function.
 Default is 8 threads.}

@@ -161,7 +161,7 @@ remove_matches <- function(reads_bam, read_names, output, YS, threads,
 filter_host <- function(reads_bam, libs, lib_dir = NULL, make_bam = FALSE,
                         output = paste(tools::file_path_sans_ext(reads_bam),
                             "filtered", sep = "."), settings = align_details,
-                        YS = 1000000, threads = 8) {
+                        YS = 500000, threads = 8) {
     # Initialize list of names
     read_names <- vector(mode = "list", length(libs))
     for (i in seq_along(libs)) {
@@ -231,8 +231,14 @@ filter_host <- function(reads_bam, libs, lib_dir = NULL, make_bam = FALSE,
 #' parameters as one string and if optional parameters are given then the user
 #' is responsible for entering all the parameters to be used by Bowtie2. NOTE:
 #' The only parameters that should NOT be specified here is the threads.
-#' @param YS yieldSize, an integer. The number of alignments to be read in from
-#' the bam file at once. Default is 1000000.
+#' @param YS_1 yieldSize, an integer. The number of alignments to be read in from
+#' the bam file at once for the creation of an intermediate fastq file.
+#' Default is 1000000.
+#' @param YS_2 yieldSize, am integer. The number of alignments to be read in from
+#' the bam file at once for the creation of a filtered bam file. Smaller
+#' chunks are generally needed for this step, which is why it is a better idea to
+#' keep YS_2 smaller than YS_1 to conserve memory.
+#' Default is 100000.
 #' @param threads The amount of threads available for the function.
 #' Default is 8 threads.
 #' @param overwrite Whether existing files should be overwritten.
@@ -284,16 +290,17 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs, make_bam = FALSE,
                                output = paste(
                                    tools::file_path_sans_ext(reads_bam),
                                    "filtered", sep = "."),
-                               bowtie2_options = NULL, YS = 1000000,
+                               bowtie2_options = NULL, YS_1 = 1000000,
+                               YS_2 = 100000,
                                threads = 8, overwrite = FALSE) {
     # If user does not specify parameters, specify for them
     if (missing(bowtie2_options)) {
-        bowtie2_options <- paste("--very-sensitive -k 100 --score-min",
-                                 "L,-0.2,-0.2 --threads", threads)
+        bowtie2_options <- paste("--very-fast-local -k 100 ",
+                                 "--threads", threads)
     } else bowtie2_options <- paste(bowtie2_options, "--threads", threads)
     # Convert reads_bam into fastq (parallelized)
     read_loc <- file.path(dirname(reads_bam), "intermediate.fastq")
-    mk_interim_fastq(reads_bam, read_loc, YS, threads)
+    mk_interim_fastq(reads_bam, read_loc, YS_1, threads)
     # Init list of names
     read_names <- vector(mode = "list", length(libs))
     for (i in seq_along(libs)) {
@@ -318,7 +325,7 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs, make_bam = FALSE,
     }
     # remove intermediate fastq file
     file.remove(read_loc)
-    name_out <- remove_matches(reads_bam, read_names, output, YS, threads,
+    name_out <- remove_matches(reads_bam, read_names, output, YS_2, threads,
                                "bowtie", make_bam)
     return(name_out)
 }

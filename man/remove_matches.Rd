@@ -19,9 +19,6 @@ element should be a vector of read names.}
 is automatically defined by whether \code{make_bam = TRUE.} Default is
 the basename of \code{unfiltered_bam} + \code{.filtered} + extension.}
 
-\item{YS}{yieldSize, an integer. The number of alignments to be read in from
-the bam file at once. Default is 1000000.}
-
 \item{threads}{The number of threads to be used in filtering the bam file.}
 
 \item{aligner}{The aligner which was used to create the bam file.}
