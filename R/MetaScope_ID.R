@@ -13,6 +13,7 @@ obtain_reads <- function(input_file, input_type, aligner){
         }
         reads <- Rsamtools::scanBam(input_file, param = params)
     } else if (input_type == "rds") {
+        message("Reading .rds file: ", input_file)
         reads <- list(as.list(readRDS(input_file)))
         if (identical(aligner, "bowtie")) {
             reads[[1]]$tag <- list("AS" = reads[[1]]$AS)
@@ -387,7 +388,7 @@ metascope_id <- function(input_file, input_type = "bam", aligner = "subread",
     if (is.null(num_plot)) num_plot <- min(nrow(results), 10)
     if (num_plot > 0) {
         message("Creating coverage plots")
-        sapply(seq_along(results$TaxonomyID)[seq_len(num_species_plot)],
+        sapply(seq_along(results$TaxonomyID)[seq_len(num_plot)],
                function(x) locations(as.numeric(results$TaxonomyID)[x],
                                      which_genome = results$Genome[x],
                                      accessions, taxids, reads, input_file))
