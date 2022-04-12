@@ -45,7 +45,7 @@ get_table <- function(what_tax) {
                          what_tax, "/assembly_summary.txt", sep = "")
     refseq_table <- utils::read.table(refseq_link, header = TRUE,
                                       sep = "\t", comment.char = "",
-                                      quote = "", skip = 1)
+                                      quote = "", skip = 1, fill = TRUE)
     return(refseq_table)
 }
 
