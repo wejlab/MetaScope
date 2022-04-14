@@ -62,8 +62,8 @@ create_MAE <- function(annot_path, which_annot_col, combined_list,
     dplyr::mutate_all(as.character) %>% S4Vectors::DataFrame()
   microbe_se <- SummarizedExperiment::SummarizedExperiment(
     assays = se_mgx, colData = se_colData, rowData = se_rowData) #%>%
-    #TBSignatureProfiler::mkAssay(., input_name = "MGX", log = TRUE,
-    #                             output_name = "rawcounts")
+  #TBSignatureProfiler::mkAssay(., input_name = "MGX", log = TRUE,
+  #                             output_name = "rawcounts")
   MAE <- MultiAssayExperiment::MultiAssayExperiment(
     experiments = S4Vectors::SimpleList(MicrobeGenetics = microbe_se),
     colData = se_colData)
@@ -94,7 +94,7 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #'
 #' @param meta_counts A vector of filepaths to the counts ID CSVs output
 #' by MetaScope
-#' @param annot_path The filepath to the annotation file for the samples
+#' @param annot_path The filepath to the CSV annotation file for the samples
 #' @param end_string The end string used at the end of the metascope_id
 #' files. Default is ".filtered.metascope_id.csv"
 #' @param which_annot_col The name of the column of the annotation file
@@ -108,6 +108,10 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #' @param path_to_write Where should output animalcules and/or QIIME files
 #' be written to? Should be a character string of the folder path.
 #' Default is '.', i.e. the current working directory.
+#' #' @param NCBI_key (character) NCBI Entrez API key. optional.
+#' See taxize::use_entrez(). Due to the high number of
+#' requests made to NCBI, this function will be less prone to errors
+#' if you obtain an NCBI key.
 #' @returns returns a multi-assay experiment file of combined sample counts
 #' data and/or biom file and mapping file for analysis with QIIME.
 #' The multi-assay experiment will have
@@ -126,7 +130,7 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
                                 end_string = ".filtered.metascope_id.csv",
                                 qiime_biom_out = FALSE,
-                                path_to_write = ".") {
+                                path_to_write = ".", NCBI_key = NULL) {
   combined_list <- data.table::rbindlist(
     lapply(all_files, read_in_id, end_string = end_string,
            which_annot_col = which_annot_col)) %>%
@@ -138,8 +142,9 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
   # Create taxonomy, counts tables
   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
                    "family", "genus", "species", "strain")
+  options("ENTREZ_KEY" = NCBI_key)
   all_ncbi <- taxize::classification(combined_list$TaxonomyID, db = "ncbi",
-                                     max_tries = 4)
+                                     max_tries = 4, key = NCBI_key)
   taxonomy_table <- as.data.frame(t(dplyr::bind_rows(lapply(all_ncbi,
                                                             mk_table,
                                                             taxon_ranks))))
