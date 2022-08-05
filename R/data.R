@@ -11,9 +11,11 @@
 #' \code{phredOffset = 33}, \code{unique = FALSE}, and
 #' \code{nBestLocations = 16}. Full descriptions of these parameters can be
 #' read by accessing \code{?Rsubread::align}.
-#'
+#' @name align_details
+#' @docType data
+#' @format list
+#' @usage data(align_details)
 #' @keywords datasets
-#'
 #' @examples
 #' data("align_details")
 #'

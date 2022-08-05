@@ -57,7 +57,8 @@ file.copy(from = refPath, to = file.path(".", "target.fasta"))
 
 ## Make and align to a single reference library
 mk_subread_index("target.fasta")
-readPath <- system.file("extdata", "reads.fastq",package = "MetaScope")
+readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
+align_details <- get0("align_details", envir = asNamespace("MetaScope"))
 target_map <- align_target(readPath, "target", project_name="subread_target")
 target_map_sam <- Rsamtools::asSam(target_map, overwrite = TRUE)
 

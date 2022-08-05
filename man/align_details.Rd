@@ -5,10 +5,10 @@
 \alias{align_details}
 \title{A universal parameter settings object for Rsubread alignment}
 \format{
-An object of class \code{list} of length 7.
+list
 }
 \usage{
-align_details
+data(align_details)
 }
 \description{
 This object is a named vector of multiple options that can be chosen for
