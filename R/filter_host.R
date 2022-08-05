@@ -1,6 +1,6 @@
 globalVariables(c("align_details"))
 
-#' Helper function for filter_host_bowtie to write interim fastq file
+# Helper function for filter_host_bowtie to write interim fastq file
 mk_interim_fastq <- function(reads_bam, read_loc, YS, threads) {
     message("Creating Intermediate Fastq file")
     bf <- Rsamtools::BamFile(reads_bam, yieldSize = YS)
@@ -11,24 +11,24 @@ mk_interim_fastq <- function(reads_bam, read_loc, YS, threads) {
             what = to_pull))[[1]] 
     }
     MAP <- function(value) {
-        dplyr::tibble(Header = value$qname |> unname(unlist()),
-                      Sequence = as.character(value$seq),
-                      Quality = as.character(value$qual)) %>%
-            dplyr::distinct(Header, .keep_all = TRUE) %>%
-            dplyr::mutate(Plus = "+",
-                          Header = stringr::str_c("@", .data$Header)) %>%
+        dplyr::tibble("Header" = value$qname |> unname(unlist()),
+                      "Sequence" = as.character(value$seq),
+                      "Quality" = as.character(value$qual)) %>%
+            dplyr::distinct(.data$Header, .keep_all = TRUE) %>%
+            dplyr::mutate("Plus" = "+",
+                          "Header" = stringr::str_c("@", .data$Header)) %>%
             dplyr::select(.data$Header, .data$Sequence, .data$Plus,
                           .data$Quality) 
     }
     REDUCE <- function(x, y, iterate = TRUE) dplyr::bind_rows(x, y) %>%
-        dplyr::distinct(Header, .keep_all = TRUE)
+        dplyr::distinct(.data$Header, .keep_all = TRUE)
     DONE <- function(value) length(value$qname) == 0
     # Create and write interim fastq file
     BiocParallel::register(BiocParallel::MulticoreParam(threads))
     suppressWarnings(GenomicFiles::reduceByYield(
         bf, YIELD, MAP, REDUCE, DONE, parallel = TRUE)) %>%
         as.matrix() %>% t() %>% as.character() %>% dplyr::as_tibble() %>%
-        data.table::fwrite(., file = read_loc, compress = "gzip",
+        data.table::fwrite(file = read_loc, compress = "gzip",
                            col.names = FALSE, quote = FALSE)
     message("Finished Creating Intermediate Fastq File")
 }
@@ -47,9 +47,10 @@ mk_interim_fastq <- function(reads_bam, read_loc, YS, threads) {
 #' @param read_names A \code{list} of target query names from \code{reads_bam}
 #' that have also aligned to a filter reference library. Each \code{list}
 #' element should be a vector of read names.
-#' @param name_out The name of the .bam or .rds file that to which the filtered
+#' @param output The name of the .bam or .rds file that to which the filtered
 #' alignments will be written.
 #' @inheritParams filter_host_bowtie
+#' @inheritParams filter_host
 #' @param threads The number of threads to be used in filtering the bam file.
 #' @param aligner The aligner which was used to create the bam file.
 #'
@@ -70,7 +71,7 @@ mk_interim_fastq <- function(reads_bam, read_loc, YS, threads) {
 #' # out <- "subread_target.filtered.bam"
 #'
 #' # remove_matches_bam(readPath, read_names, out, YS = 1000, threads = 1,
-#'                  aligner = "subread", make_bam = FALSE)
+#' #                    aligner = "subread", make_bam = FALSE)
 #'
 
 remove_matches <- function(reads_bam, read_names, output, YS, threads,
@@ -107,12 +108,12 @@ remove_matches <- function(reads_bam, read_names, output, YS, threads,
             }
         }
         MAP <- function(value) value[!(value$qname %in% filter_names), ]
-        REDUCE <- function(x, y, iterate = true) dplyr::bind_rows(x, y)
+        REDUCE <- function(x, y, iterate = TRUE) dplyr::bind_rows(x, y)
         DONE <- function(value) nrow(value) == 0
         BiocParallel::register(BiocParallel::MulticoreParam(threads))
         suppressWarnings(GenomicFiles::reduceByYield(
             bf, YIELD, MAP, REDUCE, DONE, parallel = TRUE)) %>%
-            saveRDS(., name_out)
+            saveRDS(.data, name_out)
     }
     message("DONE! Alignments written to ", name_out)
     return(name_out)
@@ -128,6 +129,9 @@ remove_matches <- function(reads_bam, read_names, output, YS, threads,
 #' sorted .bam file with any reads that match the filter libraries removed.
 #' This resulting .bam file may be used upstream for further analysis.
 #'
+#' @param YS yieldSize, an integer. The number of alignments to be read in from
+#' the bam file at once for the creation of an intermediate fastq file.
+#' Default is 1000000.
 #' @inheritParams filter_host_bowtie
 #' @inheritParams align_target
 #' @return The name of a filtered, sorted .bam file written to the user's
@@ -237,7 +241,7 @@ filter_host <- function(reads_bam, libs, lib_dir = NULL, make_bam = FALSE,
 #' @param YS_2 yieldSize, am integer. The number of alignments to be read in from
 #' the bam file at once for the creation of a filtered bam file. Smaller
 #' chunks are generally needed for this step, which is why it is a better idea to
-#' keep YS_2 smaller than YS_1 to conserve memory.
+#' keep `YS_2` smaller than `YS_1` to conserve memory.
 #' Default is 100000.
 #' @param threads The amount of threads available for the function.
 #' Default is 8 threads.

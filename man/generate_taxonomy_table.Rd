@@ -16,6 +16,10 @@ available NCBI genomes. Each column is a taxonomic rank or indication of a
 strain; each row is a taxonomic classification for an unique species or
 strain.
 }
+\details{
+To use an NCBI key, add `ENTREZ_KEY = <your key here>` to your global
+environment using `Sys.setenv()`.
+}
 \examples{
 # Code not run
 \dontrun{

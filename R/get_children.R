@@ -1,4 +1,4 @@
-
+globalVariables(c("taxonomy_table"))
 #' Get child nodes from NCBI taxonomy
 #'
 #' This function will utilize a organism classification table to obtain all

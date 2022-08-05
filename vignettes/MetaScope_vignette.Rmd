@@ -297,21 +297,24 @@ Following the proper alignment of a sample to all target and filter libraries of
 The identification workflow consists of a single function, `MetaScope_ID()`, which reads in a .bam file, annotates the taxonomy and genome names, reduces the mapping ambiguity using a mixture model, and outputs a .csv file with the results. Currently, it assumes that the genome library/.bam files use NCBI accession names for reference names. 
 
 ```{R identification, eval = TRUE, warning = FALSE, message = FALSE, results = FALSE}
-MetaScope::metascope_id(bam_file = final_map, input_type = "bam", aligner = "bowtie", num_species_plot = 0)
+MetaScope::metascope_id(final_map, input_type = "bam",
+                        aligner = "bowtie", num_species_plot = 0)
 ```
 
 We will now look at the read reassignment results reported in the output CSV file.
 
 ```{R CSV summary, eval = TRUE, warning = FALSE, message = FALSE, echo = FALSE}
-relevant_col <- read.csv(paste(tools::file_path_sans_ext(final_map),
-                                          ".metascope_id.csv", sep = ""))[,2:4]
-relevant_col[,1] <- gsub(',.*', '', relevant_col[,1])
-relevant_col[,1] <- gsub("(ST398).*", "\\1", relevant_col[,1])
-relevant_col[,1] <- gsub("(N315).*", "\\1", relevant_col[,1])
-relevant_col[,1] <- gsub("(Newman).*", "\\1", relevant_col[,1])
-relevant_col[,1] <- gsub("(Mu3).*", "\\1", relevant_col[,1])
-relevant_col[,1] <- gsub("(RF122).*", "\\1", relevant_col[,1])
-knitr::kable(relevant_col)
+relevant_col <- read.csv(paste0(tools::file_path_sans_ext(final_map),
+                                ".metascope_id.csv"))[,2:4]
+
+relevant_col |>
+  dplyr::mutate(Genome = stringr::str_replace_all(Genome, ',.*', ''),
+                Genome = stringr::str_replace_all(Genome, "(ST398).*", "\\1"),
+                Genome = stringr::str_replace_all(Genome, "(N315).*", "\\1"),
+                Genome = stringr::str_replace_all(Genome, "(Newman).*", "\\1"),
+                Genome = stringr::str_replace_all(Genome, "(Mu3).*", "\\1"),
+                Genome = stringr::str_replace_all(Genome, "(RF122).*", "\\1")) |>
+  knitr::kable()
 ```
 
 We can see that the read reassignment function has reassigned the majority of the ambiguous alignments back to the Staphylococcus aureus RF122 strain, the correct strain of origin.

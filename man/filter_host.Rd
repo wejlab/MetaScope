@@ -43,6 +43,10 @@ phredOffset, unique, and nBestLocations. Descriptions of these parameters
 are available under \code{?Rsubread::align}. Defaults to the global
 \code{align_details} object.}
 
+\item{YS}{yieldSize, an integer. The number of alignments to be read in from
+the bam file at once for the creation of an intermediate fastq file.
+Default is 1000000.}
+
 \item{threads}{The amount of threads available for the function.
 Default is 8 threads.}
 }

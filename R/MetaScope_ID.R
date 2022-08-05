@@ -29,13 +29,13 @@ obtain_reads <- function(input_file, input_type, aligner){
 identify_rnames <- function(reads, unmapped) {
     # Account for potential index issues
     mapped_2015 <- reads[[1]]$rname[!unmapped] %>%
-        stringr::str_split(., pattern = "ref\\|", n = 2) %>%
-        sapply(., function(x) x[2]) %>%
-        stringr::str_split(., pattern = "\\|", n = 2) %>%
-        sapply(., function(x) x[1])
+        stringr::str_split(pattern = "ref\\|", n = 2) %>%
+        sapply(function(x) x[2]) %>%
+        stringr::str_split(pattern = "\\|", n = 2) %>%
+        sapply(function(x) x[1])
     mapped_2018 <- reads[[1]]$rname[!unmapped] %>%
-        stringr::str_split(., pattern = "ion\\|", n = 2) %>%
-        sapply(., function(x) x[2])
+        stringr::str_split(pattern = "ion\\|", n = 2) %>%
+        sapply(function(x) x[2])
     mapped_2021 <- reads[[1]]$rname[!unmapped]
     # Identify least number of NA's
     ind <- which.min(c(sum(is.na(mapped_2015)), sum(is.na(mapped_2018)),
@@ -52,8 +52,8 @@ find_accessions <- function(accessions, NCBI_key) {
     if (URI_length > 2500) {
         chunks <- split(accessions, ceiling(seq_along(accessions) / 100))
         tax_id_all <- c()
-        message(paste("Accession list broken into", length(chunks), "chunks"))
-        for (i in 1:length(chunks)) {
+        message("Accession list broken into", length(chunks), "chunks")
+        for (i in seq_len(chunks)) {
             success <- FALSE
             attempt <- 0
             # Attempt to get taxid up to three times for each chunk
@@ -147,11 +147,11 @@ get_assignments <- function(combined, EMconv, EMmaxIts, unique_taxids,
     gammasums <- Matrix::colSums(gammas_new)
     EMreads <- round(gammasums[hits_ind], 1)
     EMprop <- gammasums[hits_ind] / sum(gammas_new)
-    results <- cbind(TaxonomyID = final_taxids, Genome = final_genomes,
-                     read_count = best_hit, Proportion = proportion,
-                     EMreads = EMreads, EMProportion = EMprop)
-    results <- as.data.frame(results[order(best_hit, decreasing = TRUE), ])
-    message("Found reads for ", length(best_hit), " genomes")
+    results <- dplyr::tibble(TaxonomyID = final_taxids, Genome = final_genomes,
+                             read_count = best_hit, Proportion = proportion,
+                             EMreads = EMreads, EMProportion = EMprop) %>%
+      dplyr::arrange(dplyr::desc(.data$read_count))
+    message("Found reads for ", nrow(results), " genomes")
     return(results)
 }
 
@@ -234,13 +234,13 @@ locations <- function(which_taxid, which_genome,
     # map back to BAM
     map2bam_acc <- which(reads[[1]]$rname %in% choose_acc)
     # Split genome name to make digestible
-    this_genome <- strsplit(which_genome, " ")[[1]][1:2]
+    this_genome <- strsplit(which_genome, " ")[[1]][c(1, 2)]
     use_name <- paste(this_genome, collapse = " ")
     coverage <- round(mean(seq_len(338099) %in% unique(
         reads[[1]]$pos[map2bam_acc])), 3)
     # Plotting
     dfplot <- dplyr::tibble(x = reads[[1]]$pos[map2bam_acc])
-    ggplot2::ggplot(dfplot, ggplot2::aes(x)) +
+    ggplot2::ggplot(dfplot, ggplot2::aes(.data$x)) +
         ggplot2::geom_histogram(bins = 30) +
         ggplot2::labs(main = paste("Positions of reads mapped to", use_name),
                       xlab = "Leftmost position in genome",

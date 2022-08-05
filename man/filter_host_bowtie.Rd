@@ -52,7 +52,7 @@ Default is 1000000.}
 \item{YS_2}{yieldSize, am integer. The number of alignments to be read in from
 the bam file at once for the creation of a filtered bam file. Smaller
 chunks are generally needed for this step, which is why it is a better idea to
-keep YS_2 smaller than YS_1 to conserve memory.
+keep `YS_2` smaller than `YS_1` to conserve memory.
 Default is 100000.}
 
 \item{threads}{The amount of threads available for the function.
