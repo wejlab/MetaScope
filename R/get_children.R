@@ -1,4 +1,3 @@
-
 #' Get child nodes from NCBI taxonomy
 #'
 #' This function will utilize a organism classification table to obtain all
@@ -7,7 +6,7 @@
 #'
 #' @param input_taxon The parent taxon.
 #' @param input_rank The taxonomic rank of the input taxon.
-#' @param data A dataframe of organism classification information.
+#' @param tax_dat A dataframe of organism classification information.
 #' At minimum, should have a column indicating "strain", and and all others
 #' should be taxonomic ranks. Each row should be a taxonomic relationship.
 #' This defaults to the `taxonomy_table` object.
@@ -28,13 +27,13 @@
 #' get_children('Primates', 'order')
 #'
 
-get_children <- function(input_taxon, input_rank, data = taxonomy_table){
+get_children <- function(input_taxon, input_rank, tax_dat = taxonomy_table){
     # Get child strains
-    ind <- tolower(data[, input_rank]) %in% tolower(input_taxon)
-    strain_list <- unique(data[, "strain"][ind])
+    ind <- tolower(tax_dat[, input_rank]) %in% tolower(input_taxon)
+    strain_list <- unique(tax_dat[, "strain"][ind])
     strain_list <- strain_list[!is.na(strain_list)]
     ## Delete rows with child strains
-    new_table <- data[!(data[, "strain"] %in% strain_list), ]
+    new_table <- tax_dat[!(tax_dat[, "strain"] %in% strain_list), ]
     ind <- tolower(new_table[, input_rank]) %in% tolower(input_taxon)
     species_list <- unique(new_table[, "species"][ind])
     species_list <- species_list[!is.na(species_list)]

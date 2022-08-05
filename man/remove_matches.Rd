@@ -15,9 +15,12 @@ instance of \code{align_target()}.}
 that have also aligned to a filter reference library. Each \code{list}
 element should be a vector of read names.}
 
-\item{output}{The desired name of the output .bam or .rds file. Extension
-is automatically defined by whether \code{make_bam = TRUE.} Default is
-the basename of \code{unfiltered_bam} + \code{.filtered} + extension.}
+\item{output}{The name of the .bam or .rds file that to which the filtered
+alignments will be written.}
+
+\item{YS}{yieldSize, an integer. The number of alignments to be read in from
+the bam file at once for the creation of an intermediate fastq file.
+Default is 1000000.}
 
 \item{threads}{The number of threads to be used in filtering the bam file.}
 
@@ -26,9 +29,6 @@ the basename of \code{unfiltered_bam} + \code{.filtered} + extension.}
 \item{make_bam}{Logical, whether to also output a bam file with host reads
 filtered out. An rds file will be created instead if \code{FALSE}.
 Default is \code{FALSE}.}
-
-\item{name_out}{The name of the .bam or .rds file that to which the filtered
-alignments will be written.}
 }
 \value{
 Depending on input \code{make_bam}, either the name of a filtered,
@@ -56,6 +56,6 @@ This function is not intended for direct use.
 # out <- "subread_target.filtered.bam"
 
 # remove_matches_bam(readPath, read_names, out, YS = 1000, threads = 1,
-                 aligner = "subread", make_bam = FALSE)
+#                    aligner = "subread", make_bam = FALSE)
 
 }

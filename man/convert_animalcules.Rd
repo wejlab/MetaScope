@@ -10,14 +10,15 @@ convert_animalcules(
   which_annot_col,
   end_string = ".filtered.metascope_id.csv",
   qiime_biom_out = FALSE,
-  path_to_write = "."
+  path_to_write = ".",
+  NCBI_key = NULL
 )
 }
 \arguments{
 \item{meta_counts}{A vector of filepaths to the counts ID CSVs output
 by MetaScope}
 
-\item{annot_path}{The filepath to the annotation file for the samples}
+\item{annot_path}{The filepath to the CSV annotation file for the samples}
 
 \item{which_annot_col}{The name of the column of the annotation file
 containing the sample IDs.
@@ -35,6 +36,11 @@ Default is \code{FALSE}.}
 \item{path_to_write}{Where should output animalcules and/or QIIME files
 be written to? Should be a character string of the folder path.
 Default is '.', i.e. the current working directory.}
+
+\item{NCBI_key}{(character) NCBI Entrez API key. optional.
+See taxize::use_entrez(). Due to the high number of
+requests made to NCBI, this function will be less prone to errors
+if you obtain an NCBI key.}
 }
 \value{
 returns a multi-assay experiment file of combined sample counts
@@ -53,7 +59,9 @@ QIIME.
 #all_files <- list.files("~/decamp/analysis/aodom/Novartis_COPD/MetaScope_run/Output",
 #                         pattern = "*.filtered.metascope_id.csv",
 #                         full.names = TRUE)
-#out <- convert_animalcules(meta_counts = all_files, annot_path = "~/decamp/analysis/aodom/Novartis_COPD/Data/DECAMP_patho_annotation.csv", end_string = ".filtered.metascope_id.csv", which_annot_col = "DECAMP_ID")
+#out <- convert_animalcules(meta_counts = all_files,
+#annot_path = "~/decamp/analysis/aodom/Novartis_COPD/Data/DECAMP_patho_annotation.csv",
+# end_string = ".filtered.metascope_id.csv", which_annot_col = "DECAMP_ID")
 #}
  # coming soon!
 

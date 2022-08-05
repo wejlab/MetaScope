@@ -4,14 +4,14 @@
 \alias{get_children}
 \title{Get child nodes from NCBI taxonomy}
 \usage{
-get_children(input_taxon, input_rank, data = taxonomy_table)
+get_children(input_taxon, input_rank, tax_dat = taxonomy_table)
 }
 \arguments{
 \item{input_taxon}{The parent taxon.}
 
 \item{input_rank}{The taxonomic rank of the input taxon.}
 
-\item{data}{A dataframe of organism classification information.
+\item{tax_dat}{A dataframe of organism classification information.
 At minimum, should have a column indicating "strain", and and all others
 should be taxonomic ranks. Each row should be a taxonomic relationship.
 This defaults to the `taxonomy_table` object.}

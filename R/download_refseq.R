@@ -1,5 +1,3 @@
-globalVariables(c("taxonomy_table"))
-
 # Helper function to identify parent kingdom, rank
 id_kingdom_rank <- function(classification.table, taxon, rank_input) {
     # Get the parent taxon in super kingdom rank
@@ -194,7 +192,6 @@ download_genomes <- function(species_table, taxon, patho_out, compress) {
 #' (e.g. bacteria.pathoscope.fasta.gz') if \code{path_out = TRUE}.
 #'
 #' @export
-#'
 #' @examples
 #' #### Download RefSeq genomes
 #'
@@ -228,7 +225,8 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
     parent_kingdom <- id_kingdom_rank(classification.table, taxon, rank_input)
     refseq_table <- download_parentkingdom(parent_kingdom)
     # Get NCBI scientific names of children species or strains
-    children_list <- get_children(taxon, rank_input, data = taxonomy_table)
+    taxonomy_table <- get0("taxonomy_table", envir = asNamespace("MetaScope"))
+    children_list <- get_children(taxon, rank_input, tax_dat = taxonomy_table)
     species_table <- get_speciestab(children_list, refseq_table, taxon,
                                     representative, reference)
     combined_fasta <- download_genomes(species_table, taxon, patho_out,

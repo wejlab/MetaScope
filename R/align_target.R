@@ -78,7 +78,7 @@ filter_unmapped_reads <- function(bamfile) {
 #'
 
 combined_header <- function(bam_files, header_file = "header_tmp.sam") {
-    message(paste("Making a combined header file:", header_file))
+    message("Making a combined header file:", header_file)
     # get first and last line of header
     bam_head <- Rsamtools::scanBamHeader(bam_files[1])
     n <- length(bam_head[[1]]$text)
@@ -317,8 +317,8 @@ align_target <- function(reads, libs, lib_dir=NULL,
     }
     # merge bam files if needed; rename if not
     if (length(bam_files) > 1) {
-        message("Merging the bam files into", paste(project_name, ".bam",
-                                                        sep = ""))
+        files_merged <- paste0(project_name, ".bam")
+        message("Merging the bam files into", files_merged)
         merged_all <- merge_bam_files(bam_files, project_name)
     } else {
         file.rename(bam_files, paste(project_name, ".bam", sep = ""))

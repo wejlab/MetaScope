@@ -18,10 +18,12 @@ Illumina
 Langmead
 Liao
 MGX
+Mabey
 MetaScope's
 NCBI's
 NCBI’s
 NGS
+ORCID
 PathoScope
 PhiX
 Pre
@@ -39,6 +41,7 @@ SRX
 SampleName
 Subread
 Sys
+YS
 al
 archaea
 archaeal
@@ -97,6 +100,7 @@ sam
 sampleName
 sampleNames
 samtools
+setenv
 subread
 subreads
 taxid
