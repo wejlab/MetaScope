@@ -1,4 +1,6 @@
-# MetaScope 
+# MetaScope
+
+*Note: The MetaScope package is still under development with some major flaws and inefficiencies. In the meantime, we ask that you conduct analyses with PathoScope 2.0. However, the `MetaScope::download_refseq()` function is fully functional and should be used for obtaining reference genomes in a PathoScope-compatible format.*
 
 ## What is MetaScope?
 
