@@ -209,31 +209,48 @@ merge_bam_files <- function(bam_files, destination,
                             head_file = paste(destination, "_header.sam",
                                               sep = "")) {
     message("Combining headers")
-    com_head <- combined_header(bam_files, header_file = head_file)
     message("Merging .bam files")
-    bam_files_h <- sam_files_h <- NULL
-    for (i in seq_along(bam_files)) {
+    com_head <- combined_header(bam_files, header_file = head_file)
+    # Paths for merged bam files
+    unsortbam <- paste0(destination, "_unsorted.bam")
+    if (check_samtools_exists()) {
+      message("samtools found on system. Merging files using samtools")
+      sapply(bam_files,
+             function(bf) sys::exec_wait("samtools",
+                                         c("reheader", head_file, bf),
+             std_out = FALSE, std_err = TRUE))
+      sys::exec_wait("samtools", c("merge", unsortbam, bam_files),
+                     std_out = FALSE, std_err = TRUE)
+      sys::exec_wait("rm", c("-rf", bam_files, head_file), std_err = TRUE)
+      message("Sorting merged bam file")
+      merged_bam_sorted <- paste0(destination, ".bam")
+      sys::exec_wait("samtools",
+                     c("sort", "-o", merged_bam_sorted, unsortbam),
+                     std_out = TRUE, std_err = TRUE)
+      sys::exec_wait("rm", c("-rf", unsortbam), std_err = TRUE)
+    } else {
+      message("samtools not found on system. Merging files using Rsamtools.")
+      bam_files_h <- sam_files_h <- NULL
+      for (i in seq_along(bam_files)) {
         new_bam_h <- bam_reheader_R(com_head, bam_files[i])
         bam_files_h <- c(bam_files_h, new_bam_h)
         file.remove(bam_files[i])
         # remove .bam and .vcf and .bam.summary files for each alignment
-        suppressWarnings(file.remove(paste(bam_files[i],
-                                           ".indel.vcf", sep = "")))
-        suppressWarnings(file.remove(paste(bam_files[i],
-                                           ".summary", sep = "")))
+        suppressWarnings(file.remove(
+          paste(bam_files[i], ".indel.vcf", sep = "")))
+        suppressWarnings(file.remove(
+          paste(bam_files[i],".summary", sep = "")))
+      }
+      merged_bam <- Rsamtools::mergeBam(
+        bam_files_h, unsortbam, overwrite = TRUE)
+      # clean up
+      file.remove(com_head)
+      sapply(bam_files_h, file.remove)
+      message("Sorting merged bam file")
+      # sort merged bam file
+      merged_bam_sorted <- Rsamtools::sortBam(merged_bam, destination)
+      file.remove(merged_bam)
     }
-    merged_bam <- Rsamtools::mergeBam(
-        bam_files_h, paste(tools::file_path_sans_ext(destination),
-                           "_unsorted.bam", sep = ""), overwrite = TRUE)
-    # clean up
-    file.remove(com_head)
-    for (i in bam_files_h) {
-        file.remove(i)
-    }
-    message("Sorting merged bam file")
-    # sort merged bam file
-    merged_bam_sorted <- Rsamtools::sortBam(merged_bam, destination)
-    file.remove(merged_bam)
     # return merged and sorted bam
     return(merged_bam_sorted)
 }
@@ -407,8 +424,9 @@ align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir,
     align_dir <- tools::file_path_as_absolute(align_dir)
     # If user does not specify parameters, specify for them
     if (missing(bowtie2_options)) {
-        bowtie2_options <- paste("--very-sensitive -k 100 --score-min",
-                                 "L,-0.2,-0.2 --threads", threads)
+        bowtie2_options <- paste("--very-sensitive-local -k 100",
+                                 "--score-min L,20,1.0 --threads",
+                                 threads)
     } else bowtie2_options <- paste(bowtie2_options, "--threads", threads)
 
     bam_files <- numeric(length(libs))
