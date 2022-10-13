@@ -299,8 +299,10 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs, make_bam = FALSE,
                                threads = 8, overwrite = FALSE) {
     # If user does not specify parameters, specify for them
     if (missing(bowtie2_options)) {
-        bowtie2_options <- paste("--very-fast-local -k 100 ",
-                                 "--threads", threads)
+      # Relaxed Parameters for Generous Alignments to Metagenomes
+      bowtie2_options <- paste("--local -k 100 -D 20 -R 3 -L 3",
+                               "-N 1 -p 8 --gbar 1 --mp 3",
+                               "--threads", threads)
     } else bowtie2_options <- paste(bowtie2_options, "--threads", threads)
     # Convert reads_bam into fastq (parallelized)
     read_loc <- file.path(dirname(reads_bam), "intermediate.fastq")
