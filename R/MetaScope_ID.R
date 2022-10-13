@@ -201,7 +201,7 @@ count_matches <- function(x, char = "M") {
     } else if (length(x) != 1) {
         stop("Please provide a single CIGAR string to be parsed.")
     }
-    pattern <- paste("\\d+", char, sep = "")
+    pattern <- paste0("\\d+", char)
     ind <- gregexpr(pattern, x)[[1]]
     start <- as.numeric(ind)
     end <- start + attr(ind, "match.length") - 2
@@ -326,8 +326,8 @@ locations <- function(which_taxid, which_genome,
 
 metascope_id <- function(input_file, input_type = "bam", aligner = "subread",
                          NCBI_key = NULL,
-                         out_file = paste(tools::file_path_sans_ext(input_file),
-                                          ".metascope_id.csv", sep = ""),
+                         out_file = paste0(tools::file_path_sans_ext(input_file),
+                                          ".metascope_id.csv"),
                          EMconv = 1 / 10000, EMmaxIts = 25,
                          num_species_plot = NULL) {
     # Check to make sure valid aligner is specified
