@@ -1,3 +1,7 @@
-## code to prepare `DATASET` dataset goes here
+# Code to prepare align_details list
+align_details <- list(type = "dna", nthreads = 8, maxMismatches = 3,
+                      nsubreads = 10, phredOffset = 33, unique = FALSE,
+                      nBestLocations = 16)
 
-usethis::use_data(DATASET, overwrite = TRUE)
+# Save dataset
+usethis::use_data(align_details, overwrite = TRUE, internal = FALSE)
