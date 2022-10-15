@@ -170,9 +170,15 @@ download_genomes <- function(species_table, taxon, patho_out, compress) {
 #' ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/**kingdom**/assembly_summary.txt,
 #' and then use this file to download the genome(s) and combine them in a single
 #' compressed or uncompressed .fasta file.
+#' 
+#' When selecting the \code{taxon} to be downloaded, if you recieve an error
+#' saying \code{Your input is not a valid taxon}, please take a look at the
+#' \code{taxonomy_table} object, which can be accessed with the command
+#' \code{data("taxonomy_table")}. Only taxa with exact spelling as they appear
+#' at any level of the table will be acknowledged.
 #'
 #' @param taxon Select one taxon to download. The taxon name should be a
-#' recognized NCBI scientific name, with no grammatical or capitalization
+#' recognized NCBI scientific or common name, with no grammatical or capitalization
 #' inconsistencies. All available taxonomies are visible by accessing the
 #' \code{taxonomy_table} object included in the package.
 #' @param reference Download only RefSeq reference genomes?
