@@ -1,36 +1,72 @@
 globalVariables(c("align_details"))
 
+# Helper function for mk_interim_fastq()
+reduceByYield_iterate <- function(X, YIELD, MAP, REDUCE, init) {
+  if (!isOpen(X)) {
+    open(X)
+    on.exit(close(X))
+  }
+  # Result must be a data frame
+  result <- if (missing(init)) {
+    data <- YIELD(X)
+    if (DONE(data)) return(list())
+    MAP(data)
+  } else init
+  pb <- utils::txtProgressBar(
+    min = 0,  max = mx <- nrow(result), style = 3)
+  repeat {
+    if(nrow(result) == 0) break
+    data <- YIELD(X)
+    value <- MAP(data)
+    result <- REDUCE(result, value)
+    setTxtProgressBar(pb, mx - nrow(result))
+  }
+  close(pb)
+}
+
 # Helper function for filter_host_bowtie to write interim fastq file
-mk_interim_fastq <- function(reads_bam, read_loc, YS, threads) {
-    message("Creating Intermediate Fastq file")
-    bf <- Rsamtools::BamFile(reads_bam, yieldSize = YS)
-    # Define functions
-    YIELD <- function(x) {
-        to_pull <- c("qname", "qual", "seq")
-        value <- Rsamtools::scanBam(x, param = Rsamtools::ScanBamParam(
-            what = to_pull))[[1]] 
-    }
-    MAP <- function(value) {
-        dplyr::tibble("Header" = value$qname |> unname(unlist()),
-                      "Sequence" = as.character(value$seq),
-                      "Quality" = as.character(value$qual)) %>%
-            dplyr::distinct(.data$Header, .keep_all = TRUE) %>%
-            dplyr::mutate("Plus" = "+",
-                          "Header" = stringr::str_c("@", .data$Header)) %>%
-            dplyr::select(.data$Header, .data$Sequence, .data$Plus,
-                          .data$Quality) 
-    }
-    REDUCE <- function(x, y, iterate = TRUE) dplyr::bind_rows(x, y) %>%
-        dplyr::distinct(.data$Header, .keep_all = TRUE)
-    DONE <- function(value) length(value$qname) == 0
-    # Create and write interim fastq file
-    BiocParallel::register(BiocParallel::MulticoreParam(threads))
-    suppressWarnings(GenomicFiles::reduceByYield(
-        bf, YIELD, MAP, REDUCE, DONE, parallel = TRUE)) %>%
-        as.matrix() %>% t() %>% as.character() %>% dplyr::as_tibble() %>%
-        data.table::fwrite(file = read_loc, compress = "gzip",
-                           col.names = FALSE, quote = FALSE)
-    message("Finished Creating Intermediate Fastq File")
+mk_interim_fastq <- function(reads_bam, read_loc, YS = 10000) {
+  message("Writing Intermediate FASTQ file")
+  # Pull out all query names
+  bf_init <- Rsamtools::BamFile(reads_bam, yieldSize = 100000000)
+  allqname <- Rsamtools::scanBam(bf_init, param = Rsamtools::ScanBamParam(
+    what = "qname"))[[1]]$qname %>% unique()
+  init_df <- dplyr::tibble("Header" = unname(unlist(allqname))) %>%
+    dplyr::distinct(.data$Header, .keep_all = TRUE)
+  # Define BAM file with smaller yield size
+  bf <- Rsamtools::BamFile(reads_bam, yieldSize = YS)
+  # Define functions
+  YIELD <- function(bf) {
+    to_pull <- c("qname", "qual", "seq")
+    value <- Rsamtools::scanBam(bf, param = Rsamtools::ScanBamParam(
+      what = to_pull))[[1]]
+    return(value)
+  }
+  MAP <- function(value) {
+    y <- dplyr::tibble("Header" = value$qname |> unlist(),
+                       "Sequence" = as.character(value$seq),
+                       "Quality" = as.character(value$qual)) %>%
+      dplyr::distinct(.data$Header, .keep_all = TRUE)
+    return(y)
+  }
+  REDUCE <- function(x, y) {
+    all_join <- dplyr::left_join(x, y, by = "Header")
+    # Print all current reads to file
+    all_join %>% dplyr::filter(!is.na(Sequence)) %>%
+      dplyr::mutate("Plus" = "+",
+                    "Header" = stringr::str_c("@", .data$Header)) %>%
+      dplyr::select(.data$Header, .data$Sequence, .data$Plus,
+                    .data$Quality) %>% as.matrix() %>% t() %>%
+      as.character() %>% dplyr::as_tibble() %>%
+      data.table::fwrite(file = paste0(read_loc, ".gz"), compress = "gzip",
+                         col.names = FALSE, quote = FALSE,
+                         append = TRUE)
+    empty_vals <- all_join %>% dplyr::filter(is.na(.data$Sequence)) %>%
+      dplyr::select(.data$Header)
+    return(empty_vals)
+  }
+  reduceByYield_iterate(bf, YIELD, MAP, REDUCE, init = init_df)
+  message("Intermediate FASTQ file written to", read_loc)
 }
 
 #' Helper function to remove reads matched to filter libraries
@@ -306,7 +342,7 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs, make_bam = FALSE,
     } else bowtie2_options <- paste(bowtie2_options, "--threads", threads)
     # Convert reads_bam into fastq (parallelized)
     read_loc <- file.path(dirname(reads_bam), "intermediate.fastq")
-    mk_interim_fastq(reads_bam, read_loc, YS_1, threads)
+    mk_interim_fastq(reads_bam, read_loc, YS_1)
     # Init list of names
     read_names <- vector(mode = "list", length(libs))
     for (i in seq_along(libs)) {
