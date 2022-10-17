@@ -1,10 +1,10 @@
 globalVariables(c("qname", "rname"))
 
 obtain_reads <- function(input_file, input_type, aligner){
-    if (input_type == "bam") {
+  to_pull <- c("qname", "rname", "cigar", "qwidth", "pos")
+    if (identical(input_type, "bam")) {
         message("Reading .bam file: ", input_file)
-        to_pull <- c("qname", "rname", "cigar", "qwidth", "pos")
-        if (identical(aligner, "bowtie")) {
+        if (identical(aligner, "bowtie2")) {
             params <- Rsamtools::ScanBamParam(what = to_pull, tag = c("AS"))
         } else if (identical(aligner, "subread")) {
             params <- Rsamtools::ScanBamParam(what = to_pull, tag = c("NM"))
@@ -12,15 +12,15 @@ obtain_reads <- function(input_file, input_type, aligner){
             params <- Rsamtools::ScanBamParam(what = to_pull)
         }
         reads <- Rsamtools::scanBam(input_file, param = params)
-    } else if (input_type == "rds") {
-        message("Reading .rds file: ", input_file)
-        reads <- list(as.list(readRDS(input_file)))
-        if (identical(aligner, "bowtie")) {
-            reads[[1]]$tag <- list("AS" = reads[[1]]$AS)
-            reads[[1]]$AS <- NULL
+    } else if (identical(input_type, "csv.gz")) {
+      message("Reading .csv.gz file: ", input_file)
+      reads <- data.table::fread(input_file, sep = ",", header = FALSE) %>%
+        magrittr::set_colnames(c(to_pull, "tag")) %>%
+        as.list() %>% list()
+        if (identical(aligner, "bowtie2")) {
+            reads[[1]]$tag <- list("AS" = reads[[1]]$tag)
         } else if (identical(aligner, "subread")) {
-            reads[[1]]$tag <- list("NM" = reads[[1]]$NM)
-            reads[[1]]$NM <- NULL
+            reads[[1]]$tag <- list("NM" = reads[[1]]$tag)
         }
     }
     return(reads)
@@ -52,8 +52,8 @@ find_accessions <- function(accessions, NCBI_key) {
     if (URI_length > 2500) {
         chunks <- split(accessions, ceiling(seq_along(accessions) / 100))
         tax_id_all <- c()
-        message("Accession list broken into", length(chunks), "chunks")
-        for (i in seq_len(chunks)) {
+        message("Accession list broken into ", length(chunks), " chunks")
+        for (i in seq_along(chunks)) {
             success <- FALSE
             attempt <- 0
             # Attempt to get taxid up to three times for each chunk
@@ -86,7 +86,7 @@ get_alignscore <- function(aligner, cigar_strings, count_matches, scores,
         scaling_factor <- 100.0 / max(alignment_scores)
         relative_alignment_scores <- alignment_scores - min(alignment_scores)
         exp_alignment_scores <- exp(relative_alignment_scores * scaling_factor)
-    } else if (identical(aligner, "bowtie")) {
+    } else if (identical(aligner, "bowtie2")) {
         # Bowtie2 alignment scores: AS value + read length (qwidths)
         alignment_scores <- scores + qwidths
         scaling_factor <- 100.0 / max(alignment_scores)
@@ -261,10 +261,10 @@ locations <- function(which_taxid, which_genome,
 #' .bam file).
 #'
 #' @param input_file The .bam or .rds file that needs to be identified.
-#' @param input_type Extension of file input. Should be either "bam" or "rds".
-#' Default is "bam".
+#' @param input_type Extension of file input. Should be either "bam" or "csv.gz".
+#' Default is "csv.gz".
 #' @param aligner The aligner which was used to create the bam file. Default is
-#' "subread" but can also be set to "bowtie" or "other"
+#' "bowtie2" but can also be set to "subread" or "other".
 #' @param NCBI_key (character) NCBI Entrez API key. optional.
 #' See taxize::use_entrez(). Due to the high number of
 #' requests made to NCBI, this function will be less prone to errors
@@ -303,14 +303,14 @@ locations <- function(which_taxid, which_genome,
 #' metascope_id(input_file = bamPath, aligner = "subread",
 #'              num_species_plot = 0)
 #'
-#' ## Bowtie aligned bam file
+#' ## Bowtie 2 aligned bam file
 #'
 #' ## Create object with path to filtered subread bam file
 #' bamPath <- system.file("extdata","bowtie_target.filtered.bam",
 #'                        package = "MetaScope")
 #'
-#' ## Run metascope id with the aligner option set to bowtie
-#' metascope_id(input_file = bamPath, aligner = "bowtie",
+#' ## Run metascope id with the aligner option set to bowtie2
+#' metascope_id(input_file = bamPath, aligner = "bowtie2",
 #'              num_species_plot = 0)
 #'
 #' ## Different or unknown aligned bam file
@@ -324,15 +324,15 @@ locations <- function(which_taxid, which_genome,
 #'              num_species_plot = 0)
 #'
 
-metascope_id <- function(input_file, input_type = "bam", aligner = "subread",
+metascope_id <- function(input_file, input_type = "bam", aligner = "bowtie2",
                          NCBI_key = NULL,
                          out_file = paste0(tools::file_path_sans_ext(input_file),
                                           ".metascope_id.csv"),
                          EMconv = 1 / 10000, EMmaxIts = 25,
                          num_species_plot = NULL) {
     # Check to make sure valid aligner is specified
-    if (aligner != "bowtie" && aligner != "subread" && aligner != "other")
-        stop("Please make sure aligner is set to either 'bowtie', 'subread',",
+    if (aligner != "bowtie2" && aligner != "subread" && aligner != "other")
+        stop("Please make sure aligner is set to either 'bowtie2', 'subread',",
              " or 'other'")
     reads <- obtain_reads(input_file, input_type, aligner)
     unmapped <- is.na(reads[[1]]$rname)
@@ -340,7 +340,7 @@ metascope_id <- function(input_file, input_type = "bam", aligner = "subread",
     mapped_qname <- reads[[1]]$qname[!unmapped]
     mapped_cigar <- reads[[1]]$cigar[!unmapped]
     mapped_qwidth <- reads[[1]]$qwidth[!unmapped]
-    if (aligner == "bowtie") {
+    if (aligner == "bowtie2") {
         # mapped alignments used
         map_edit_or_align <- reads[[1]][["tag"]][["AS"]][!unmapped]
     } else if (aligner == "subread") map_edit_or_align <-
@@ -366,7 +366,7 @@ metascope_id <- function(input_file, input_type = "bam", aligner = "subread",
     rname_tax_inds <- rname_tax_inds[order(qname_inds)]
     cigar_strings <- mapped_cigar[order(qname_inds)]
     qwidths <- mapped_qwidth[order(qname_inds)]
-    if (aligner == "bowtie") {
+    if (aligner == "bowtie2") {
         # mapped alignments used
         scores <- map_edit_or_align[order(qname_inds)]
     } else if (aligner == "subread") {

@@ -1,17 +1,32 @@
 globalVariables(c("align_details"))
 
+# Helper function for remove_matches
+reduceByYield_RM <- function(X, YIELD, MAP, DONE, filter_names, num_reads) {
+  if (!Rsamtools::isOpen(X)) {
+    Rsamtools::open.BamFile(X)
+    on.exit(Rsamtools::close.BamFile(X))
+  }
+  pb <- utils::txtProgressBar(
+    min = 0,  max = num_reads, style = 3)
+  k <- 0
+  repeat {
+    if(DONE(data <- YIELD(X))) break
+    k <- k + nrow(data)
+    MAP(data, filter_names)
+    utils::setTxtProgressBar(pb, k)
+  }
+  base::close(pb)
+  message("DONE!")
+}
+
 # Helper function for mk_interim_fastq()
 reduceByYield_iterate <- function(X, YIELD, MAP, REDUCE, init) {
-  if (!isOpen(X)) {
-    open(X)
-    on.exit(close(X))
+  if (!Rsamtools::isOpen(X)) {
+    Rsamtools::open.BamFile(X)
+    on.exit(Rsamtools::close.BamFile(X))
   }
   # Result must be a data frame
-  result <- if (missing(init)) {
-    data <- YIELD(X)
-    if (DONE(data)) return(list())
-    MAP(data)
-  } else init
+  result <- init
   pb <- utils::txtProgressBar(
     min = 0,  max = mx <- nrow(result), style = 3)
   repeat {
@@ -25,8 +40,9 @@ reduceByYield_iterate <- function(X, YIELD, MAP, REDUCE, init) {
 }
 
 # Helper function for filter_host_bowtie to write interim fastq file
-mk_interim_fastq <- function(reads_bam, read_loc, YS = 10000) {
-  message("Writing Intermediate FASTQ file")
+mk_interim_fastq <- function(reads_bam, read_loc, YS) {
+  unlink(read_loc, recursive = FALSE) 
+  message("Writing Intermediate FASTQ file to ", read_loc)
   # Pull out all query names
   bf_init <- Rsamtools::BamFile(reads_bam, yieldSize = 100000000)
   allqname <- Rsamtools::scanBam(bf_init, param = Rsamtools::ScanBamParam(
@@ -58,7 +74,7 @@ mk_interim_fastq <- function(reads_bam, read_loc, YS = 10000) {
       dplyr::select(.data$Header, .data$Sequence, .data$Plus,
                     .data$Quality) %>% as.matrix() %>% t() %>%
       as.character() %>% dplyr::as_tibble() %>%
-      data.table::fwrite(file = paste0(read_loc, ".gz"), compress = "gzip",
+      data.table::fwrite(file = read_loc, compress = "gzip",
                          col.names = FALSE, quote = FALSE,
                          append = TRUE)
     empty_vals <- all_join %>% dplyr::filter(is.na(.data$Sequence)) %>%
@@ -131,25 +147,36 @@ remove_matches <- function(reads_bam, read_names, output, YS, threads,
             param = Rsamtools::ScanBamParam(what = "qname"))
         file.remove(bam_index)
     } else if (!make_bam) {
-        name_out <- paste0(output, ".rds")
-        bf <- Rsamtools::BamFile(reads_bam, yieldSize = YS)
-        YIELD <- function(x) {
-            to_pull <- c("qname", "rname", "cigar", "qwidth", "pos")
-            if (identical(aligner, "bowtie")) {
-                Rsamtools::scanBam(x, param = Rsamtools::ScanBamParam(
-                    what = to_pull, tag = c("AS")))[[1]] |> as.data.frame()
-            } else if (identical(aligner, "subread")) {
-                Rsamtools::scanBam(x, param = Rsamtools::ScanBamParam(
-                    what = to_pull, tag = c("NM")))[[1]] |> as.data.frame()
-            }
+      name_out <- paste0(output, ".csv.gz")
+      numread <- Rsamtools::BamFile(reads_bam, yieldSize = 100000000) %>%
+        Rsamtools::scanBam(param = Rsamtools::ScanBamParam(
+        what = "pos")) %>% .[[1]] %>% unlist() %>% length()
+      # Define BAM file with smaller yield size
+      bf <- Rsamtools::BamFile(reads_bam, yieldSize = YS)
+      YIELD <- function(X) {
+        to_pull <- c("qname", "rname", "cigar", "qwidth", "pos")
+        if (identical(aligner, "bowtie2")) {
+          out <- Rsamtools::scanBam(X, param = Rsamtools::ScanBamParam(
+            what = to_pull, tag = c("AS")))[[1]]
+          out[to_pull] %>% dplyr::as_tibble() %>%
+            dplyr::mutate(tag = out$tag$AS) %>% return()
+        } else if (identical(aligner, "subread")) {
+          out <- Rsamtools::scanBam(X, param = Rsamtools::ScanBamParam(
+            what = to_pull, tag = c("NM")))[[1]]
+          out[to_pull] %>% dplyr::as_tibble() %>%
+            dplyr::mutate(tag = out$tag$NM) %>% return()
         }
-        MAP <- function(value) value[!(value$qname %in% filter_names), ]
-        REDUCE <- function(x, y, iterate = TRUE) dplyr::bind_rows(x, y)
-        DONE <- function(value) nrow(value) == 0
-        BiocParallel::register(BiocParallel::MulticoreParam(threads))
-        suppressWarnings(GenomicFiles::reduceByYield(
-            bf, YIELD, MAP, REDUCE, DONE, parallel = TRUE)) %>%
-            saveRDS(.data, name_out)
+      }
+      MAP <- function(value, filter_names) {
+        value %>%
+          dplyr::filter(!(qname %in% filter_names)) %>%
+          data.table::fwrite(file = name_out, compress = "gzip",
+                             col.names = FALSE, quote = TRUE, append = TRUE,
+                             nThread = threads)
+        return("")
+      }
+      DONE <- function(data) nrow(data) == 0
+      reduceByYield_RM(bf, YIELD, MAP, DONE, filter_names, numread)
     }
     message("DONE! Alignments written to ", name_out)
     return(name_out)
@@ -271,13 +298,8 @@ filter_host <- function(reads_bam, libs, lib_dir = NULL, make_bam = FALSE,
 #' parameters as one string and if optional parameters are given then the user
 #' is responsible for entering all the parameters to be used by Bowtie2. NOTE:
 #' The only parameters that should NOT be specified here is the threads.
-#' @param YS_1 yieldSize, an integer. The number of alignments to be read in from
-#' the bam file at once for the creation of an intermediate fastq file.
-#' Default is 1000000.
-#' @param YS_2 yieldSize, am integer. The number of alignments to be read in from
-#' the bam file at once for the creation of a filtered bam file. Smaller
-#' chunks are generally needed for this step, which is why it is a better idea to
-#' keep `YS_2` smaller than `YS_1` to conserve memory.
+#' @param YS yieldSize, an integer. The number of alignments to be read in from
+#' the bam file at once for chunked functions.
 #' Default is 100000.
 #' @param threads The amount of threads available for the function.
 #' Default is 8 threads.
@@ -330,8 +352,7 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs, make_bam = FALSE,
                                output = paste(
                                    tools::file_path_sans_ext(reads_bam),
                                    "filtered", sep = "."),
-                               bowtie2_options = NULL, YS_1 = 1000000,
-                               YS_2 = 100000,
+                               bowtie2_options = NULL, YS = 100000,
                                threads = 8, overwrite = FALSE) {
     # If user does not specify parameters, specify for them
     if (missing(bowtie2_options)) {
@@ -340,9 +361,9 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs, make_bam = FALSE,
                                "-N 1 -p 8 --gbar 1 --mp 3",
                                "--threads", threads)
     } else bowtie2_options <- paste(bowtie2_options, "--threads", threads)
-    # Convert reads_bam into fastq (parallelized)
-    read_loc <- file.path(dirname(reads_bam), "intermediate.fastq")
-    mk_interim_fastq(reads_bam, read_loc, YS_1)
+    # Convert reads_bam into fastq
+    read_loc <- file.path(dirname(output), "intermediate.fastq.gz")
+    mk_interim_fastq(reads_bam, read_loc, YS)
     # Init list of names
     read_names <- vector(mode = "list", length(libs))
     for (i in seq_along(libs)) {
@@ -367,7 +388,7 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs, make_bam = FALSE,
     }
     # remove intermediate fastq file
     file.remove(read_loc)
-    name_out <- remove_matches(reads_bam, read_names, output, YS_2, threads,
-                               "bowtie", make_bam)
+    name_out <- remove_matches(reads_bam, read_names, output, YS, threads,
+                               "bowtie2", make_bam)
     return(name_out)
 }

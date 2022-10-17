@@ -18,11 +18,11 @@ metascope_id(
 \arguments{
 \item{input_file}{The .bam or .rds file that needs to be identified.}
 
-\item{input_type}{Extension of file input. Should be either "bam" or "rds".
-Default is "bam".}
+\item{input_type}{Extension of file input. Should be either "bam" or "csv.gz".
+Default is "csv.gz".}
 
 \item{aligner}{The aligner which was used to create the bam file. Default is
-"subread" but can also be set to "bowtie" or "other"}
+"bowtie2" but can also be set to "subread" or "other".}
 
 \item{NCBI_key}{(character) NCBI Entrez API key. optional.
 See taxize::use_entrez(). Due to the high number of
@@ -71,14 +71,14 @@ package = "MetaScope")
 metascope_id(input_file = bamPath, aligner = "subread",
              num_species_plot = 0)
 
-## Bowtie aligned bam file
+## Bowtie 2 aligned bam file
 
 ## Create object with path to filtered subread bam file
 bamPath <- system.file("extdata","bowtie_target.filtered.bam",
                        package = "MetaScope")
 
-## Run metascope id with the aligner option set to bowtie
-metascope_id(input_file = bamPath, aligner = "bowtie",
+## Run metascope id with the aligner option set to bowtie2
+metascope_id(input_file = bamPath, aligner = "bowtie2",
              num_species_plot = 0)
 
 ## Different or unknown aligned bam file

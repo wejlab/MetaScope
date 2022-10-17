@@ -19,8 +19,8 @@ element should be a vector of read names.}
 alignments will be written.}
 
 \item{YS}{yieldSize, an integer. The number of alignments to be read in from
-the bam file at once for the creation of an intermediate fastq file.
-Default is 1000000.}
+the bam file at once for chunked functions.
+Default is 100000.}
 
 \item{threads}{The number of threads to be used in filtering the bam file.}
 
