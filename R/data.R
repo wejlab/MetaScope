@@ -54,7 +54,7 @@
 
 #' Taxonomy table
 #'
-#' This is a taxonomy table to be used in \code{download_refseq()}.
+#' This is a taxonomy table to be used in \code{download_refseq()}. Last updated 10/18/22.
 #'
 #' @keywords datasets
 #'
