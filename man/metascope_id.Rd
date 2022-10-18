@@ -7,7 +7,7 @@
 metascope_id(
   input_file,
   input_type = "bam",
-  aligner = "subread",
+  aligner = "bowtie2",
   NCBI_key = NULL,
   out_file = paste0(tools::file_path_sans_ext(input_file), ".metascope_id.csv"),
   EMconv = 1/10000,
