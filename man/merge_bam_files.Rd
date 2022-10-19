@@ -16,8 +16,8 @@ merge_bam_files(
 \item{destination}{A file name and location for the merged .bam file.}
 
 \item{head_file}{A file name and location for the combined header file.
-Defaults to the destination . For example, 'example.bam' will be written
-as 'exampleh.bam'.}
+Defaults to the destination . For example, 'example.bam' will be written as
+'example.bam'.}
 }
 \value{
 This function merges .bam files and combines them into a single file.
@@ -26,27 +26,7 @@ The function also outputs the new .bam filename.
 \description{
 This function merges .bam files. It first used the combined_header function
 to generate a combined header for all the files, reheaders the files, and
-then merges and sorts the .bam files. This is similar to the
-'samtools merge' function, but it allows the .bam files to have different
-headers. It is not intended for use by users.
-}
-\examples{
-
-# refPath <- system.file("extdata","target.fasta", package = "MetaScope")
-# file.copy(from = refPath, to = file.path(".", "target.fasta"))
-# mk_subread_index('target.fasta', split = .02)
-
-# readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
-# Rsubread::align(index = "target_1", readfile1 = readPath,
-# output_file = "target1.bam", maxMismatches = 3)
-# Rsubread::align(index = "target_2", readfile1 = readPath,
-# output_file = "target2.bam")
-
-# bam_files <- c('target1.bam','target2.bam')
-# com_head <- combined_header(bam_files)
-# bam_reheader_R(com_head, 'target1.bam')
-# bam_reheader_R(com_head, 'target2.bam')
-# bam_files <- c('target1h.bam','target2h.bam')
-# merged_all <- merge_bam_files(bam_files, 'example_merged')
-
+then merges and sorts the .bam files. This is similar to the 'samtools merge'
+function, but it allows the .bam files to have different headers. It is not
+intended for use by users.
 }

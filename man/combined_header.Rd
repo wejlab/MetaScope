@@ -7,34 +7,19 @@
 combined_header(bam_files, header_file = "header_tmp.sam")
 }
 \arguments{
-\item{bam_files}{A list of the locations/file names of .bam files from which
-to combine the headers.}
+\item{bam_files}{A character vector of the locations/file names of .bam files
+from which to combine the headers.}
 
 \item{header_file}{A file name and location for the output file for the
 combined header. This will be a .sam format file without any reads.
 Defaults to 'header_tmp.sam'.}
 }
 \value{
-This function will return a combined header from all the supplied .bam files.
+This function will return a combined header from all the supplied
+.bam files.
 }
 \description{
 This function generates a combined header from multiple .bam files from
-different reference libraries (e.g. a split bacterial library).
-It is not intended for use by users.
-}
-\examples{
-
-# refPath <- system.file("extdata","target.fasta", package = "MetaScope")
-# file.copy(from = refPath, to = file.path(".", "target.fasta"))
-# mk_subread_index('target.fasta', split = .02)
-
-# readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
-# Rsubread::align(index = "target_1", readfile1 = readPath,
-# output_file = "example1.bam")
-# Rsubread::align(index = "target_2", readfile1 = readPath,
-# output_file = "example2.bam")
-
-# bam_files <- c('example1.bam','example2.bam')
-# com_head <- combined_header(bam_files)
-
+different reference libraries (e.g. a split bacterial library). It is not
+intended for use by users.
 }

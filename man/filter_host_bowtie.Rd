@@ -2,8 +2,8 @@
 % Please edit documentation in R/filter_host.R
 \name{filter_host_bowtie}
 \alias{filter_host_bowtie}
-\title{Align reads against one or more filter libraries and subsequently
-remove mapped reads}
+\title{Align reads against one or more filter libraries and subsequently remove
+mapped reads}
 \usage{
 filter_host_bowtie(
   reads_bam,
@@ -25,53 +25,54 @@ instance of \code{align_target_bowtie()}.}
 \item{lib_dir}{Path to the directory that contains the filter Bowtie2 index
 files.}
 
-\item{libs}{The basename of the filter libraries
-(without .bt2 or .bt2l extension)}
+\item{libs}{The basename of the filter libraries (without .bt2 or .bt2l
+extension)}
 
 \item{make_bam}{Logical, whether to also output a bam file with host reads
-filtered out. An rds file will be created instead if \code{FALSE}.
-Default is \code{FALSE}.}
+filtered out. An rds file will be created instead if \code{FALSE}. Default
+is \code{FALSE}.}
 
-\item{output}{The desired name of the output .bam or .rds file. Extension
-is automatically defined by whether \code{make_bam = TRUE.} Default is
-the basename of \code{unfiltered_bam} + \code{.filtered} + extension.}
+\item{output}{The desired name of the output .bam or .rds file. Extension is
+automatically defined by whether \code{make_bam = TRUE.} Default is the
+basename of \code{unfiltered_bam} + \code{.filtered} + extension.}
 
 \item{bowtie2_options}{Optional: Additional parameters that can be passed to
-the filter_host_bowtie() function. To see all the available parameters
-use Rbowtie2::bowtie2_usage(). Default parameters are the parameters are the
-default parameters that PathoScope 2.0 uses. NOTE: Users should pass all their
-parameters as one string and if optional parameters are given then the user
-is responsible for entering all the parameters to be used by Bowtie2. NOTE:
-The only parameters that should NOT be specified here is the threads.}
+the filter_host_bowtie() function. To see all the available parameters use
+Rbowtie2::bowtie2_usage(). Default parameters are the parameters are the
+default parameters that PathoScope 2.0 uses. NOTE: Users should pass all
+their parameters as one string and if optional parameters are given then
+the user is responsible for entering all the parameters to be used by
+Bowtie2. NOTE: The only parameters that should NOT be specified here is the
+threads.}
 
 \item{YS}{yieldSize, an integer. The number of alignments to be read in from
-the bam file at once for chunked functions.
-Default is 100000.}
+the bam file at once for chunked functions. Default is 100000.}
 
-\item{threads}{The amount of threads available for the function.
-Default is 8 threads.}
+\item{threads}{The amount of threads available for the function. Default is 8
+threads.}
 
-\item{overwrite}{Whether existing files should be overwritten.
-Default is FALSE.}
+\item{overwrite}{Whether existing files should be overwritten. Default is
+FALSE.}
 }
 \value{
 The name of a filtered, sorted .bam file written to the user's
-current working directory. Or, if \code{make_bam = FALSE}, an RDS file
-containing a data frame of only requisite information to run
-\code{metascope_id()}.
+  current working directory. Or, if \code{make_bam = FALSE}, an RDS file
+  containing a data frame of only requisite information to run
+  \code{metascope_id()}.
 }
 \description{
-After a sample is aligned to a target library with \code{align_target_bowtie()},
-we may use \code{filter_host_bowtie()} to remove unwelcome host contamination using
-filter reference libraries. This function takes as input the name of the .bam
-file produced via \code{align_target_bowtie()}, and produces a
-sorted .bam file with any reads that match the filter libraries removed.
-This resulting .bam file may be used downstream for further analysis.
+After a sample is aligned to a target library with
+\code{align_target_bowtie()}, we may use \code{filter_host_bowtie()} to
+remove unwelcome host contamination using filter reference libraries. This
+function takes as input the name of the .bam file produced via
+\code{align_target_bowtie()}, and produces a sorted .bam file with any reads
+that match the filter libraries removed. This resulting .bam file may be used
+downstream for further analysis.
 }
 \details{
-Alternatively, an RDS data frame can be output for a smaller output file
-that is created more efficiently (through parallelization) and is still
-compatible with \code{metascope_id()}.
+Alternatively, an RDS data frame can be output for a smaller output file that
+is created more efficiently (through parallelization) and is still compatible
+with \code{metascope_id()}.
 }
 \examples{
 #### Filter reads from bam file that align to any of the filter libraries

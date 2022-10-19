@@ -114,7 +114,7 @@ download_genomes <- function(species_table, taxon, patho_out, compress) {
           combined_fasta_patho <- paste(taxon, "pathoscope.fasta.gz",
                                         sep = ".")
       } else {
-          combined_fasta <- paste(taxon, "fasta", sep = ".") %>%
+          combined_fasta <- paste(taxon, "fasta", sep = ".")
           combined_fasta_patho <- paste(taxon, "pathoscope.fasta",
                                         sep = ".")
       }
@@ -151,7 +151,7 @@ download_genomes <- function(species_table, taxon, patho_out, compress) {
                 # Identify accessions
                 ind <- ref %>% stringr::str_starts(">")
                 accession <- ref[ind] %>% stringr::str_split(pattern = " ") %>%
-                  sapply (function(x) head(x, n = 1)) %>%
+                  vapply(S4Vectors::head, n = 1, FUN.VALUE = character(1)) %>%
                   stringr::str_remove_all(">")
                 ref[ind] <- paste("ti|", species_table[i, ]$taxid, "|org|",
                     gsub(" ", "_", species_table[i, ]$organism_name),
@@ -162,8 +162,7 @@ download_genomes <- function(species_table, taxon, patho_out, compress) {
                                      compress = "gzip", col.names = FALSE,
                                      row.names = FALSE)
               }
-          }, error = function(e) cat("ERROR :",
-                                     conditionMessage(e), "\n"))
+          }, error = function(e) message(conditionMessage(e)))
         }
     unlink(file.path(download_dir, "*"), force = TRUE)
     unlink(file.path(download_dir), recursive = TRUE, force = TRUE)
@@ -180,7 +179,7 @@ download_genomes <- function(species_table, taxon, patho_out, compress) {
 #' and then use this file to download the genome(s) and combine them in a single
 #' compressed or uncompressed .fasta file.
 #' 
-#' When selecting the \code{taxon} to be downloaded, if you recieve an error
+#' When selecting the \code{taxon} to be downloaded, if you receive an error
 #' saying \code{Your input is not a valid taxon}, please take a look at the
 #' \code{taxonomy_table} object, which can be accessed with the command
 #' \code{data("taxonomy_table")}. Only taxa with exact spelling as they appear
@@ -210,8 +209,8 @@ download_genomes <- function(species_table, taxon, patho_out, compress) {
 #' @examples
 #' #### Download RefSeq genomes
 #'
-#' ## Download all RefSeq reference bacterial superkingdom genomes
-#' download_refseq('bacteria', reference = TRUE, representative = FALSE)
+#' ## Download all RefSeq reference viral superkingdom genomes
+#' download_refseq('viruses', reference = TRUE, representative = FALSE)
 #'
 #' ## Download all RefSeq representative mononegavirales genomes
 #' download_refseq('mononegavirales', representative = TRUE)
@@ -232,9 +231,9 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
     message("Finding ", taxon)
     # Get input taxon rank
     tryCatch({
-        suppressMessages(classification.table <- taxize::classification(
-        taxize::get_uid(taxon, messages = FALSE)[[1]], db = 'ncbi')[[1]])},
-        warning = function(w) {stop("Your input is not a valid taxon")}
+        classification.table <- taxize::classification(
+        taxize::get_uid(taxon, messages = FALSE)[[1]], db = 'ncbi')[[1]]},
+        warning = function(w) stop("Your input is not a valid taxon")
     )
     rank_input <- classification.table$rank[nrow(classification.table)]
     parent_kingdom <- id_kingdom_rank(classification.table, taxon, rank_input)

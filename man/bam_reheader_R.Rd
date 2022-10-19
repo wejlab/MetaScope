@@ -13,39 +13,19 @@ bam_reheader_R(
 \arguments{
 \item{head}{A file name and location for the .sam file with the new header.}
 
-\item{old_bam}{A file name and location for the .bam file which you
-would like to reheader.}
+\item{old_bam}{A file name and location for the .bam file which you would
+like to reheader.}
 
 \item{new_bam}{A file name for the new .bam file with a replaced header.
 Defaults to the same base filename plus 'h.bam'. For example, 'example.bam'
 will be written as 'exampleh.bam'.}
 }
 \value{
-This function will return a new .bam file with a replaced header.
-The function also outputs the new .bam filename.
+This function will return a new .bam file with a replaced header. The
+function also outputs the new .bam filename.
 }
 \description{
 This function replaces the header from one .bam file with a header from a
 different .sam file. This function mimics the function of the 'reheader'
 function in samtools. It is not intended for use by users.
-}
-\examples{
-
-# refPath <- system.file("extdata","target.fasta", package = "MetaScope")
-# file.copy(from = refPath, to = file.path(".", "target.fasta"))
-# mk_subread_index('target.fasta', split = .02)
-# readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
-
-# Rsubread::align(index = "target_1", readfile1 = readPath,
-# output_file = "example1.bam")
-# Rsubread::align(index = "target_2", readfile1 = readPath,
-# output_file = "example2.bam")
-
-# bam_files <- c('example1.bam','example2.bam')
-# com_head <- combined_header(bam_files)
-# bam_reheader_R(com_head, 'example2.bam')
-
-## Note that the following would be an equivalent command if samtools is installed
-# system2("samtools reheader header_tmp.sam example2.bam > example2h.bam")
-
 }

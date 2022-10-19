@@ -57,7 +57,7 @@ generate_taxonomy_table <- function() {
     lapply(mk_table, taxon_ranks = taxon_ranks) %>%
     dplyr::bind_rows() %>% t() %>% as.data.frame() %>%
     magrittr::set_colnames(taxon_ranks)
-  usethis::use_data(taxonomy_table, internal = FALSE, overwrite = TRUE,
+  usethis::use_data(taxonomy_table, internal = TRUE, overwrite = TRUE,
                     compress = "xz")
 }
 

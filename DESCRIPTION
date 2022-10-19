@@ -32,7 +32,6 @@ Imports:
     data.table,
     Rbowtie2,
     magrittr,
-    GenomicFiles,
     MultiAssayExperiment,
     S4Vectors,
     SummarizedExperiment,
@@ -47,7 +46,8 @@ Suggests:
     testthat (>= 3.0.0),
     biomformat,
     lintr,
-    usethis
+    usethis,
+    sys
 biocViews:
     MicrobiomeData,
     ReproducibleResearch,

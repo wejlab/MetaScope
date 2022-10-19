@@ -5,46 +5,48 @@
 \title{Align microbiome reads to a set of reference libraries}
 \usage{
 align_target(
-  reads,
-  libs,
+  read1,
+  read2 = NULL,
   lib_dir = NULL,
-  project_name = tools::file_path_sans_ext(reads),
-  settings = align_details
+  libs,
+  align_file = tools::file_path_sans_ext(read1),
+  subread_options = align_details
 )
 }
 \arguments{
-\item{reads}{Location of the .fastq file to align}
+\item{read1}{Path to the .fastq file to align.}
 
-\item{libs}{A vector of character strings giving the basenames of the
-Subread index files for alignment. These should be located in the same
-directory and the current directory if lib_dir=NULL.}
+\item{read2}{Optional: Location of the mate pair .fastq file to align.}
 
-\item{lib_dir}{path to the library index files (all libraries should be here)}
+\item{lib_dir}{Path to the index files for all libraries.}
 
-\item{project_name}{A name for the project, which names the output .bam
-file (e.g. project_name.bam). Defaults to the basename of the reads file.}
+\item{libs}{A vector of character strings giving the basenames of the Subread
+index files for alignment. If ALL indices to be used are located in the
+current working directory, set \code{lib_dir = NULL}. Default is
+\code{lib_dir = NULL}.}
 
-\item{settings}{A named \code{list} specifying alignment parameters for
-the \code{Rsubread::align()} function, which is
-called inside \code{align_target()}.
-Elements should include type, nthreads, maxMismatches, nsubreads,
-phredOffset, unique, and nBestLocations. Descriptions of these parameters
-are available under \code{?Rsubread::align}. Defaults to the global
-\code{align_details} object.}
+\item{align_file}{The basename of the output alignment file (without trailing
+.bam extension).}
+
+\item{subread_options}{A named \code{list} specifying alignment parameters
+for the \code{Rsubread::align()} function, which is called inside
+\code{align_target()}. Elements should include type, nthreads,
+maxMismatches, nsubreads, phredOffset, unique, and nBestLocations.
+Descriptions of these parameters are available under
+\code{?Rsubread::align}. Defaults to the global \code{align_details}
+object.}
 }
 \value{
-This function writes a merged and sorted .bam file after aligning to all
-reference libraries given, along with a summary report file, to the user's
-working directory.
-The function also outputs the new .bam filename.
+This function writes a merged and sorted .bam file after aligning to
+all reference libraries given, along with a summary report file, to the
+user's working directory. The function also outputs the new .bam filename.
 }
 \description{
 This is the main MetaScope target library mapping function, using Rsubread
-and multiple libraries. Aligns to each library separately, filters
-unmapped reads from each file, and then merges and sorts the .bam files
-from each library into one output file. If desired, output can be
-passed to `filter_host()` to remove reads that also map to filter library
-genomes.
+and multiple libraries. Aligns to each library separately, filters unmapped
+reads from each file, and then merges and sorts the .bam files from each
+library into one output file. If desired, output can be passed to
+`filter_host()` to remove reads that also map to filter library genomes.
 }
 \examples{
 #### Align example reads to an example reference library using Rsubread
@@ -58,14 +60,20 @@ file.copy(from = refPath, to = file.path(".", "target.fasta"))
 ## Make and align to a single reference library
 mk_subread_index("target.fasta")
 readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
-align_details <- get0("align_details", envir = asNamespace("MetaScope"))
-target_map <- align_target(readPath, "target", project_name="subread_target")
-target_map_sam <- Rsamtools::asSam(target_map, overwrite = TRUE)
+data("align_details")
+align_details[["type"]] <- "rna"
+align_details[["phredOffset"]] <- 50
+target_map <- align_target(readPath, libs = "target",
+                           align_file = "subread_target")
 
 ## Make and align to multiple reference libraries
 mk_subread_index('target.fasta', split = .02)
 targLibs <- c("target_1", "target_2")
-readPath <- system.file("extdata", "reads.fastq",package = "MetaScope")
-target_map <- align_target(readPath, targLibs, project_name = "subread_target")
+readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
+data("align_details")
+align_details[["type"]] <- "rna"
+align_details[["phredOffset"]] <- 50
+target_map <- align_target(readPath, libs = targLibs,
+                           align_file = "subread_target")
 
 }

@@ -2,17 +2,17 @@
 % Please edit documentation in R/filter_host.R
 \name{filter_host}
 \alias{filter_host}
-\title{Align reads against one or more filter libraries and subsequently
-remove mapped reads}
+\title{Align reads against one or more filter libraries and subsequently remove
+mapped reads}
 \usage{
 filter_host(
   reads_bam,
-  libs,
   lib_dir = NULL,
+  libs,
   make_bam = FALSE,
   output = paste(tools::file_path_sans_ext(reads_bam), "filtered", sep = "."),
-  settings = align_details,
-  YS = 5e+05,
+  subread_options = align_details,
+  YS = 1e+05,
   threads = 8
 )
 }
@@ -21,48 +21,47 @@ filter_host(
 been aligned to a reference library. Likely, the output from running an
 instance of \code{align_target_bowtie()}.}
 
-\item{libs}{The basename of the filter libraries
-(without .bt2 or .bt2l extension)}
-
 \item{lib_dir}{Path to the directory that contains the filter Bowtie2 index
 files.}
 
+\item{libs}{The basename of the filter libraries (without .bt2 or .bt2l
+extension)}
+
 \item{make_bam}{Logical, whether to also output a bam file with host reads
-filtered out. An rds file will be created instead if \code{FALSE}.
-Default is \code{FALSE}.}
+filtered out. An rds file will be created instead if \code{FALSE}. Default
+is \code{FALSE}.}
 
-\item{output}{The desired name of the output .bam or .rds file. Extension
-is automatically defined by whether \code{make_bam = TRUE.} Default is
-the basename of \code{unfiltered_bam} + \code{.filtered} + extension.}
+\item{output}{The desired name of the output .bam or .rds file. Extension is
+automatically defined by whether \code{make_bam = TRUE.} Default is the
+basename of \code{unfiltered_bam} + \code{.filtered} + extension.}
 
-\item{settings}{A named \code{list} specifying alignment parameters for
-the \code{Rsubread::align()} function, which is
-called inside \code{align_target()}.
-Elements should include type, nthreads, maxMismatches, nsubreads,
-phredOffset, unique, and nBestLocations. Descriptions of these parameters
-are available under \code{?Rsubread::align}. Defaults to the global
-\code{align_details} object.}
+\item{subread_options}{A named \code{list} specifying alignment parameters
+for the \code{Rsubread::align()} function, which is called inside
+\code{align_target()}. Elements should include type, nthreads,
+maxMismatches, nsubreads, phredOffset, unique, and nBestLocations.
+Descriptions of these parameters are available under
+\code{?Rsubread::align}. Defaults to the global \code{align_details}
+object.}
 
 \item{YS}{yieldSize, an integer. The number of alignments to be read in from
-the bam file at once for the creation of an intermediate fastq file.
-Default is 1000000.}
+the bam file at once for chunked functions. Default is 100000.}
 
-\item{threads}{The amount of threads available for the function.
-Default is 8 threads.}
+\item{threads}{The amount of threads available for the function. Default is 8
+threads.}
 }
 \value{
 The name of a filtered, sorted .bam file written to the user's
-current working directory. Or, if \code{make_bam = FALSE}, an RDS file
-containing a data frame of only requisite information to run
-\code{metascope_id()}.
+  current working directory. Or, if \code{make_bam = FALSE}, an RDS file
+  containing a data frame of only requisite information to run
+  \code{metascope_id()}.
 }
 \description{
-After a sample is aligned to a target library with \code{align_target()},
-we may use \code{filter_host()} to remove unwelcome host contamination using
-filter reference libraries. This function takes as input the name
-of the .bam file produced via \code{align_target()}, and produces a
-sorted .bam file with any reads that match the filter libraries removed.
-This resulting .bam file may be used upstream for further analysis.
+After aligning your sample to a target library with \code{align_target()},
+use \code{filter_host()} to remove unwelcome host contamination using filter
+reference libraries. This function takes as input the name of the .bam file
+produced via \code{align_target()}, and produces a sorted .bam file with any
+reads that match the filter libraries removed. This resulting .bam file may
+be used upstream for further analysis.
 }
 \examples{
 #### Filter reads from bam file that align to any of the filter libraries
@@ -70,7 +69,7 @@ This resulting .bam file may be used upstream for further analysis.
 ## Assuming a bam file has been created previously with align_target()
 
 ## Create object with path to the example filter library
-refPath <- system.file("extdata","filter.fasta", package = "MetaScope")
+refPath <- system.file("extdata", "filter.fasta", package = "MetaScope")
 
 ## Copy the example filter library to the current directory
 file.copy(from = refPath, to = file.path(".", "filter.fasta"))
@@ -79,7 +78,8 @@ file.copy(from = refPath, to = file.path(".", "filter.fasta"))
 mk_subread_index('filter.fasta')
 
 ## Create object with path to the previously aligned bam file
-readPath <- system.file("extdata", "subread_target.bam", package = "MetaScope")
+readPath <- system.file("extdata", "subread_target.bam",
+                        package = "MetaScope")
 
 ## Filter bam file
 filter_host(readPath, libs = "filter", threads = 1)

@@ -12,6 +12,7 @@ ENTREZ
 Entrez
 FASTA
 FASTQ
+Faits
 GGAATTATCGGT
 Gapped
 Illumina
@@ -20,6 +21,7 @@ Liao
 MGX
 Mabey
 MetaScope's
+Metagenomic
 NCBI's
 NCBI’s
 NGS
@@ -27,6 +29,7 @@ ORCID
 PathoScope
 PhiX
 Pre
+Preprint
 QIIME
 QualityScaledXStringSet
 RBowtie
@@ -41,8 +44,8 @@ SRX
 SampleName
 Subread
 Sys
-YS
 al
+amplicon
 archaea
 archaeal
 bam
@@ -60,7 +63,6 @@ csv
 demultiplex
 demultiplexed
 demultiplexing
-dir
 entrez
 epidermidis
 et
@@ -71,6 +73,8 @@ fastq
 filepath
 github
 gz
+htslib
+http
 indel
 maxMismatches
 metagenomic
@@ -100,7 +104,6 @@ sam
 sampleName
 sampleNames
 samtools
-setenv
 subread
 subreads
 taxid
@@ -110,4 +113,5 @@ tmp
 tsv
 unmapped
 wgsim
+www
 yieldSize

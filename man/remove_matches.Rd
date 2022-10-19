@@ -19,43 +19,27 @@ element should be a vector of read names.}
 alignments will be written.}
 
 \item{YS}{yieldSize, an integer. The number of alignments to be read in from
-the bam file at once for chunked functions.
-Default is 100000.}
+the bam file at once for chunked functions. Default is 100000.}
 
 \item{threads}{The number of threads to be used in filtering the bam file.}
 
 \item{aligner}{The aligner which was used to create the bam file.}
 
 \item{make_bam}{Logical, whether to also output a bam file with host reads
-filtered out. An rds file will be created instead if \code{FALSE}.
-Default is \code{FALSE}.}
+filtered out. An rds file will be created instead if \code{FALSE}. Default
+is \code{FALSE}.}
 }
 \value{
 Depending on input \code{make_bam}, either the name of a filtered,
-sorted .bam file written to the user's current working directory, or
-an RDS file containing a data frame of only requisite information to run
-\code{metascope_id()}.
+  sorted .bam file written to the user's current working directory, or an RDS
+  file containing a data frame of only requisite information to run
+  \code{metascope_id()}.
 }
 \description{
-Within the \code{filter_host()} function, we align our sequencing sample to all
-filter libraries of interest. The \code{remove_matches()} function allows
+Using the \code{filter_host()} function, we align our sequencing sample to
+all filter libraries of interest. The \code{remove_matches()} function allows
 for removal of any target reads that are also aligned to filter libraries.
 }
 \details{
 This function is not intended for direct use.
-}
-\examples{
-
-#readPath <- system.file("extdata", "subread_target.bam",
-#                        package = "MetaScope")
-
-## Assume that the first 10 query names aligned to first filter library
-## And another 10 aligned to second filter library
-# qnames <- Rsamtools::scanBam(readPath)[[1]]$qname
-# read_names <- list(qnames[1:10], qnames[30:40])
-# out <- "subread_target.filtered.bam"
-
-# remove_matches_bam(readPath, read_names, out, YS = 1000, threads = 1,
-#                    aligner = "subread", make_bam = FALSE)
-
 }

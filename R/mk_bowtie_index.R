@@ -38,7 +38,7 @@
 #'
 #' ## Create the reference library index files in the current directory
 #' mk_bowtie_index(ref_dir = ref_temp, lib_dir = ".", lib_name = "target",
-#' threads = 4, overwrite=FALSE)
+#' threads = 4, overwrite = FALSE)
 
 mk_bowtie_index <- function(ref_dir, lib_dir, lib_name, bowtie2_build_options,
                             threads = 8, overwrite = FALSE) {

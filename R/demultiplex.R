@@ -136,6 +136,8 @@ extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads,
 #' directory, and will be named based on the given sampleNames and barcodes,
 #' e.g. './demultiplex_fastq/SampleName1_GGAATTATCGGT.fastq.gz'
 #'
+#' @export
+#'
 #' @examples
 #'
 #' ## Get barcode, index, and read data locations
@@ -149,8 +151,6 @@ extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads,
 #' demult <- demultiplex(barcodePath, indexPath, readPath, rcBarcodes = FALSE,
 #'                       hammingDist = 2)
 #' demult
-#'
-#' @export
 #'
 
 demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,

@@ -50,8 +50,6 @@
 #'
 "bt2_16S_params"
 
-
-
 #' Taxonomy table
 #'
 #' This is a taxonomy table to be used in \code{download_refseq()}. Last updated 10/18/22.

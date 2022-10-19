@@ -47,7 +47,7 @@ and then use this file to download the genome(s) and combine them in a single
 compressed or uncompressed .fasta file.
 }
 \details{
-When selecting the \code{taxon} to be downloaded, if you recieve an error
+When selecting the \code{taxon} to be downloaded, if you receive an error
 saying \code{Your input is not a valid taxon}, please take a look at the
 \code{taxonomy_table} object, which can be accessed with the command
 \code{data("taxonomy_table")}. Only taxa with exact spelling as they appear
@@ -56,8 +56,8 @@ at any level of the table will be acknowledged.
 \examples{
 #### Download RefSeq genomes
 
-## Download all RefSeq reference bacterial superkingdom genomes
-download_refseq('bacteria', reference = TRUE, representative = FALSE)
+## Download all RefSeq reference viral superkingdom genomes
+download_refseq('viruses', reference = TRUE, representative = FALSE)
 
 ## Download all RefSeq representative mononegavirales genomes
 download_refseq('mononegavirales', representative = TRUE)

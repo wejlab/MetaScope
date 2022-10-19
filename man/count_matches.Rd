@@ -43,6 +43,7 @@ count_matches(cigar2, char = "P")
 
 # Apply to multiple strings: 1I + 1I + 5I
 cigar3 <- c("3M1I3M1D5M", "4M1I1P9M", "76M13M5I")
-sapply(cigar3, count_matches, char = "I")
+vapply(cigar3, count_matches, char = "I",
+       FUN.VALUE = numeric(1))
 
 }

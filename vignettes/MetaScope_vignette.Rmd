@@ -25,11 +25,16 @@ editor_options:
   chunk_output_type: console
 ---
 
+## Quick note
+
+MetaScope will fun faster and more efficiently if samtools is present on your device!
+You can download it at [http://www.htslib.org/](http://www.htslib.org/).
+
 ## Introduction
 
-MetaScope is a complete metagenomics profiling package that can accurately identify the composition of microbes at a strain-level resolution within a sample. MetaScope can be considered as an updated and expanded R translation of [PathoScope 2.0](https://microbiomejournal.biomedcentral.com/articles/10.1186/2049-2618-2-33), a Python-based metagenomic profiling package created by our lab. A few improvements made in MetaScope include using the BAM file format instead of the SAM file format for significantly less disk space usage, removing all dependencies to NCBI's now defunct GI sequence annotations, and properly filtering reads that align to filter reference genomes. Functions to analyze host microbiome data are also planned to be added in future updates to the package. 
+MetaScope is a complete metagenomics profiling package that can accurately identify the composition of microbes at a strain-level resolution within a sample. MetaScope can be considered as an updated and expanded R translation of [PathoScope 2.0](https://microbiomejournal.biomedcentral.com/articles/10.1186/2049-2618-2-33), a Python-based metagenomic profiling package created by our lab. A few improvements made in MetaScope include using the BAM file format instead of the SAM file format for significantly less disk space usage, removing all dependencies to NCBI's now defunct GI sequence annotations, and properly filtering reads that align to filter reference genomes. Functions to analyze host microbiome data are also planned to be added in future updates to the package.
 
-The core functions within the package create a workflow that allows users to (1) obtain reference genomes for target and filter microbes; (2) make aligner specific indexes from genomes; (3) align reads to target genomes; (4) filter reads aligning to filter genomes; (5) reassign ambiguously mapped reads to their likely correct microbe of origin. Due to the modular nature of the package, users can choose to either conduct all of their analysis or part of their analysis within the package depending on what data the user already has prior to using the package (for example if the user has already aligned their reads then they could skip functions (1),(2), and (3)). There are two types of workflows that can be done completely within the package: the Rbowtie2 and the Rsubread workflow. The Rbowtie2 and Rsubread workflows are essentially analogous to each other with the major difference being that functions (2),(3), and (4) differ by the aligner utilized. The Rbowtie2 functions utilize the [Bowtie2](https://www.nature.com/articles/nmeth.1923) aligner (Langmead 2012) whereas the [Rsubread](https://academic.oup.com/nar/article/47/8/e47/5345150) functions utilize the Rsubread aligner (Liao 2019). The nuances of how to use each function can be found by looking at each function's help manual (R command: ?[name of function]). For reference, PathoScope2.0 uses the Bowtie2 aligner in its workflow. 
+The core functions within the package create a workflow that allows users to (1) obtain reference genomes for target and filter microbes; (2) make aligner-specific indexes from genomes; (3) align reads to target genomes; (4) filter reads aligning to filter genomes; (5) reassign ambiguously mapped reads to their likely correct microbe of origin. Due to the modular nature of the package, users can choose to either conduct all of their analysis or part of their analysis within the package depending on what data the user already has prior to using the package (for example if the user has already aligned their reads then they could skip functions (1),(2), and (3)). There are two types of workflows that can be done completely within the package: the Rbowtie2 and the Rsubread workflow. The Rbowtie2 and Rsubread workflows are essentially analogous to each other with the major difference being that functions (2),(3), and (4) differ by the aligner utilized. The Rbowtie2 functions utilize the [Bowtie2](https://www.nature.com/articles/nmeth.1923) aligner (Langmead 2012) whereas the [Rsubread](https://academic.oup.com/nar/article/47/8/e47/5345150) functions utilize the Rsubread aligner (Liao 2019). The nuances of how to use each function can be found by looking at each function's help manual (R command: ?[name of function]). For reference, PathoScope2.0 uses the Bowtie2 aligner in its workflow. 
 
 In this vignette, we will analyze the mock data provided in the package via the Rbowtie2 workflow. We will utilize all the core functions in sequential order, and mention of the equivalent Rsubread function will be provided whenever an Rbowtie2 function is being used.   
 
@@ -39,66 +44,38 @@ The mock data provided in the package consists of simulated sequencing data gene
 
 ## Reference Genome Library
 
-The MetaScope genome library workflow is designed to assist with collection of sequence data from the National Center for Biotechnology Information (NCBI) database. Prior to doing so, the potential targets and filters for the analysis should be identified. That is, what "target" species do you expect to find in your metagenomic sample that you would like to identify, and what reads would you like to "filter" out from the data that are not essential to your analysis?
+The MetaScope genome library workflow is designed to assist with collection of sequence data from the National Center for Biotechnology Information (NCBI) nucleotide database. Prior to doing so, the potential targets and filters for the analysis should be identified. That is, what "target" species do you expect to find in your metagenomic sample that you would like to identify, and what reads would you like to "filter" out from the data that are not essential to your analysis?
 
 Typically, the targets of the analysis are microbes (that is, viruses, bacteria, and fungi), and we wish to filter out or discard any reads from the host in addition to artificially added sequences, such as PhiX174. Following identification of the targets and filters, we use a reference genome library to align the vast number of sample reads back to the respective regions of origin in various species.
 
-The `download_refseq()` function automatically extracts custom reference genome libraries in a FASTA file for microbial or host genomes. The user must first indicate a taxon for which to download the genomes, such as 'bacteria' or 'Primates'. A table of possible entries \can be viewed by accessing the `taxonomy_table` object. They may then specify whether they wish to download only the RefSeq reference genomes, or both the reference and representative genomes. The compress option then allows users to specify whether to compress the output FASTA file; this is done by default.
+The `download_refseq()` function automatically extracts custom reference genome libraries in a FASTA file for microbial or host genomes. The user must first indicate a taxon for which to download the genomes, such as 'bacteria' or 'primates'. A table of possible entries can be viewed by accessing the `taxonomy_table` object. The user may then specify whether they wish to download only the RefSeq reference genomes, or both the reference and representative genomes. The compress option then allows users to specify whether to compress the output FASTA file; this is done by default.
 
-Even though in this scenario we know exactly where the reads in the mock data (reads.fastq) originate from, in most cases we only have a general idea of where our reads may originate from. This is why in the following code, we download the genome of the Staphylococcus aureus RF122 strain along with the genomes of five other closely related Staphylococcus aureus strains from the NCBI RefSeq database, in an uncompressed FASTA format. These genomes together will act as our target genome library. 
+### Downloading target genomes
+Even though in this scenario we know exactly where the reads in the mock data (reads.fastq) originate from, in most cases we only have a general idea of where our reads may originate from. Therefore, in the following code, we will download the genome of the Staphylococcus aureus RF122 strain along with the genomes of five other closely related Staphylococcus aureus strains from the NCBI RefSeq database. These genomes together will act as our target genome library. 
 
 ```{R target lib, eval = FALSE, warning = FALSE}
 ## Code block not run
 
-MetaScope::download_refseq(
-  taxon = "Staphylococcus aureus RF122",
-  reference = FALSE,
-  representative = FALSE,
-  compress = FALSE
-)
-MetaScope::download_refseq(
-  taxon = "Staphylococcus aureus subsp. aureus ST398",
-  reference = FALSE,
-  representative = FALSE,
-  compress = FALSE
-)
-MetaScope::download_refseq(
-  taxon = "Staphylococcus aureus subsp. aureus N315",
-  reference = FALSE,
-  representative = FALSE,
-  compress = FALSE
-)
-MetaScope::download_refseq(
-  taxon = "Staphylococcus aureus subsp. aureus Mu50",
-  reference = FALSE,
-  representative = FALSE,
-  compress = FALSE
-)
-MetaScope::download_refseq(
-  taxon = "Staphylococcus aureus subsp. aureus Mu3",
-  reference = FALSE,
-  representative = FALSE,
-  compress = FALSE
-)
-MetaScope::download_refseq(
-  taxon = "Staphylococcus aureus subsp. aureus str. Newman",
-  reference = FALSE,
-  representative = FALSE,
-  compress = FALSE
-)
+all_species <- c("Staphylococcus aureus RF122",
+                 "Staphylococcus aureus subsp. aureus ST398",
+                 "Staphylococcus aureus subsp. aureus N315",
+                 "Staphylococcus aureus subsp. aureus Mu50",
+                 "Staphylococcus aureus subsp. aureus Mu3",
+                 "Staphylococcus aureus subsp. aureus str. Newman")
+sapply(all_species, MetaScope::download_refseq, 
+       reference = FALSE, representative = FALSE, compress = FALSE)
 ```
 
-We will also download the genome of the Staphylococcus epidermidis RP62A strain from the NCBI RefSeq database, in an uncompressed FASTA format. This genome will act as our filter library.  
+### Downloading filter genomes
+We will also download the genome of the Staphylococcus epidermidis RP62A strain from the NCBI nucleotide database, in an uncompressed FASTA format. This genome will act as our filter library.  
 
 ```{R filter lib, eval = FALSE, warning = FALSE}
 ## Code block not run
-
 MetaScope::download_refseq(
   taxon = "Staphylococcus epidermidis RP62A",
   representative = FALSE,
   reference = FALSE,
-  compress = FALSE
-)
+  compress = FALSE)
 ```
 
 ## Demultiplex
@@ -108,7 +85,6 @@ Sequence runs on NGS instruments are typically carried out with multiple samples
 This is an optional step in the analysis process depending on whether your reads are multiplexed. The reads which we are currently trying to analyze are not multiplexed and therefore this step is skipped in our analysis. The example shown below is using different reads that are barcoded in order to show the utility of the function. 
 
 ```{R demultiplex, eval = TRUE, warning = FALSE, message = FALSE}
-
 # Get barcode, index, and read data locations
 barcodePath <-
   system.file("extdata", "barcodes.txt", package = "MetaScope")
@@ -210,7 +186,9 @@ final_map <-
     reads_bam = target_map,
     lib_dir = index_temp,
     libs = "filter",
-    make_bam = TRUE,
+    make_bam = TRUE, # Set to true to create BAM output
+    # Default is to create simplified .csv.gz output
+    # The .csv.gz output is much quicker to create!
     overwrite = TRUE,
     threads = 1
   )
@@ -297,8 +275,9 @@ Following the proper alignment of a sample to all target and filter libraries of
 The identification workflow consists of a single function, `MetaScope_ID()`, which reads in a .bam file, annotates the taxonomy and genome names, reduces the mapping ambiguity using a mixture model, and outputs a .csv file with the results. Currently, it assumes that the genome library/.bam files use NCBI accession names for reference names. 
 
 ```{R identification, eval = TRUE, warning = FALSE, message = FALSE, results = FALSE}
-MetaScope::metascope_id(final_map, input_type = "bam",
-                        aligner = "bowtie", num_species_plot = 0)
+MetaScope::metascope_id(final_map, input_type = "bam", 
+                        # change input_type to "csv.gz" when not creating a BAM
+                        aligner = "bowtie2", num_species_plot = 0)
 ```
 
 We will now look at the read reassignment results reported in the output CSV file.

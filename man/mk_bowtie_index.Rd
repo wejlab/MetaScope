@@ -58,5 +58,5 @@ file.copy(from = refPath, to = file.path(ref_temp, "target.fasta"))
 
 ## Create the reference library index files in the current directory
 mk_bowtie_index(ref_dir = ref_temp, lib_dir = ".", lib_name = "target",
-threads = 4, overwrite=FALSE)
+threads = 4, overwrite = FALSE)
 }

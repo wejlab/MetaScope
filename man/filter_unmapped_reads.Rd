@@ -11,28 +11,18 @@ filter_unmapped_reads(bamfile)
 reads}
 }
 \value{
-This function will overwrite the existing .bam file with a new .bam file in
-the same location that has only mapped lines. The function itself returns the
-output .bam file name.
+This function will overwrite the existing .bam file with a new .bam
+file in the same location that has only mapped lines. The function itself
+returns the output .bam file name.
 }
 \description{
 This function will remove all unmapped reads or lines in a .bam file
 (warning: overwrites the original file!). This function is needed because
-combining multiple .bam files from different microbial libraries may lead
-to some reads that mapped to one library and have unmapped entries from
-another library. This will remove any unmapped entries and leave all
-reference mapped lines in the .bam file.
+combining multiple .bam files from different microbial libraries may lead to
+some reads that mapped to one library and have unmapped entries from another
+library. This will remove any unmapped entries and leave all reference mapped
+lines in the .bam file.
 }
 \details{
 It is not intended for direct use.
-}
-\examples{
-
-# refPath <- system.file("extdata","target.fasta", package = "MetaScope")
-# file.copy(from = refPath, to = file.path(".", "target.fasta"))
-# mk_subread_index('target.fasta')
-# readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
-# Rsubread::align(index = "target", readfile1 = readPath, output_file = "example.bam")
-# filtered <- filter_unmapped_reads("example.bam")
-
 }
