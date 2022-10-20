@@ -6,7 +6,7 @@
 \usage{
 metascope_id(
   input_file,
-  input_type = "bam",
+  input_type = "csv.gz",
   aligner = "bowtie2",
   NCBI_key = NULL,
   out_file = paste0(tools::file_path_sans_ext(input_file), ".metascope_id.csv"),
@@ -89,6 +89,6 @@ bamPath <- system.file("extdata","subread_target.filtered.bam",
 
 ## Run metascope id with the aligner option set to other
 metascope_id(input_file = bamPath, aligner = "other",
-             num_species_plot = 0)
+             num_species_plot = 0, input_type = "bam")
 
 }

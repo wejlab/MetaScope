@@ -320,13 +320,15 @@ locations <- function(which_taxid, which_genome,
 #'
 #' ## Run metascope id with the aligner option set to other
 #' metascope_id(input_file = bamPath, aligner = "other",
-#'              num_species_plot = 0)
+#'              num_species_plot = 0, input_type = "bam")
 #'
 
-metascope_id <- function(input_file, input_type = "bam", aligner = "bowtie2",
+metascope_id <- function(input_file, input_type = "csv.gz",
+                         aligner = "bowtie2",
                          NCBI_key = NULL,
-                         out_file = paste0(tools::file_path_sans_ext(input_file),
-                                           ".metascope_id.csv"),
+                         out_file = paste0(
+                           tools::file_path_sans_ext(input_file),
+                           ".metascope_id.csv"),
                          EMconv = 1 / 10000, EMmaxIts = 25,
                          num_species_plot = NULL) {
   # Check to make sure valid aligner is specified
