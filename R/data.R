@@ -48,7 +48,7 @@
 #' @keywords datasets
 #' @examples
 #' data("bt2_16S_params")
-#' 
+#'
 "bt2_16S_params"
 
 #' A universal parameter object for Bowtie 2 loose alignment
@@ -78,7 +78,7 @@
 #' @keywords datasets
 #' @examples
 #' data("bt2_loose_params")
-#' 
+#'
 "bt2_loose_params"
 
 
@@ -88,5 +88,5 @@
 #' 10/18/22.
 #'
 #' @keywords datasets
-#' 
+#'
 "taxonomy_table"

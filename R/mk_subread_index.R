@@ -8,14 +8,14 @@
 #' @param ref_lib The name/location of the reference library file, in
 #'   (uncompressed) .fasta format.
 #' @param split The maximum allowed size of the genome file (in GB). If the
-#'   ref_lib file is larger than this, the function will split the library into
-#'   multiple parts.
+#'   \code{ref_lib} file is larger than this, the function will split the
+#'   library into multiple parts.
 #' @param mem The maximum amount of memory (in MB) that can be used by the index
 #'   generation process (used by the Rsubread::buildindex function).
 #'
 #' @return Creates one or more Subread indexes for the supplied reference .fasta
 #'   file. If multiple indexes are created, the libraries will be named the
-#'   ref_lib basename plus _1, _2, etc. The function returns the names of the
+#'   \code{ref_lib} basename + "_1", "_2", etc. The function returns the names of the
 #'   folders holding these files.
 #'
 #' @export
@@ -36,14 +36,14 @@
 #' mk_subread_index(out_fasta)
 #' unlink(ref_temp)
 #' now - Sys.time()
-#' 
+#'
 
 mk_subread_index <- function(ref_lib, split = 4, mem = 8000) {
-  GB <- 1073741824
+  gb <- 1073741824
   ref_size <- file.info(ref_lib)$size
-  split_libs <- ceiling(ref_size / (split * GB))
-  if (ref_size > (split * GB)) {
-    message( "Library size is ", round(ref_size / GB, 1),
+  split_libs <- ceiling(ref_size / (split * gb))
+  if (ref_size > (split * gb)) {
+    message("Library size is ", round(ref_size / gb, 1),
     " GBs. Splitting the library into ", split_libs,
       " separate components.")
     # Making connections to the .fasta library
@@ -57,15 +57,15 @@ mk_subread_index <- function(ref_lib, split = 4, mem = 8000) {
       assign(out_cons[i], file(out_files[i], open = "w"))
     }
     ## Reading ref library and splitting to split libraries
-    nGenomes <- -1
-    while ((length(oneLine <-
+    ngenomes <- -1
+    while ((length(one_line <-
                    readLines(con, n = 1, warn = FALSE)) > 0)) {
-      if (substr(oneLine, 1, 1) == ">") {
-        nGenomes <- nGenomes + 1
+      if (substr(one_line, 1, 1) == ">") {
+        ngenomes <- ngenomes + 1
       }
-      writeLines(oneLine, get(out_cons[(nGenomes %% split_libs) + 1]))
+      writeLines(one_line, get(out_cons[(ngenomes %% split_libs) + 1]))
     }
-    message("Printed ", nGenomes + 1, " sequences to ", split_libs,
+    message("Printed ", ngenomes + 1, " sequences to ", split_libs,
             " genome files")
     close(con)
     for (ocon in out_cons) close(get(ocon))
@@ -73,7 +73,7 @@ mk_subread_index <- function(ref_lib, split = 4, mem = 8000) {
       basename = tools::file_path_sans_ext(lib),
       reference = lib, memory = mem)
   } else {
-    message("Library size is ", round(ref_size / GB, 1),
+    message("Library size is ", round(ref_size / gb, 1),
             " GBs. Building the Rsubread index")
     Rsubread::buildindex(
       basename = tools::file_path_sans_ext(ref_lib, compression = TRUE),

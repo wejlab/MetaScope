@@ -19,19 +19,20 @@ filter_host(
 \arguments{
 \item{reads_bam}{The name of a merged, sorted .bam file that has previously
 been aligned to a reference library. Likely, the output from running an
-instance of \code{align_target_bowtie()}.}
+instance of \code{align_target()}.}
 
-\item{lib_dir}{Path to the directory that contains the filter Bowtie2 index
+\item{lib_dir}{Path to the directory that contains the filter Subread index
 files.}
 
-\item{libs}{The basename of the filter libraries (without .bt2 or .bt2l
-extension)}
+\item{libs}{The basename of the filter libraries (without index
+extension).}
 
 \item{make_bam}{Logical, whether to also output a bam file with host reads
-filtered out. An rds file will be created instead if \code{FALSE}. Default
-is \code{FALSE}.}
+filtered out. A .csv.gz file will be created instead if \code{FALSE}.
+Creating a bam file is costly on resources over creating a compressed
+csv file with only relevant information, so default is \code{FALSE}.}
 
-\item{output}{The desired name of the output .bam or .rds file. Extension is
+\item{output}{The desired name of the output .bam or .csv.gz file. Extension is
 automatically defined by whether \code{make_bam = TRUE.} Default is the
 basename of \code{unfiltered_bam} + \code{.filtered} + extension.}
 
@@ -46,12 +47,12 @@ object.}
 \item{YS}{yieldSize, an integer. The number of alignments to be read in from
 the bam file at once for chunked functions. Default is 100000.}
 
-\item{threads}{The amount of threads available for the function. Default is 8
-threads.}
+\item{threads}{The amount of threads available for the function. Default is 1
+thread.}
 }
 \value{
 The name of a filtered, sorted .bam file written to the user's
-  current working directory. Or, if \code{make_bam = FALSE}, an RDS file
+  current working directory. Or, if \code{make_bam = FALSE}, a .csv.gz file
   containing a data frame of only requisite information to run
   \code{metascope_id()}.
 }
@@ -68,17 +69,21 @@ be used upstream for further analysis.
 
 ## Assuming a bam file has been created previously with align_target()
 \donttest{
+## Create temporary directory
 filter_ref_temp <- tempfile()
 dir.create(filter_ref_temp)
 
+# Download filter genome
 all_species <- c("Staphylococcus aureus subsp. aureus str. Newman")
 all_ref <- vapply(all_species, MetaScope::download_refseq, 
                   reference = FALSE, representative = FALSE, compress = TRUE,
                   out_dir = filter_ref_temp, FUN.VALUE = character(1))
 ind_out <- vapply(all_ref, mk_subread_index, FUN.VALUE = character(1))
-# Get path to example reads
+
+## Get path to example reads
 readPath <- system.file("extdata", "subread_target.bam",
                         package = "MetaScope")
+
 ## Copy the example reads to the temp directory
 refPath <- file.path(filter_ref_temp, "subread_target.bam")
 file.copy(from = readPath, to = refPath)
@@ -88,11 +93,13 @@ align_details[["phredOffset"]] <- 10
 # Just to get it to align - toy example!
 align_details[["maxMismatches"]] <- 10
 
+## Align and filter reads
 filtered_map <- filter_host(
   refPath, lib_dir = filter_ref_temp,
   libs = stringr::str_replace_all(all_species, " ", "_"),
   threads = 1, subread_options = align_details)
 
+## Remove temporary directory
 unlink(filter_ref_temp, recursive = TRUE)
 }
 

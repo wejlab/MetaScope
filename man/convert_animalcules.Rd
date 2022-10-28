@@ -17,16 +17,16 @@ convert_animalcules(
 }
 \arguments{
 \item{meta_counts}{A vector of filepaths to the counts ID CSVs output by
-MetaScope}
+\code{metascope_id()}.}
 
-\item{annot_path}{The filepath to the CSV annotation file for the samples}
+\item{annot_path}{The filepath to the CSV annotation file for the samples.}
 
 \item{which_annot_col}{The name of the column of the annotation file
 containing the sample IDs. These should be the same as the
 \code{meta_counts} root filenames.}
 
 \item{end_string}{The end string used at the end of the metascope_id files.
-Default is ".filtered.metascope_id.csv"}
+Default is ".filtered.metascope_id.csv".}
 
 \item{qiime_biom_out}{Would you also like a qiime-compatible biom file
 output? If yes, two files will be saved: one is a biom file of the counts
@@ -34,7 +34,7 @@ table, and the other is a specifically formatted mapping file of metadata
 information. Default is \code{FALSE}.}
 
 \item{path_to_write}{Where should output animalcules and/or QIIME files be
-written to? Should be a character string of the folder path. Default is
+written? Should be a character string of the folder path. Default is
 '.', i.e. the current working directory.}
 
 \item{NCBI_key}{(character) NCBI Entrez API key. optional. See
@@ -42,7 +42,7 @@ taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 function will be less prone to errors if you obtain an NCBI key.}
 }
 \value{
-returns a multi-assay experiment file of combined sample counts data
+Returns a multi-assay experiment file of combined sample counts data
   and/or biom file and mapping file for analysis with QIIME. The multi-assay
   experiment will have assays for the counts ("MGX"), log counts, CPM, and
   log CPM.
@@ -50,8 +50,8 @@ returns a multi-assay experiment file of combined sample counts data
 \description{
 Upon completion of the MetaScope pipeline, users can analyze and visualize
 abundances in their samples using the animalcules package. This function
-allows interoperability of metascope_id output with both animalcules and
-QIIME.
+allows interoperability of \code{metascope_id} output with both animalcules
+and QIIME.
 }
 \examples{
 tempfolder <- tempfile()

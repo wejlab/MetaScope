@@ -16,7 +16,7 @@ find_taxonomy <- function(tax_id) {
           attempt <- attempt + 1
           if (attempt > 1) message("Attempt #", attempt, " Chunk #", i)
           suppressMessages(
-            tax_id_chunk <- taxize::classification(chunks[[i]], db = 'ncbi',
+            tax_id_chunk <- taxize::classification(chunks[[i]], db = "ncbi",
                                                    max_tries = 3))
           Sys.sleep(1)
           genome_return[[i]] <- tax_id_chunk
@@ -25,7 +25,7 @@ find_taxonomy <- function(tax_id) {
       }
     }
   } else suppressMessages(genome_return <- taxize::classification(
-    taxid, db = 'ncbi', max_tries = 3))
+    tax_id, db = "ncbi", max_tries = 3))
   return(genome_return)
 }
 
@@ -35,9 +35,9 @@ find_taxonomy <- function(tax_id) {
 #' available NCBI genomes. Each column is a taxonomic rank or indication of a
 #' strain; each row is a taxonomic classification for an unique species or
 #' strain.
-#' 
-#' This returns a table of taxonomic relationships for all species or strains with
-#' NCBI genomes.
+#'
+#' This returns a table of taxonomic relationships for all species or strains
+#' with NCBI genomes.
 #'
 #' To use an NCBI key, add `ENTREZ_KEY = <your key here>` to your global
 #' environment using `Sys.setenv()`

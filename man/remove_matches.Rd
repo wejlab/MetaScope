@@ -15,7 +15,7 @@ instance of \code{align_target()}.}
 that have also aligned to a filter reference library. Each \code{list}
 element should be a vector of read names.}
 
-\item{output}{The name of the .bam or .rds file that to which the filtered
+\item{output}{The name of the .bam or .csv.gz file that to which the filtered
 alignments will be written.}
 
 \item{YS}{yieldSize, an integer. The number of alignments to be read in from
@@ -27,8 +27,9 @@ Default is 1.}
 \item{aligner}{The aligner which was used to create the bam file.}
 
 \item{make_bam}{Logical, whether to also output a bam file with host reads
-filtered out. An rds file will be created instead if \code{FALSE}. Default
-is \code{FALSE}.}
+filtered out. A .csv.gz file will be created instead if \code{FALSE}.
+Creating a bam file is costly on resources over creating a compressed
+csv file with only relevant information, so default is \code{FALSE}.}
 }
 \value{
 Depending on input \code{make_bam}, either the name of a filtered,

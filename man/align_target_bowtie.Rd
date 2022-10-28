@@ -38,11 +38,11 @@ Rbowtie2::bowtie2_usage(). Default parameters are the parameters are the
 default parameters that PathoScope 2.0 uses. NOTE: Users should pass all
 their parameters as one string and if optional parameters are given then
 the user is responsible for entering all the parameters to be used by
-Bowtie2. NOTE: The only parameter that should NOT be specified here is the
-threads.}
+Bowtie2. The only parameter that should NOT be specified here is the
+number of threads.}
 
 \item{threads}{The number of threads that can be utilized by the function.
-Default is 8 threads.}
+Default is 1 thread.}
 
 \item{overwrite}{Whether existing files should be overwritten. Default is
 FALSE.}
@@ -51,7 +51,7 @@ FALSE.}
 Returns the path to where the output alignment file is stored.
 }
 \description{
-This is the main MetaScope target library mapping function, using RBowtie2
+This is the main MetaScope target library mapping function, using Rbowtie2
 and multiple libraries. Aligns to each library separately, filters unmapped
 reads from each file, and then merges and sorts the .bam files from each
 library into one output file. If desired, output can be passed to
@@ -61,8 +61,11 @@ genomes.
 \examples{
 #### Align example reads to an example reference library using Rbowtie2
 
+## Create temporary directory to store file
 target_ref_temp <- tempfile()
 dir.create(target_ref_temp)
+
+## Dowload reference genome
 MetaScope::download_refseq("Measles morbillivirus",
                            reference = TRUE,
                            representative = FALSE,
@@ -70,10 +73,11 @@ MetaScope::download_refseq("Measles morbillivirus",
                            out_dir = target_ref_temp
 )
 
-
-# Create temp directory to store the indices
+## Create temporary directory to store the indices
 index_temp <- tempfile()
 dir.create(index_temp)
+
+## Create bowtie2 index
 MetaScope::mk_bowtie_index(
   ref_dir = target_ref_temp,
   lib_dir = index_temp,
@@ -81,12 +85,15 @@ MetaScope::mk_bowtie_index(
   overwrite = TRUE
 )
 
+## Create temporary directory for final file
 output_temp <- tempfile()
 dir.create(output_temp)
 
-# Get path to example reads
+## Get path to example reads
 readPath <- system.file("extdata", "virus_example.fastq",
                         package = "MetaScope")
+
+## Align to target genomes
 target_map <-
   MetaScope::align_target_bowtie(
     read1 = readPath,
@@ -97,6 +104,7 @@ target_map <-
     overwrite = TRUE
   )
 
+## Remove extra folders
 unlink(target_ref_temp, recursive = TRUE)
 unlink(index_temp, recursive = TRUE)
 unlink(output_temp, recursive = TRUE)

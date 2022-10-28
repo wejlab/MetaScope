@@ -27,7 +27,7 @@ current working directory, set \code{lib_dir = NULL}. Default is
 \code{lib_dir = NULL}.}
 
 \item{threads}{The number of threads that can be utilized by the function.
-Default is 8 threads.}
+Default is 1 thread.}
 
 \item{align_file}{The basename of the output alignment file (without trailing
 .bam extension).}
@@ -55,8 +55,11 @@ library into one output file. If desired, output can be passed to
 \examples{
 #### Align example reads to an example reference library using Rsubread
 \donttest{
+## Create temporary directory
 target_ref_temp <- tempfile()
 dir.create(target_ref_temp)
+
+## Download genome
 tax <- "Mycoplasma genitalium G37"
 all_ref <- MetaScope::download_refseq(tax,
                                       reference = FALSE,
@@ -64,23 +67,31 @@ all_ref <- MetaScope::download_refseq(tax,
                                       compress = TRUE,
                                       out_dir = target_ref_temp
 )
+
+## Create subread index
 ind_out <- mk_subread_index(all_ref)
-# Get path to example reads
+
+## Get path to example reads
 readPath <- system.file("extdata", "reads.fastq",
                         package = "MetaScope")
 ## Copy the example reads to the temp directory
 refPath <- file.path(target_ref_temp, "reads.fastq")
 file.copy(from = readPath, to = refPath)
+
+## Modify alignment parameters object
 data("align_details")
 align_details[["type"]] <- "rna"
 align_details[["phredOffset"]] <- 50
 # Just to get it to align - toy example!
 align_details[["maxMismatches"]] <- 100
 
+## Run alignment
 target_map <- align_target(refPath,
                            libs = stringr::str_replace_all(tax, " ", "_"),
                            lib_dir = target_ref_temp,
                            subread_options = align_details)
+
+## Remove temporary folder
 unlink(target_ref_temp, recursive = TRUE)
 }
 

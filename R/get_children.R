@@ -1,7 +1,7 @@
 #' Get child nodes from NCBI taxonomy
 #'
-#' This function will utilize a organism classification table to obtain all
-#' chidren species and/or strains with available NCBI reference sequences given
+#' This function will utilize an organism classification table to obtain all
+#' children species and/or strains with available NCBI reference sequences given
 #' a parent taxon and its rank.
 #'
 #' @param input_taxon The parent taxon.
@@ -27,7 +27,7 @@
 #' get_children('Primates', 'order')
 #'
 
-get_children <- function(input_taxon, input_rank, tax_dat = NULL){
+get_children <- function(input_taxon, input_rank, tax_dat = NULL) {
   if (is.null(tax_dat)) tax_dat <- taxonomy_table
     # Get child strains
     ind <- tolower(tax_dat[, input_rank]) %in% tolower(input_taxon)

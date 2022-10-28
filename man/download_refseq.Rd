@@ -14,7 +14,7 @@ download_refseq(
 )
 }
 \arguments{
-\item{taxon}{Select one taxon to download. The taxon name should be a
+\item{taxon}{Name of single taxon to download. The taxon name should be a
 recognized NCBI scientific or common name, with no grammatical or
 capitalization inconsistencies. All available taxonomies are visible by
 accessing the \code{taxonomy_table} object included in the package.}
@@ -38,15 +38,15 @@ libraries should be output.}
 \value{
 Returns a .fasta or .fasta.gz file of the desired RefSeq genomes.
 This file is named after the kingdom selected and saved to the current
-directory (e.g. 'bacteria.fasta.gz'). Currently, this function also returns
-a .fasta file formatted for PathoScope as well
+directory (e.g. 'bacteria.fasta.gz'). This function also has the option
+to return a .fasta file formatted for PathoScope as well
 (e.g. bacteria.pathoscope.fasta.gz') if \code{path_out = TRUE}.
 }
 \description{
 This function will automatically download RefSeq genome libraries in a fasta
 format from the specified taxon. The function will first download the
 summary report at:
-ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/**kingdom**/assembly_summary.txt,
+\code{ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/**kingdom**/assembly_summary.txt},
 and then use this file to download the genome(s) and combine them in a
 single compressed or uncompressed .fasta file.
 }

@@ -1,46 +1,48 @@
 #' Helper function for demultiplexing
 #'
 #' Helper function for demultiplexing sequencing reads, designed in a way to
-#' allow for parallelization across barcodes (parallel extraction of reads
-#' by barcode). This function takes a specific barcode (numeric index) from
-#' lists of sample names/barcodes, a Biostrings::DNAStringSet of barcodes by
-#' sequence header, and a Biostrings::QualityScaledXStringSet of reads
-#' corresponding to the barcodes. Based on the barcode index given, it
-#' extracts all reads for the indexed barcode and writes all the reads from
-#' that barcode to a separate .fastq file.
-#'
+#' allow for parallelization across barcodes (parallel extraction of reads by
+#' barcode). This function takes a specific barcode (numeric index) from lists
+#' of sample names/barcodes, a \code{Biostrings::DNAStringSet} of barcodes by
+#' sequence header, and a \code{Biostrings::QualityScaledXStringSet} of reads
+#' corresponding to the barcodes. Based on the barcode index given, it extracts
+#' all reads for the indexed barcode and writes all the reads from that barcode
+#' to a separate .fastq file.
+#' 
 #' @param barcodeIndex Which barcode (integer number or index) in the barcodes
-#' or sample name to use for read extraction
+#'   or sample name to use for read extraction.
 #' @param barcodes A list of all barcodes in the sequencing dataset. Correlates
-#' and in same order as sampleNames
-#' @param sampleNames A list of sample names or identifiers associated with
-#' each barcode in the barcodes list
-#' @param index A Biostrings::DNAStringSet that contains the read headers and
-#' barcode sequence for each header in the sequence slot
-#' @param reads A Biostrings::QualityScaledXStringSet that has the same
-#' headers and order as the index file, but contains the read sequences and
-#' their quality scores
+#'   and in same order as \code{sampleNames}.
+#' @param sampleNames A list of sample names or identifiers associated with each
+#'   barcode in the barcodes list.
+#' @param index A \code{Biostrings::DNAStringSet} that contains the read headers
+#'   and barcode sequence for each header in the sequence slot.
+#' @param reads A \code{Biostrings::QualityScaledXStringSet} that has the same
+#'   headers and order as the index file, but contains the read sequences and
+#'   their quality scores.
 #' @param location A directory location to store the demultiplexed read files.
-#' Defaults to generate a new subdirectory at './demultiplex_fastq'
-#' @param rcBarcodes Should the barcode indexes in the barcodes list be
-#' reverse complemented to match the sequences in the index DNAStringSet?
-#' Defaults to TRUE
+#'   Defaults to generate a new subdirectory at './demultiplex_fastq'
+#' @param rcBarcodes Should the barcode indices in the barcodes list be reverse
+#'   complemented to match the sequences in the index DNAStringSet? Defaults to
+#'   \code{TRUE}.
 #' @param hDist Uses a Hamming Distance or number of base differences to allow
-#' for inexact matches for the barcodes/indexes. Defaults to 0. Warning: if
-#' the Hamming Distance is >=1 and this leads to inexact index matches to more
-#' than one barcode, that read will be written to more than one demultiplexed
-#' read files
+#'   for inexact matches for the barcodes/indexes. Defaults to 0. Warning: if
+#'   the Hamming Distance is >=1 and this leads to inexact index matches to more
+#'   than one barcode, that read will be written to more than one demultiplexed
+#'   read files.
 #'
 #' @return Writes a single .fastq file that contains all reads whose index
-#' matches the barcode specified. This file will be written to the location
-#' directory, and will be named based on the specified sampleName and barcode,
-#' e.g. './demultiplex_fastq/SampleName1_GGAATTATCGGT.fastq.gz'
+#'   matches the barcode specified. This file will be written to the location
+#'   directory, and will be named based on the specified sampleName and barcode,
+#'   e.g. './demultiplex_fastq/SampleName1_GGAATTATCGGT.fastq.gz'
 #' @export
 #' @examples
 #'
-#' ## Load example barcode, index, and read data into R session:
+#' ## Create temporary directory
 #' ref_temp <- tempfile()
 #' dir.create(ref_temp)
+#'
+#' ## Load example barcode, index, and read data into R session
 #' barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
 #' bcFile <- read.table(barcodePath, sep = "\t", header = TRUE)
 #'
@@ -60,6 +62,7 @@
 #' more_results <- lapply(1:6, extractReads, bcFile[, 2], bcFile[, 1], inds,
 #'                        reads, rcBarcodes = FALSE, location = ref_temp)
 #'
+#' ## Remove temporary directory
 #' unlink(ref_temp, recursive = TRUE)
 #'
 
@@ -75,7 +78,6 @@ extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads,
     } else {
         rci <- barcode
     }
-    # ind_match <- as.character(index) == rci
     ind_match <- utils::adist(as.character(index), rci) <= hDist
     numReads <- sum(ind_match)
     outFileName <- paste(location, "/", sampleName, "_", barcode,
@@ -133,30 +135,34 @@ errmessages <- function(barcodes, samNames, numReads) {
 #'   allow for inexact matches for the barcodes/indexes. Defaults to \code{0}.
 #'   Warning: if the Hamming Distance is \code{>=1} and this leads to inexact
 #'   index matches to more than one barcode, that read will be written to more
-#'   than one demultiplexed read files
+#'   than one demultiplexed read files.
 #'
 #' @return Returns multiple .fastq files that contain all reads whose index
 #'   matches the barcodes given. These files will be written to the location
 #'   directory, and will be named based on the given sampleNames and barcodes,
 #'   e.g. './demultiplex_fastq/SampleName1_GGAATTATCGGT.fastq.gz'
-#'   
+#'
 #' @export
 #'
 #' @examples
 #'
-#' ## Get barcode, index, and read data locations
+#' ## Create temporary directory
 #' ref_temp <- tempfile()
 #' dir.create(ref_temp)
+#'
+#' ## Get barcode, index, and read data locations
 #' barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
 #' indexPath <- system.file("extdata", "virus_example_index.fastq",
 #'                          package = "MetaScope")
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #'                          package = "MetaScope")
 #'
-#' ## Get barcode, index, and read data locations
+#' ## Demultiplex
 #' demult <- demultiplex(barcodePath, indexPath, readPath, rcBarcodes = FALSE,
 #'                       hammingDist = 2, location = ref_temp)
 #' demult
+#'
+#' # Remove temporary directory
 #' unlink(ref_temp, recursive = TRUE)
 #'
 
@@ -181,7 +187,7 @@ demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
     ind_no_match <- numeric(length(reads))
     for (i in seq_along(barcodes)) {
         extracted <- extractReads(
-          i, barcodes, samNames, inds, reads,rcBarcodes = rcBarcodes,
+          i, barcodes, samNames, inds, reads, rcBarcodes = rcBarcodes,
           location = location, hDist = hammingDist)
         numReads <- c(numReads, extracted$numberOfReads)
         ind_no_match <- ind_no_match + extracted$matchedIndexes

@@ -26,13 +26,14 @@ instance of \code{align_target_bowtie()}.}
 files.}
 
 \item{libs}{The basename of the filter libraries (without .bt2 or .bt2l
-extension)}
+extension).}
 
 \item{make_bam}{Logical, whether to also output a bam file with host reads
-filtered out. An rds file will be created instead if \code{FALSE}. Default
-is \code{FALSE}.}
+filtered out. A .csv.gz file will be created instead if \code{FALSE}.
+Creating a bam file is costly on resources over creating a compressed
+csv file with only relevant information, so default is \code{FALSE}.}
 
-\item{output}{The desired name of the output .bam or .rds file. Extension is
+\item{output}{The desired name of the output .bam or .csv.gz file. Extension is
 automatically defined by whether \code{make_bam = TRUE.} Default is the
 basename of \code{unfiltered_bam} + \code{.filtered} + extension.}
 
@@ -47,15 +48,15 @@ The only parameters that should NOT be specified here is the threads.}
 \item{YS}{yieldSize, an integer. The number of alignments to be read in from
 the bam file at once for chunked functions. Default is 100000.}
 
-\item{threads}{The amount of threads available for the function. Default is 8
-threads.}
+\item{threads}{The amount of threads available for the function. Default is 1
+thread.}
 
 \item{overwrite}{Whether existing files should be overwritten. Default is
 FALSE.}
 }
 \value{
 The name of a filtered, sorted .bam file written to the user's
-  current working directory. Or, if \code{make_bam = FALSE}, an RDS file
+  current working directory. Or, if \code{make_bam = FALSE}, a .csv.gz file
   containing a data frame of only requisite information to run
   \code{metascope_id()}.
 }
@@ -81,6 +82,7 @@ with \code{metascope_id()}.
 filter_ref_temp <- tempfile()
 dir.create(filter_ref_temp)
 
+## Download reference genome
 MetaScope::download_refseq("Zaire ebolavirus",
                            reference = FALSE,
                            representative = FALSE,
@@ -88,10 +90,11 @@ MetaScope::download_refseq("Zaire ebolavirus",
                            out_dir = filter_ref_temp
 )
 
-# Create temp directory to store the indices
+## Create temp directory to store the indices
 index_temp <- tempfile()
 dir.create(index_temp)
 
+## Create filter index
 MetaScope::mk_bowtie_index(
   ref_dir = filter_ref_temp,
   lib_dir = index_temp,
@@ -99,15 +102,17 @@ MetaScope::mk_bowtie_index(
   overwrite = TRUE
 )
 
+## Create temporary folder to hold final output file
 output_temp <- tempfile()
 dir.create(output_temp)
 
-# Get path to example bam
+## Get path to example bam
 bamPath <- system.file("extdata", "bowtie_target.bam",
                        package = "MetaScope")
 target_copied <- file.path(output_temp, "bowtie_target.bam")
 file.copy(bamPath, target_copied)
 
+## Align and filter reads
 filter_out <-
   filter_host_bowtie(
     reads_bam = target_copied,
@@ -116,6 +121,7 @@ filter_out <-
     threads = 1
   )
 
+## Remove temporary directories
 unlink(filter_ref_temp, recursive = TRUE)
 unlink(index_temp, recursive = TRUE)
 unlink(output_temp, recursive = TRUE)

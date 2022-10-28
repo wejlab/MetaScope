@@ -42,7 +42,7 @@ demultiplexed files.}
 allow for inexact matches for the barcodes/indexes. Defaults to \code{0}.
 Warning: if the Hamming Distance is \code{>=1} and this leads to inexact
 index matches to more than one barcode, that read will be written to more
-than one demultiplexed read files}
+than one demultiplexed read files.}
 }
 \value{
 Returns multiple .fastq files that contain all reads whose index
@@ -60,19 +60,23 @@ barcode and writes all the reads from that barcode to separate .fastq files.
 }
 \examples{
 
-## Get barcode, index, and read data locations
+## Create temporary directory
 ref_temp <- tempfile()
 dir.create(ref_temp)
+
+## Get barcode, index, and read data locations
 barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
 indexPath <- system.file("extdata", "virus_example_index.fastq",
                          package = "MetaScope")
 readPath <- system.file("extdata", "virus_example.fastq",
                          package = "MetaScope")
 
-## Get barcode, index, and read data locations
+## Demultiplex
 demult <- demultiplex(barcodePath, indexPath, readPath, rcBarcodes = FALSE,
                       hammingDist = 2, location = ref_temp)
 demult
+
+# Remove temporary directory
 unlink(ref_temp, recursive = TRUE)
 
 }

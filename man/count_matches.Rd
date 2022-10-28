@@ -18,15 +18,16 @@ an integer number representing the total number of alignment
 operations for the read that was summarized by the input CIGAR string.
 }
 \description{
-The 'CIGAR' (Compact Idiosyncratic Gapped Alignment Report) string is how
-the SAM/BAM format represents spliced alignments. This function will accept
-a CIGAR string for a single read and a single character indicating the
+The 'CIGAR' (Compact Idiosyncratic Gapped Alignment Report) string is how the
+SAM/BAM format represents spliced alignments. This function will accept a
+CIGAR string for a single read and a single character indicating the
 operation to be parsed in the string. An operation is a type of column that
 appears in the alignment, e.g. a match or gap. The integer following the
-operator specifies a number of consecutive operations. The `count_matches()`
-will identify all occurrences of the operator in the string input, add them,
-and return an integer number representing the total number of operations
-for the read that was summarized by the input CIGAR string.
+operator specifies a number of consecutive operations. The
+\code{count_matches()} function will identify all occurrences of the operator
+in the string input, add them, and return an integer number representing the
+total number of operations for the read that was summarized by the input
+CIGAR string.
 }
 \details{
 This function is best used on a vector of CIGAR strings using an apply

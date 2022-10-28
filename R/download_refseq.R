@@ -1,29 +1,29 @@
 # Helper function to identify parent kingdom, rank
-id_kingdom_rank <- function(classification.table, taxon, rank_input) {
+id_kingdom_rank <- function(classification_table, taxon, rank_input) {
   # Get the parent taxon in super kingdom rank
-  parent_kingdom <- classification.table$name[
-    classification.table$rank == "superkingdom"]
+  parent_kingdom <- classification_table$name[
+    classification_table$rank == "superkingdom"]
   parent_rank <- "Superkingdom"
   # The Eukaryota superkingdom isn't a folder on the NCBI FTP site
   # Instead, grab the corresponding kingdom
   # because some eukaryota kingdoms are folders on the FTP site
-  if (identical(parent_kingdom, "Eukaryota")){
-    parent_kingdom <- classification.table$name[
-      classification.table$rank == "kingdom"]
+  if (identical(parent_kingdom, "Eukaryota")) {
+    parent_kingdom <- classification_table$name[
+      classification_table$rank == "kingdom"]
     parent_rank <- "Kingdom"
     # There are only two eukaryota kingdoms in the taxonomy table that
     # have a corresponding folder on the FTP site. If not one of these
     # two kingdoms then forced to search all the eukaryota folders on the
     # site
-    if (length(parent_kingdom) != 0){
+    if (length(parent_kingdom) != 0) {
       if (!(parent_kingdom %in% c("Viridiplantae", "Fungi"))) {
-        parent_kingdom <- classification.table$name[
-          classification.table$rank == "superkingdom"]
+        parent_kingdom <- classification_table$name[
+          classification_table$rank == "superkingdom"]
         parent_rank <- "Superkingdom"
       }
     } else {
-      parent_kingdom <- classification.table$name[
-        classification.table$rank == "superkingdom"]
+      parent_kingdom <- classification_table$name[
+        classification_table$rank == "superkingdom"]
       parent_rank <- "Superkingdom"
     }
   }
@@ -76,16 +76,20 @@ get_speciestab <- function(children_list, refseq_table, taxon,
   if (rlang::is_empty(children_list)) {
     species_table <- refseq_table[which(tolower(
       refseq_table$organism_name) %in% tolower(taxon)), ]
-  } else species_table <- refseq_table[which(tolower(
+  } else {
+    species_table <- refseq_table[which(tolower(
     refseq_table$organism_name) %in% tolower(children_list)), ]
+  }
   # Reduce table size based on reference or representative
   if (representative) reference <- TRUE
-  if (representative & reference) {
+  if (representative && reference) {
     species_table <- species_table[
       species_table$refseq_category %in% c("reference genome",
                                            "representative genome"), ]
-  } else if (!representative & reference) species_table <-
-      species_table[species_table$refseq_category == "reference genome", ]
+  } else if (!representative && reference) {
+    species_table <- species_table[
+      species_table$refseq_category == "reference genome", ]
+  }
   return(species_table)
 }
 
@@ -179,7 +183,7 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
 #' This function will automatically download RefSeq genome libraries in a fasta
 #' format from the specified taxon. The function will first download the
 #' summary report at:
-#' ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/**kingdom**/assembly_summary.txt,
+#' \code{ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/**kingdom**/assembly_summary.txt},
 #' and then use this file to download the genome(s) and combine them in a
 #' single compressed or uncompressed .fasta file.
 #'
@@ -189,7 +193,7 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
 #' \code{data("taxonomy_table")}. Only taxa with exact spelling as they appear
 #' at any level of the table will be acknowledged.
 #'
-#' @param taxon Select one taxon to download. The taxon name should be a
+#' @param taxon Name of single taxon to download. The taxon name should be a
 #'   recognized NCBI scientific or common name, with no grammatical or
 #'   capitalization inconsistencies. All available taxonomies are visible by
 #'   accessing the \code{taxonomy_table} object included in the package.
@@ -204,11 +208,11 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
 #'   Defaults to \code{FALSE}.
 #' @param out_dir Character string giving the name of the directory to which
 #'   libraries should be output.
-#'   
+#'
 #' @return Returns a .fasta or .fasta.gz file of the desired RefSeq genomes.
 #' This file is named after the kingdom selected and saved to the current
-#' directory (e.g. 'bacteria.fasta.gz'). Currently, this function also returns
-#' a .fasta file formatted for PathoScope as well
+#' directory (e.g. 'bacteria.fasta.gz'). This function also has the option
+#' to return a .fasta file formatted for PathoScope as well
 #' (e.g. bacteria.pathoscope.fasta.gz') if \code{path_out = TRUE}.
 #'
 #' @export
@@ -228,16 +232,16 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
 download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
                             compress = TRUE, patho_out = FALSE,
                             out_dir = NULL) {
-  if(is.null(out_dir)) out_dir <- getwd()
+  if (is.null(out_dir)) out_dir <- getwd()
   message("Finding ", taxon)
   # Get input taxon rank
   tryCatch({
-    classification.table <- taxize::classification(
-      taxize::get_uid(taxon, messages = FALSE)[[1]], db = 'ncbi')[[1]]},
+    classification_table <- taxize::classification(
+      taxize::get_uid(taxon, messages = FALSE)[[1]], db = "ncbi")[[1]]},
     warning = function(w) stop("Your input is not a valid taxon")
   )
-  rank_input <- classification.table$rank[nrow(classification.table)]
-  parent_kingdom <- id_kingdom_rank(classification.table, taxon, rank_input)
+  rank_input <- classification_table$rank[nrow(classification_table)]
+  parent_kingdom <- id_kingdom_rank(classification_table, taxon, rank_input)
   refseq_table <- download_parentkingdom(parent_kingdom)
   # Get NCBI scientific names of children species or strains
   taxonomy_table <- get0("taxonomy_table", envir = asNamespace("MetaScope"))

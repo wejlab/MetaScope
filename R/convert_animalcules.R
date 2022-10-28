@@ -14,6 +14,8 @@ create_qiime_biom <- function(se_colData, taxonomy_table, which_annot_col,
     ind <- base::match(se_colData[, which_annot_col], colnames(counts_table_g))
     counts_table_match <- counts_table_g[, c(ind)]
     # Formatting
+    to_rm <- "[^[:alnum:] _.\\-+%;/:,]"
+    func <- function(x) stringr::str_remove_all(x, to_rm)
     alt_col <- se_colData %>% dplyr::as_tibble() %>%
       dplyr::mutate("#SampleID" = se_colData[, which_annot_col],
         # Sample Column: alphanumeric characters and periods ONLY
@@ -22,10 +24,8 @@ create_qiime_biom <- function(se_colData, taxonomy_table, which_annot_col,
         "#SampleID" = stringr::str_remove_all(.data$`#SampleID`,
                                               "[^[:alnum:].]")) %>%
       # Metadata columns: Only alphanumeric and [_.-+% ;:,/] characters
-      apply(.data, 2, function(x)
-        stringr::str_remove_all(x, "[^[:alnum:] _.\\-+%;/:,]")) %>%
-      ifelse(.data == " ", NA, .data) %>%
-      ifelse(.data == "<NA>", NA, .data) # Change " " to NA
+      apply(.data, 2, func) %>% ifelse(.data == " ", NA, .data) %>%
+      ifelse(.data == "<NA>", NA, .data)
     # Remove unecessary columns
     ind <- colnames(alt_col) == which_annot_col
     alt_col2 <- alt_col[, -ind] %>% dplyr::as_tibble() %>%
@@ -80,10 +80,11 @@ create_MAE <- function(annot_path, which_annot_col, combined_list,
 read_in_id <- function(path_id_counts, end_string, which_annot_col) {
     name_file <- utils::tail(stringr::str_split(path_id_counts, "/")[[1]],
                              n = 1)
-    meta_counts <- readr::read_csv(path_id_counts, show_col_types = FALSE) %>%
+    readr::read_csv(path_id_counts, show_col_types = FALSE) %>%
       dplyr::filter(!is.na(.data$TaxonomyID)) %>%
       dplyr::select(.data$read_count, .data$TaxonomyID) %>%
-      dplyr::mutate(sample = stringr::str_remove(name_file, end_string))
+      dplyr::mutate(sample = stringr::str_remove(name_file, end_string)) %>%
+      return()
   }
 
 #' Create a multi-assay experiment from MetaScope output for usage with
@@ -91,14 +92,14 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #'
 #' Upon completion of the MetaScope pipeline, users can analyze and visualize
 #' abundances in their samples using the animalcules package. This function
-#' allows interoperability of metascope_id output with both animalcules and
-#' QIIME.
+#' allows interoperability of \code{metascope_id} output with both animalcules
+#' and QIIME.
 #'
 #' @param meta_counts A vector of filepaths to the counts ID CSVs output by
-#'   MetaScope
-#' @param annot_path The filepath to the CSV annotation file for the samples
+#'   \code{metascope_id()}.
+#' @param annot_path The filepath to the CSV annotation file for the samples.
 #' @param end_string The end string used at the end of the metascope_id files.
-#'   Default is ".filtered.metascope_id.csv"
+#'   Default is ".filtered.metascope_id.csv".
 #' @param which_annot_col The name of the column of the annotation file
 #'   containing the sample IDs. These should be the same as the
 #'   \code{meta_counts} root filenames.
@@ -107,12 +108,12 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #'   table, and the other is a specifically formatted mapping file of metadata
 #'   information. Default is \code{FALSE}.
 #' @param path_to_write Where should output animalcules and/or QIIME files be
-#'   written to? Should be a character string of the folder path. Default is
+#'   written? Should be a character string of the folder path. Default is
 #'   '.', i.e. the current working directory.
 #' @param NCBI_key (character) NCBI Entrez API key. optional. See
 #'   taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 #'   function will be less prone to errors if you obtain an NCBI key.
-#' @returns returns a multi-assay experiment file of combined sample counts data
+#' @returns Returns a multi-assay experiment file of combined sample counts data
 #'   and/or biom file and mapping file for analysis with QIIME. The multi-assay
 #'   experiment will have assays for the counts ("MGX"), log counts, CPM, and
 #'   log CPM.
@@ -122,12 +123,12 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #' @examples
 #' tempfolder <- tempfile()
 #' dir.create(tempfolder)
-#' 
+#'
 #' # Create three different samples
 #' samp_names <- c("X123", "X456", "X789")
 #' all_files <- file.path(tempfolder,
 #'                        paste0(samp_names, ".csv"))
-#' 
+#'
 #' create_IDcsv <- function (out_file) {
 #'   final_taxids <- c("273036", "418127", "11234")
 #'   final_genomes <- c(
@@ -148,7 +149,7 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #'   return(out_file)
 #' }
 #' out_files <- vapply(all_files, create_IDcsv, FUN.VALUE = character(1))
-#' 
+#'
 #' # Create annotation data for samples
 #' annot_dat <- file.path(tempfolder, "annot.csv")
 #' dplyr::tibble(Sample = samp_names, RSV = c("pos", "neg", "pos"),
@@ -156,7 +157,7 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #'               yrsold = c(0.5, 0.6, 0.2)) |>
 #'   utils::write.csv(file = annot_dat,
 #'                    row.names = FALSE)
-#' 
+#'
 #' # Convert samples to MAE
 #' outMAE <- convert_animalcules(meta_counts = out_files,
 #'                               annot_path = annot_dat,
@@ -165,7 +166,7 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #'                               qiime_biom_out = FALSE,
 #'                               path_to_write = tempfolder,
 #'                               NCBI_key = NULL)
-#' 
+#'
 #' unlink(tempfolder, recursive = TRUE)
 #'
 
@@ -200,7 +201,7 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
       dup_sp <- taxonomy_table$species[ind]
       for (this_sp in dup_sp) {
         all_ind <- which(taxonomy_table$species == this_sp)
-        counts_table[all_ind[1],] <- base::colSums(counts_table[all_ind,])
+        counts_table[all_ind[1], ] <- base::colSums(counts_table[all_ind, ])
       }
       counts_table %<>% dplyr::filter(!duplicated(taxonomy_table$species))
       taxonomy_table %<>% dplyr::filter(!duplicated(.data$species))

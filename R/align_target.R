@@ -100,10 +100,8 @@ combined_header <-
 #' function also outputs the new .bam filename.
 #'
 
-bam_reheader_R <- function(head,
-                           old_bam,
-                           new_bam = paste(tools::file_path_sans_ext(old_bam),
-                                           "h.bam", sep = "")) {
+bam_reheader_R <- function(head, old_bam, new_bam = paste(
+  tools::file_path_sans_ext(old_bam), "h.bam", sep = "")) {
   message("Reheading bam file")
   new_sam <- paste(tools::file_path_sans_ext(new_bam), ".sam", sep = "")
   new_sam_con <- file(new_sam, open = "w")
@@ -117,7 +115,8 @@ bam_reheader_R <- function(head,
   while (length(oneLine <- readLines(old_sam_con, n = 1, warn = FALSE)) > 0) {
     if (substr(oneLine, 1, 1) != "@") {
       writeLines(oneLine, new_sam_con)
-  }}
+    }
+  }
   close(new_sam_con)
   close(old_sam_con)
   file.remove(old_sam)
@@ -168,7 +167,7 @@ merge_bam_files <- function(bam_files, destination,
     lapply(unsortbam, unlink, force = TRUE, recursive = TRUE)
   } else {
     message("samtools not found on system. Merging files using Rsamtools.")
-    bam_files_h <- sam_files_h <- NULL
+    bam_files_h <- NULL
     for (i in seq_along(bam_files)) {
       new_bam_h <- bam_reheader_R(com_head, bam_files[i])
       bam_files_h <- c(bam_files_h, new_bam_h)
@@ -221,9 +220,11 @@ merge_bam_files <- function(bam_files, destination,
 #' @examples
 #' #### Align example reads to an example reference library using Rsubread
 #' \donttest{
-## Make and align to multiple reference libraries
+#' ## Create temporary directory
 #' target_ref_temp <- tempfile()
 #' dir.create(target_ref_temp)
+#'
+#' ## Download genome
 #' tax <- "Mycoplasma genitalium G37"
 #' all_ref <- MetaScope::download_refseq(tax,
 #'                                       reference = FALSE,
@@ -231,23 +232,31 @@ merge_bam_files <- function(bam_files, destination,
 #'                                       compress = TRUE,
 #'                                       out_dir = target_ref_temp
 #' )
+#'
+#' ## Create subread index
 #' ind_out <- mk_subread_index(all_ref)
-#' # Get path to example reads
+#'
+#' ## Get path to example reads
 #' readPath <- system.file("extdata", "reads.fastq",
 #'                         package = "MetaScope")
 #' ## Copy the example reads to the temp directory
 #' refPath <- file.path(target_ref_temp, "reads.fastq")
 #' file.copy(from = readPath, to = refPath)
+#'
+#' ## Modify alignment parameters object
 #' data("align_details")
 #' align_details[["type"]] <- "rna"
 #' align_details[["phredOffset"]] <- 50
 #' # Just to get it to align - toy example!
 #' align_details[["maxMismatches"]] <- 100
 #'
+#' ## Run alignment
 #' target_map <- align_target(refPath,
 #'                            libs = stringr::str_replace_all(tax, " ", "_"),
 #'                            lib_dir = target_ref_temp,
 #'                            subread_options = align_details)
+#'
+#' ## Remove temporary folder
 #' unlink(target_ref_temp, recursive = TRUE)
 #' }
 #'
@@ -298,7 +307,7 @@ align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
 
 #' Align microbiome reads to set of indexed Bowtie2 libraries
 #'
-#' This is the main MetaScope target library mapping function, using RBowtie2
+#' This is the main MetaScope target library mapping function, using Rbowtie2
 #' and multiple libraries. Aligns to each library separately, filters unmapped
 #' reads from each file, and then merges and sorts the .bam files from each
 #' library into one output file. If desired, output can be passed to
@@ -320,10 +329,10 @@ align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
 #'   default parameters that PathoScope 2.0 uses. NOTE: Users should pass all
 #'   their parameters as one string and if optional parameters are given then
 #'   the user is responsible for entering all the parameters to be used by
-#'   Bowtie2. NOTE: The only parameter that should NOT be specified here is the
-#'   threads.
+#'   Bowtie2. The only parameter that should NOT be specified here is the
+#'   number of threads.
 #' @param threads The number of threads that can be utilized by the function.
-#'   Default is 8 threads.
+#'   Default is 1 thread.
 #' @param overwrite Whether existing files should be overwritten. Default is
 #'   FALSE.
 #'
@@ -334,8 +343,11 @@ align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
 #' @examples
 #' #### Align example reads to an example reference library using Rbowtie2
 #'
+#' ## Create temporary directory to store file
 #' target_ref_temp <- tempfile()
 #' dir.create(target_ref_temp)
+#'
+#' ## Dowload reference genome
 #' MetaScope::download_refseq("Measles morbillivirus",
 #'                            reference = TRUE,
 #'                            representative = FALSE,
@@ -343,10 +355,11 @@ align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
 #'                            out_dir = target_ref_temp
 #' )
 #'
-#'
-#' # Create temp directory to store the indices
+#' ## Create temporary directory to store the indices
 #' index_temp <- tempfile()
 #' dir.create(index_temp)
+#'
+#' ## Create bowtie2 index
 #' MetaScope::mk_bowtie_index(
 #'   ref_dir = target_ref_temp,
 #'   lib_dir = index_temp,
@@ -354,12 +367,15 @@ align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
 #'   overwrite = TRUE
 #' )
 #'
+#' ## Create temporary directory for final file
 #' output_temp <- tempfile()
 #' dir.create(output_temp)
 #'
-#' # Get path to example reads
+#' ## Get path to example reads
 #' readPath <- system.file("extdata", "virus_example.fastq",
 #'                         package = "MetaScope")
+#'
+#' ## Align to target genomes
 #' target_map <-
 #'   MetaScope::align_target_bowtie(
 #'     read1 = readPath,
@@ -370,6 +386,7 @@ align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
 #'     overwrite = TRUE
 #'   )
 #'
+#' ## Remove extra folders
 #' unlink(target_ref_temp, recursive = TRUE)
 #' unlink(index_temp, recursive = TRUE)
 #' unlink(output_temp, recursive = TRUE)

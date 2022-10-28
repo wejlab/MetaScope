@@ -1,12 +1,10 @@
 BAM
 BiocParallel
-Biostrings
 Bowtie
 CPM
 DNAStringSet
 Demultiplex
 Demultiplexing
-EMconv
 ENTREZ
 Entrez
 FASTA
@@ -30,8 +28,6 @@ PathoScope
 Pre
 Preprint
 QIIME
-QualityScaledXStringSet
-RBowtie
 Rbowtie
 RefSeq
 Renviron
@@ -52,6 +48,7 @@ bp
 bt
 buildindex
 chidren
+convEM
 csv
 demultiplex
 demultiplexed
@@ -76,9 +73,6 @@ metatranscriptomic
 microbiome
 mk
 nBestLocations
-ncbi
-nih
-nlm
 nsubreads
 nthreads
 outpute
@@ -88,7 +82,6 @@ pathoscope
 phredOffset
 qiime
 rds
-refseq
 reheader
 reheaders
 rnames

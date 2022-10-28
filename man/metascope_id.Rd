@@ -10,8 +10,8 @@ metascope_id(
   aligner = "bowtie2",
   NCBI_key = NULL,
   out_file = paste0(tools::file_path_sans_ext(input_file), ".metascope_id.csv"),
-  EMconv = 1/10000,
-  EMmaxIts = 25,
+  convEM = 1/10000,
+  maxitsEM = 25,
   num_species_plot = NULL
 )
 }
@@ -32,11 +32,11 @@ enter the string as an input or set it as ENTREZ_KEY in .Renviron.}
 \item{out_file}{The name of the .csv output file. Defaults to the input_file
 basename plus ".metascope_id.csv".}
 
-\item{EMconv}{The convergence parameter of the EM algorithm. Default set at
+\item{convEM}{The convergence parameter of the EM algorithm. Default set at
 \code{1/10000}.}
 
-\item{EMmaxIts}{The maximum number of EM iterations, regardless of whether
-the EMconv is below the threshhold. Default set at \code{50}. If set at
+\item{maxitsEM}{The maximum number of EM iterations, regardless of whether
+the convEM is below the threshhold. Default set at \code{50}. If set at
 \code{0}, the algorithm skips the EM step and summarizes the .bam file 'as
 is'}
 
@@ -62,7 +62,7 @@ library/.bam files use NCBI accession names for reference names (rnames in
 file_temp <- tempfile()
 dir.create(file_temp)
 
-## Subread aligned bam file
+#### Subread aligned bam file
 
 ## Create object with path to filtered subread csv.gz file
 bamPath <- system.file("extdata","subread_target.filtered.csv.gz",
@@ -74,8 +74,7 @@ file.copy(bamPath, copied_csv)
 metascope_id(input_file = copied_csv, aligner = "subread",
              num_species_plot = 0, input_type = "csv.gz")
 
-## Bowtie 2 aligned .csv.gz file
-
+#### Bowtie 2 aligned .csv.gz file
 ## Create object with path to filtered bowtie2 bam file
 bamPath <- system.file("extdata","bowtie_target.filtered.csv.gz",
                        package = "MetaScope")

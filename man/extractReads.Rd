@@ -17,55 +17,57 @@ extractReads(
 }
 \arguments{
 \item{barcodeIndex}{Which barcode (integer number or index) in the barcodes
-or sample name to use for read extraction}
+or sample name to use for read extraction.}
 
 \item{barcodes}{A list of all barcodes in the sequencing dataset. Correlates
-and in same order as sampleNames}
+and in same order as \code{sampleNames}.}
 
-\item{sampleNames}{A list of sample names or identifiers associated with
-each barcode in the barcodes list}
+\item{sampleNames}{A list of sample names or identifiers associated with each
+barcode in the barcodes list.}
 
-\item{index}{A Biostrings::DNAStringSet that contains the read headers and
-barcode sequence for each header in the sequence slot}
+\item{index}{A \code{Biostrings::DNAStringSet} that contains the read headers
+and barcode sequence for each header in the sequence slot.}
 
-\item{reads}{A Biostrings::QualityScaledXStringSet that has the same
+\item{reads}{A \code{Biostrings::QualityScaledXStringSet} that has the same
 headers and order as the index file, but contains the read sequences and
-their quality scores}
+their quality scores.}
 
 \item{location}{A directory location to store the demultiplexed read files.
 Defaults to generate a new subdirectory at './demultiplex_fastq'}
 
-\item{rcBarcodes}{Should the barcode indexes in the barcodes list be
-reverse complemented to match the sequences in the index DNAStringSet?
-Defaults to TRUE}
+\item{rcBarcodes}{Should the barcode indices in the barcodes list be reverse
+complemented to match the sequences in the index DNAStringSet? Defaults to
+\code{TRUE}.}
 
 \item{hDist}{Uses a Hamming Distance or number of base differences to allow
 for inexact matches for the barcodes/indexes. Defaults to 0. Warning: if
 the Hamming Distance is >=1 and this leads to inexact index matches to more
 than one barcode, that read will be written to more than one demultiplexed
-read files}
+read files.}
 }
 \value{
 Writes a single .fastq file that contains all reads whose index
-matches the barcode specified. This file will be written to the location
-directory, and will be named based on the specified sampleName and barcode,
-e.g. './demultiplex_fastq/SampleName1_GGAATTATCGGT.fastq.gz'
+  matches the barcode specified. This file will be written to the location
+  directory, and will be named based on the specified sampleName and barcode,
+  e.g. './demultiplex_fastq/SampleName1_GGAATTATCGGT.fastq.gz'
 }
 \description{
 Helper function for demultiplexing sequencing reads, designed in a way to
-allow for parallelization across barcodes (parallel extraction of reads
-by barcode). This function takes a specific barcode (numeric index) from
-lists of sample names/barcodes, a Biostrings::DNAStringSet of barcodes by
-sequence header, and a Biostrings::QualityScaledXStringSet of reads
-corresponding to the barcodes. Based on the barcode index given, it
-extracts all reads for the indexed barcode and writes all the reads from
-that barcode to a separate .fastq file.
+allow for parallelization across barcodes (parallel extraction of reads by
+barcode). This function takes a specific barcode (numeric index) from lists
+of sample names/barcodes, a \code{Biostrings::DNAStringSet} of barcodes by
+sequence header, and a \code{Biostrings::QualityScaledXStringSet} of reads
+corresponding to the barcodes. Based on the barcode index given, it extracts
+all reads for the indexed barcode and writes all the reads from that barcode
+to a separate .fastq file.
 }
 \examples{
 
-## Load example barcode, index, and read data into R session:
+## Create temporary directory
 ref_temp <- tempfile()
 dir.create(ref_temp)
+
+## Load example barcode, index, and read data into R session
 barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
 bcFile <- read.table(barcodePath, sep = "\t", header = TRUE)
 
@@ -85,6 +87,7 @@ results <- extractReads(1, bcFile[, 2], bcFile[, 1], inds, reads,
 more_results <- lapply(1:6, extractReads, bcFile[, 2], bcFile[, 1], inds,
                        reads, rcBarcodes = FALSE, location = ref_temp)
 
+## Remove temporary directory
 unlink(ref_temp, recursive = TRUE)
 
 }
