@@ -12,7 +12,7 @@ align_target_bowtie(
   align_dir,
   align_file,
   bowtie2_options = NULL,
-  threads = 8,
+  threads = 1,
   overwrite = FALSE
 )
 }
@@ -61,33 +61,44 @@ genomes.
 \examples{
 #### Align example reads to an example reference library using Rbowtie2
 
-## Create a temporary directory to store reference library
-ref_temp <- tempfile()
-dir.create(ref_temp)
+target_ref_temp <- tempfile()
+dir.create(target_ref_temp)
+MetaScope::download_refseq("Measles morbillivirus",
+                           reference = TRUE,
+                           representative = FALSE,
+                           compress = TRUE,
+                           out_dir = target_ref_temp
+)
 
-## Create a temporary directory to store the reference library index files
-lib_temp <- tempfile()
-dir.create(lib_temp)
 
-## Create a temporary directory to store the bam file
-align_temp <- tempfile()
-dir.create(align_temp)
+# Create temp directory to store the indices
+index_temp <- tempfile()
+dir.create(index_temp)
+MetaScope::mk_bowtie_index(
+  ref_dir = target_ref_temp,
+  lib_dir = index_temp,
+  lib_name = "target",
+  overwrite = TRUE
+)
 
-## Create object with path to example reference library
-refPath <- system.file("extdata","target.fasta", package = "MetaScope")
+output_temp <- tempfile()
+dir.create(output_temp)
 
-## Copy the reference library to the temporary directory
-file.copy(from = refPath, to = file.path(ref_temp, "target.fasta"))
+# Get path to example reads
+readPath <- system.file("extdata", "virus_example.fastq",
+                        package = "MetaScope")
+target_map <-
+  MetaScope::align_target_bowtie(
+    read1 = readPath,
+    lib_dir = index_temp,
+    libs = "target",
+    align_dir = output_temp,
+    align_file = "bowtie_target",
+    overwrite = TRUE
+  )
 
-## Create the bowtie index files in the temporary index library directory
-mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "target",
-                overwrite = FALSE)
+unlink(target_ref_temp, recursive = TRUE)
+unlink(index_temp, recursive = TRUE)
+unlink(output_temp, recursive = TRUE)
 
-## Create object with path to the example reads
-readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
-
-## Align reads to the reference library
-align_target_bowtie(read1 = readPath, lib_dir = lib_temp,
-libs = "target", align_dir = align_temp, align_file = "bowtie_target",
-overwrite = TRUE)
 }

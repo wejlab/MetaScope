@@ -21,7 +21,8 @@ alignments will be written.}
 \item{YS}{yieldSize, an integer. The number of alignments to be read in from
 the bam file at once for chunked functions. Default is 100000.}
 
-\item{threads}{The number of threads to be used in filtering the bam file.}
+\item{threads}{The number of threads to be used in filtering the bam file.
+Default is 1.}
 
 \item{aligner}{The aligner which was used to create the bam file.}
 

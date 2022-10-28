@@ -1,62 +1,63 @@
-Package: MetaScope
 Type: Package
-Title: Tools and functions for preprocessing 16S and metagenomic sequencing microbiome data
-Version: 0.0.99
-Authors@R:
-  c(person(given = "Aubrey", family = "Odom-Mabey", role = c("aut", "cre"), email = "aodom@bu.edu",
+Package: MetaScope
+Title: Tools and functions for preprocessing 16S and metagenomic
+    sequencing microbiome data
+Version: 0.99.0
+Authors@R: c(
+    person("Aubrey", "Odom-Mabey", , "aodom@bu.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-7113-7598")),
-    person(given = "Rahul", family = "Varki", role = c("aut"),
-           email = "rvarki@bu.edu"),
-    person(given = "W. Evan", family = "Johnson", role = c("aut"),
-           email = "wej@bu.edu"))
-Description: This package contains the tools and methods for preprocessing microbiome data.
-    It contains tools for library generation, demultiplexing, alignment, and microbe identification.
-    Is is essentially an R translation of PathoScope 2.0, or MetaScope.
+    person("Rahul", "Varki", , "rvarki@bu.edu", role = "aut"),
+    person("W. Evan", "Johnson", , "wej@bu.edu", role = "aut",
+           comment = c(ORCID = "0000-0002-6247-6595")),
+    person("Howard", "Fan", , "hjfan@bu.edu", role = "ctb")
+  )
+Description: This package contains tools and methods for preprocessing
+    microbiome data. Functionality includes library generation,
+    demultiplexing, alignment, and microbe identification.  It is partly
+    an R translation of the PathoScope 2.0 pipeline.
 License: Artistic-2.0
-Encoding: UTF-8
-LazyData: false
+URL: https://github.com/compbiomed/metascope
+    https://compbiomed.github.io/metascope-docs/
+BugReports: https://github.com/compbiomed/MetaScope/issues
 Depends:
     R (>= 4.2.0)
 Imports:
     Biostrings,
-    tools,
-    Rsubread,
-    Rsamtools,
-    taxize,
-    BiocParallel,
-    dplyr,
-    Matrix,
-    qlcMatrix,
-    stringr,
-    rlang,
     data.table,
-    Rbowtie2,
-    magrittr,
-    MultiAssayExperiment,
-    S4Vectors,
-    SummarizedExperiment,
+    dplyr,
     ggplot2,
+    magrittr,
+    Matrix,
+    MultiAssayExperiment,
+    qlcMatrix,
+    Rbowtie2,
     readr,
-    tidyr
+    rlang,
+    Rsamtools,
+    S4Vectors,
+    stringr,
+    SummarizedExperiment,
+    taxize,
+    tidyr,
+    tools
 Suggests:
-    spelling,
     BiocStyle,
-    knitr,
-    rmarkdown,
-    testthat (>= 3.0.0),
     biomformat,
+    knitr,
     lintr,
-    usethis,
-    sys
-biocViews:
-    MicrobiomeData,
-    ReproducibleResearch,
-    SequencingData
-URL:
-  https://github.com/compbiomed/metascope
-  https://compbiomed.github.io/metascope-docs/
-VignetteBuilder: knitr
-RoxygenNote: 7.2.1
-BugReports: https://github.com/compbiomed/MetaScope/issues
+    rmarkdown,
+    Rsubread,
+    spelling,
+    sys,
+    testthat,
+    usethis
+Enhances:
+    BiocParallel
+VignetteBuilder: 
+    knitr
+BiocType: Software
+biocViews: MicrobiomeData, ReproducibleResearch, SequencingData
+Encoding: UTF-8
 Language: en-US
-Config/testthat/edition: 3
+LazyData: FALSE
+RoxygenNote: 7.2.1

@@ -25,66 +25,99 @@ editor_options:
   chunk_output_type: console
 ---
 
-## Quick note
+# Important Note
 
-MetaScope will fun faster and more efficiently if samtools is present on your device!
-You can download it at [http://www.htslib.org/](http://www.htslib.org/).
+Although it is not a requirement, MetaScope will fun faster and more efficiently for larger samples if the samtools package is present on your device. You can download it at <https://github.com/samtools/samtools>.
 
-## Introduction
+# Introduction
 
-MetaScope is a complete metagenomics profiling package that can accurately identify the composition of microbes at a strain-level resolution within a sample. MetaScope can be considered as an updated and expanded R translation of [PathoScope 2.0](https://microbiomejournal.biomedcentral.com/articles/10.1186/2049-2618-2-33), a Python-based metagenomic profiling package created by our lab. A few improvements made in MetaScope include using the BAM file format instead of the SAM file format for significantly less disk space usage, removing all dependencies to NCBI's now defunct GI sequence annotations, and properly filtering reads that align to filter reference genomes. Functions to analyze host microbiome data are also planned to be added in future updates to the package.
+MetaScope is a complete metagenomics profiling package that can accurately identify the composition of microbes within a sample at a strain-level resolution. MetaScope can be considered as an updated and expanded R translation of [PathoScope 2.0](https://microbiomejournal.biomedcentral.com/articles/10.1186/2049-2618-2-33), a Python-based metagenomic profiling package created by the Johnson lab. A few improvements made in MetaScope include using the BAM file format instead of the SAM file format for significantly less disk space usage, removing all dependencies to NCBI's now defunct GI sequence annotations, and properly filtering reads that align to filter reference genomes. Functions to analyze host microbiome data are also planned to be added in future updates to the package.
 
-The core functions within the package create a workflow that allows users to (1) obtain reference genomes for target and filter microbes; (2) make aligner-specific indexes from genomes; (3) align reads to target genomes; (4) filter reads aligning to filter genomes; (5) reassign ambiguously mapped reads to their likely correct microbe of origin. Due to the modular nature of the package, users can choose to either conduct all of their analysis or part of their analysis within the package depending on what data the user already has prior to using the package (for example if the user has already aligned their reads then they could skip functions (1),(2), and (3)). There are two types of workflows that can be done completely within the package: the Rbowtie2 and the Rsubread workflow. The Rbowtie2 and Rsubread workflows are essentially analogous to each other with the major difference being that functions (2),(3), and (4) differ by the aligner utilized. The Rbowtie2 functions utilize the [Bowtie2](https://www.nature.com/articles/nmeth.1923) aligner (Langmead 2012) whereas the [Rsubread](https://academic.oup.com/nar/article/47/8/e47/5345150) functions utilize the Rsubread aligner (Liao 2019). The nuances of how to use each function can be found by looking at each function's help manual (R command: ?[name of function]). For reference, PathoScope2.0 uses the Bowtie2 aligner in its workflow. 
+The core functions within the package create a workflow that allows users to:
 
-In this vignette, we will analyze the mock data provided in the package via the Rbowtie2 workflow. We will utilize all the core functions in sequential order, and mention of the equivalent Rsubread function will be provided whenever an Rbowtie2 function is being used.   
+1.  Obtain reference genomes for target and filter microbes;
+2.  Make aligner-specific indexes from genomes;
+3.  Align reads to target genomes;
+4.  Filter reads aligning to filter genomes;
+5.  Reassign ambiguously mapped reads to their likely correct microbe of origin.
 
-## Data
+Due to the modular nature of the package, users can choose to either conduct all of their analysis or part of their analysis within the package. This is dependent on what data the user already has prior to using the package --- for example, if the user has already aligned their reads then they could skip functions (1), (2), and (3).
 
-The mock data provided in the package consists of simulated sequencing data generated from SAMtools wgsim function (see DATA_README.txt in inst/extdata to see exact commands). The wgsim function is a tool which allows for the generation of FASTQ reads from a reference genome (FASTA). The mock data (reads.fastq) contains 1500 reads of which 1000 reads are derived from the Staphylococcus aureus RF122 strain and the remaining 500 reads are derived from Staphylococcus epidermidis RP62A strain. In this data set, we assume that the Staphylococcus aureus RF122 reads are the reads of interest and the Staphylococcus epidermidis RP62A reads are known contaminant reads which should be removed during the analysis. Ideally, the  microbial composition report (.csv) produced at the end of the analysis should contain only reads assigned to the Staphylococcus aureus RF122 strain.
+There are two types of workflows that are included in the package: the Rbowtie2 and the Rsubread workflow. The Rbowtie2 and Rsubread workflows are essentially analogous to each other, with the major difference being that functions (2), (3), and (4) differ by the aligner utilized. The Rbowtie2 functions utilize the [Bowtie2](https://www.nature.com/articles/nmeth.1923) aligner (Langmead 2012) whereas the [Rsubread](https://academic.oup.com/nar/article/47/8/e47/5345150) functions utilize the Rsubread aligner (Liao 2019). The nuances of how to use each function can be found by looking at each function's help manual (R command: `?<name of function>`). For reference, PathoScope2.0 uses the Bowtie2 aligner in its workflow.
 
-## Reference Genome Library
+In this vignette, we will analyze the mock data provided in the package via the Rbowtie2 workflow. We will utilize all the core functions in sequential order. We will make mention of the equivalent Rsubread function whenever an Rbowtie2 function is being used.
+
+## Installation
+
+In order to install MetaScope from GitHub, run the following code:
+
+```{R, eval = FALSE}
+if (!requireNamespace("devtools", quietly = TRUE))
+  install.packages("devtools")
+devtools::install_github("compbiomed/MetaScope")
+```
+
+```{R}
+suppressPackageStartupMessages({
+  library(MetaScope)
+  library(magrittr)
+})
+NCBI_key <- "01d22876be34df5c28f4aedc479a2674c809"
+options("ENTREZ_KEY" = NCBI_key)
+```
+
+# Data
+
+The mock data provided in the package consists of simulated sequencing data generated from the `SAMtools` `wgsim` function (see `DATA_README.txt` in `inst/extdata` to see exact commands). The `wgsim` function is a tool which allows for the generation of FASTQ reads from a reference genome (FASTA). The mock data (`reads.fastq`) contains 1500 reads, of which 1000 reads are derived from the *Staphylococcus aureus* RF122 strain and 500 reads are derived from the *Staphylococcus epidermidis* RP62A strain. In this data set, we assume that the *S. aureus* RF122 reads are the reads of interest, and the *S. epidermidis* RP62A reads are known contaminant reads which should be removed during the analysis. Ideally, the microbial composition report (.csv) produced at the end of the analysis should contain only reads assigned to the *S. aureus* RF122 strain.
+
+# Reference Genome Library
 
 The MetaScope genome library workflow is designed to assist with collection of sequence data from the National Center for Biotechnology Information (NCBI) nucleotide database. Prior to doing so, the potential targets and filters for the analysis should be identified. That is, what "target" species do you expect to find in your metagenomic sample that you would like to identify, and what reads would you like to "filter" out from the data that are not essential to your analysis?
 
-Typically, the targets of the analysis are microbes (that is, viruses, bacteria, and fungi), and we wish to filter out or discard any reads from the host in addition to artificially added sequences, such as PhiX174. Following identification of the targets and filters, we use a reference genome library to align the vast number of sample reads back to the respective regions of origin in various species.
+Typically, the targets of the analysis are microbes (that is, viruses, bacteria, and fungi), and we wish to filter out or discard any reads from the host in addition to artificially added sequences, such as Phi X 174. Following identification of the targets and filters, we use a reference genome library to align the vast number of sample reads back to the respective regions of origin in various species.
 
 The `download_refseq()` function automatically extracts custom reference genome libraries in a FASTA file for microbial or host genomes. The user must first indicate a taxon for which to download the genomes, such as 'bacteria' or 'primates'. A table of possible entries can be viewed by accessing the `taxonomy_table` object. The user may then specify whether they wish to download only the RefSeq reference genomes, or both the reference and representative genomes. The compress option then allows users to specify whether to compress the output FASTA file; this is done by default.
 
-### Downloading target genomes
-Even though in this scenario we know exactly where the reads in the mock data (reads.fastq) originate from, in most cases we only have a general idea of where our reads may originate from. Therefore, in the following code, we will download the genome of the Staphylococcus aureus RF122 strain along with the genomes of five other closely related Staphylococcus aureus strains from the NCBI RefSeq database. These genomes together will act as our target genome library. 
+## Downloading target genomes
 
-```{R target lib, eval = FALSE, warning = FALSE}
-## Code block not run
+Even though in this scenario we know exactly from where the reads in the mock data (`reads.fastq`) originate, in most cases we may only have a general idea of read origins. Therefore, in the following code, we will download the genome of the *Staphylococcus aureus* RF122 strain along with the genomes of a few other closely related *Staphylococcus aureus* strains from the NCBI RefSeq database. These genomes together will act as our target genome library.
+
+```{R target lib, eval = TRUE, warning = FALSE, message = FALSE}
+target_ref_temp <- tempfile()
+dir.create(target_ref_temp)
 
 all_species <- c("Staphylococcus aureus RF122",
                  "Staphylococcus aureus subsp. aureus ST398",
-                 "Staphylococcus aureus subsp. aureus N315",
-                 "Staphylococcus aureus subsp. aureus Mu50",
-                 "Staphylococcus aureus subsp. aureus Mu3",
-                 "Staphylococcus aureus subsp. aureus str. Newman")
-sapply(all_species, MetaScope::download_refseq, 
-       reference = FALSE, representative = FALSE, compress = FALSE)
+                 "Staphylococcus aureus subsp. aureus Mu3")
+sapply(all_species, download_refseq, 
+       reference = FALSE, representative = FALSE, compress = TRUE,
+       out_dir = target_ref_temp)
 ```
 
-### Downloading filter genomes
-We will also download the genome of the Staphylococcus epidermidis RP62A strain from the NCBI nucleotide database, in an uncompressed FASTA format. This genome will act as our filter library.  
+## Downloading filter genomes
 
-```{R filter lib, eval = FALSE, warning = FALSE}
-## Code block not run
-MetaScope::download_refseq(
+We will also download the genome of the *Staphylococcus epidermidis* RP62A strain from the NCBI nucleotide database, in an uncompressed FASTA format. This genome will act as our filter library.
+
+```{R filter lib, warning = FALSE, message = FALSE}
+filter_ref_temp <- tempfile()
+dir.create(filter_ref_temp)
+
+download_refseq(
   taxon = "Staphylococcus epidermidis RP62A",
-  representative = FALSE,
-  reference = FALSE,
-  compress = FALSE)
+  representative = FALSE, reference = FALSE,
+  compress = TRUE, out_dir = filter_ref_temp)
 ```
 
-## Demultiplex
+# Demultiplex
 
-Sequence runs on NGS instruments are typically carried out with multiple samples pooled together. An index tag (also called a barcode) consisting of a unique sequence of between 6 and 12bp is added to each sample so that the sequence reads from different samples can be identified. For 16s experiments or sequencing conducted using an Illumina machine, the process of demultiplexing (dividing your sequence reads into separate files for each index tag/sample) and generating the fastq data files required for downstream analysis can be done using the MetaScope demultiplexing workflow. This consists of the `demultiplex()` function, which takes as arguments a matrix of sample names/barcodes, a FASTQ file of barcodes by sequence header, and a FASTQ file of reads corresponding to the barcodes. Based on the barcodes given, the function extracts all reads for the indexed barcode and writes all the reads from that barcode to separate FASTQ files. 
+Sequence runs on NGS instruments are typically carried out with multiple samples pooled together. An index tag (also called a barcode) consisting of a unique sequence of between 6 and 12bp is added to each sample so that the sequence reads from different samples can be identified. For 16s experiments or sequencing conducted using an Illumina machine, the process of demultiplexing (dividing your sequence reads into separate files for each index tag/sample) and generating the FASTQ data files required for downstream analysis can be done using the MetaScope demultiplexing workflow. This consists of the `demultiplex()` function, which takes as arguments a matrix of sample names/barcodes, a FASTQ file of barcodes by sequence header, and a FASTQ file of reads corresponding to the barcodes. Based on the barcodes given, the function extracts all reads for the indexed barcode and writes all the reads from that barcode to separate FASTQ files.
 
-This is an optional step in the analysis process depending on whether your reads are multiplexed. The reads which we are currently trying to analyze are not multiplexed and therefore this step is skipped in our analysis. The example shown below is using different reads that are barcoded in order to show the utility of the function. 
+This is an optional step in the analysis process depending on whether your reads are multiplexed. The reads which we are currently trying to analyze are not multiplexed and therefore this step is skipped in our analysis. The example shown below is using different reads that are barcoded in order to show the utility of the function.
 
-```{R demultiplex, eval = TRUE, warning = FALSE, message = FALSE}
+```{R demultiplex, message = FALSE}
+loc_temp <- tempfile()
+dir.create(loc_temp)
+
 # Get barcode, index, and read data locations
 barcodePath <-
   system.file("extdata", "barcodes.txt", package = "MetaScope")
@@ -95,53 +128,40 @@ readPath <-
 
 # Get barcode, index, and read data locations
 demult <-
-  MetaScope::demultiplex(barcodePath,
-                         indexPath,
-                         readPath,
-                         rcBarcodes = FALSE,
-                         hammingDist = 2)
+  demultiplex(barcodePath,
+              indexPath,
+              readPath,
+              rcBarcodes = FALSE,
+              hammingDist = 2,
+              location = loc_temp)
+demult
+
+unlink(loc_temp)
 ```
 
-## Alignment with Reference Libraries
+# Alignment with Reference Libraries
 
-After acquiring the target and filter genome libraries, we then take the sequencing reads from our sample and map them first to the target library and then to the filter library. MetaScope's Rbowtie2 mapping function utilizes the [Bowtie2](https://www.nature.com/articles/nmeth.1923) aligner (Langmead 2012) which maps reads to a reference genome using a full-text minute index based approach. Essentially, the algorithm extracts substrings which are referred to as "seeds" from the reads and aligns them to the reference genomes with the assistance from the full-text minute index. Seed alignments to the reference genomes are prioritized and then finally extended into full alignments using dynamic programming. 
+After acquiring the target and filter genome libraries, we then take the sequencing reads from our sample and map them first to the target library and then to the filter library. MetaScope's Rbowtie2 mapping function utilizes the [Bowtie2](https://www.nature.com/articles/nmeth.1923) aligner (Langmead 2012) which maps reads to a reference genome using a full-text minute index based approach. Essentially, the algorithm extracts substrings which are referred to as "seeds" from the reads and aligns them to the reference genomes with the assistance from the full-text minute index. Seed alignments to the reference genomes are prioritized and then finally extended into full alignments using dynamic programming.
 
-The MetaScope Rbowtie2 mapping workflow incorporates three functions - `mk_bowtie_index()`, `align_target_bowtie()`, and `filter_host_bowtie()` (analogous Rsubread mapping workflow also incorporates three functions - `mk_subread_index()`, `align_target()`, and `filter_host`). First, we use `mk_bowtie_index()`, a wrapper for the `Rbowtie2::bowtie2_build` function, to generate Bowtie2 compatible indexes from the reference genomes that were previously downloaded. The target and reference genome files (.fasta or .fasta.gz extension) must be placed into their own separate empty directories prior to using the function. This is due to the fact that the function will attempt to build the indexes from all the files present in the directory. The function will give an error if other files (other than .fasta or .fasta.gz) are present in the directory. Depending on the combined size of the reference genomes, the function will automatically create either small (.bt2) or large (.bt2l) Bowtie2 indexes.  
+The MetaScope Rbowtie2 mapping workflow incorporates three functions - `mk_bowtie_index()`, `align_target_bowtie()`, and `filter_host_bowtie()` (analogous Rsubread mapping workflow also incorporates three functions - `mk_subread_index()`, `align_target()`, and `filter_host`). First, we use `mk_bowtie_index()`, a wrapper for the `Rbowtie2::bowtie2_build` function, to generate Bowtie2 compatible indexes from the reference genomes that were previously downloaded. The target and reference genome files (.fasta or .fasta.gz extension) must be placed into their own separate empty directories prior to using the function. This is due to the fact that the function will attempt to build the indexes from all the files present in the directory. The function will give an error if other files (other than .fasta or .fasta.gz) are present in the directory. Depending on the combined size of the reference genomes, the function will automatically create either small (.bt2) or large (.bt2l) Bowtie2 indexes.
 
-The target and filter reference genomes downloaded in the previous step have been combined and renamed to target.fasta and filter.fasta respectively for convenience. These are the files from which the Bowtie2 indexes will be made from. 
+The target and filter reference genomes downloaded in the previous step have been combined and renamed to target.fasta and filter.fasta respectively for convenience. These are the files from which the Bowtie2 indexes will be made from.
 
-```{R make indexes, eval = TRUE, warning = FALSE, message = FALSE, results = FALSE}
-
-# Create temp directory to store the Bowtie2 indexes
+```{R makeindexes, eval = TRUE}
+# Create temp directory to store the Bowtie2 indices
 index_temp <- tempfile()
 dir.create(index_temp)
 
-# Copy the target reference file provided in package to a temp directory
-target_ref_temp <- tempfile()
-dir.create(target_ref_temp)
-target_refPath <-
-  system.file("extdata", "target.fasta", package = "MetaScope")
-file.copy(from = target_refPath,
-          to = file.path(target_ref_temp, "target.fasta"))
-
 # Create target index
-MetaScope::mk_bowtie_index(
+mk_bowtie_index(
   ref_dir = target_ref_temp,
   lib_dir = index_temp,
   lib_name = "target",
   overwrite = TRUE
 )
 
-# Copy the filter reference file provided in package to a temp directory
-filter_ref_temp <- tempfile()
-dir.create(filter_ref_temp)
-filter_refPath <-
-  system.file("extdata", "filter.fasta", package = "MetaScope")
-file.copy(from = filter_refPath,
-          to = file.path(filter_ref_temp, "filter.fasta"))
-
 # Create filter index
-MetaScope::mk_bowtie_index(
+mk_bowtie_index(
   ref_dir = filter_ref_temp,
   lib_dir = index_temp,
   lib_name = "filter",
@@ -150,11 +170,11 @@ MetaScope::mk_bowtie_index(
 
 ```
 
-Following index creation, we will use the Bowtie2 aligner to map the reads to the target genomes with the `align_target_bowtie()` function (Rsubread equivalent: `align_target()`). The function takes as an input the location of the FASTQ file to align, the directory where the indexes are stored, the names of the indexes to align against, the directory where the BAM file should be written, and the basename of the output BAM file. In practice, `align_target_bowtie()` maps reads to each target library separately, removes the unmapped reads from each file, and finally merges and sorts by chromosome the BAM files from each library into a single output file (same with `align_target`). If SAMtools is installed on the machine and can be found by the Sys.which("samtools") R command, the BAM file will be directly created, otherwise an intermediate SAM file will be created prior to the creation of the BAM file which could potentially create issues if the SAM file is large and there is limited disk space. The default alignment parameters are the same as PathoScope 2.0's default alignment parameters, but users can provide their own Bowtie2 alignment settings if desired.    
+Following index creation, we will use the Bowtie2 aligner to map the reads to the target genomes with the `align_target_bowtie()` function (Rsubread equivalent: `align_target()`). The function takes as an input the location of the FASTQ file to align, the directory where the indexes are stored, the names of the indexes to align against, the directory where the BAM file should be written, and the basename of the output BAM file. In practice, `align_target_bowtie()` maps reads to each target library separately, removes the unmapped reads from each file, and finally merges and sorts by chromosome the BAM files from each library into a single output file (same with `align_target`). If SAMtools is installed on the machine and can be found by the `Sys.which("samtools")` R command, the BAM file will be directly created, otherwise an intermediate SAM file will be created prior to the creation of the BAM file which could potentially create issues if the SAM file is large and there is limited disk space. The default alignment parameters are the same as PathoScope 2.0's default alignment parameters, but users can provide their own Bowtie 2 alignment settings if desired.
 
-We will now align the sample reads (reads.fastq) to the target reference genomes using the Bowtie2 indexes that we just built.
+We will now align the sample reads (reads.fastq) to the target reference genomes using the Bowtie 2 indexes that we just built.
 
-```{R alignment align, eval = TRUE, warning = FALSE, message = FALSE, results = FALSE}
+```{R alignment align}
 
 # Create a temp directory to store output bam file
 output_temp <- tempfile()
@@ -166,7 +186,7 @@ readPath <-
 
 # Align reads to the target genomes
 target_map <-
-  MetaScope::align_target_bowtie(
+  align_target_bowtie(
     read1 = readPath,
     lib_dir = index_temp,
     libs = "target",
@@ -174,15 +194,14 @@ target_map <-
     align_file = "bowtie_target",
     overwrite = TRUE
   )
-                           
 ```
 
-The last step in the mapping workflow is to filter the previously outputted BAM file according to the reference genome for the filter/host species. Although we have already filtered out any unmapped reads, which may belong to one or more host species or otherwise, there may still remain some sort of unwelcome contamination in the data from the filter species, which we wish to remove. To do this, we employ `filter_host_bowtie()`(Rsubread equivalent: `filter_host()`), which takes as an input the location of the BAM file created from `align_target_bowtie()`, the directory where the indexes are stored, and the names of the filter indexes to align against, to produce a sorted BAM file with any reads that match the filter libraries removed. We will then use this final BAM file downstream for further analysis.
+The last step in the mapping workflow is to filter the output BAM file according to the reference genome for the filter/host species. Although we have already filtered out any unmapped reads, which may belong to one or more host species or otherwise, there may still remain some sort of unwelcome contamination in the data from the filter species which we wish to remove. To do this, we employ `filter_host_bowtie()` (Rsubread equivalent: `filter_host()`), which takes as an input the location of the BAM file created from `align_target_bowtie()`, the directory where the indexes are stored, and the names of the filter indexes to align against, to produce a sorted BAM file with any reads that match the filter libraries removed. We will then use this final BAM file downstream for further analysis.
 
-```{R alignment filter, eval = TRUE, warning = FALSE, message = FALSE, results = FALSE}
+```{R alignment filter}
 
 final_map <-
-  MetaScope::filter_host_bowtie(
+  filter_host_bowtie(
     reads_bam = target_map,
     lib_dir = index_temp,
     libs = "filter",
@@ -195,9 +214,9 @@ final_map <-
 
 ```
 
-Prior to the last step in the analysis, we will look at the primary alignments of the mapped reads in the filtered BAM file that we just created using the `filter_host_bowtie()` function. According to the [Bowtie2 manual](http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml), a primary alignment is described as the alignment that received the highest alignment score among all alignments for that read. When looking at the primary alignments of the mapped reads, we can see that the majority of reads have mapped to the correct Staphylococcus aureus RF122 strain. However, some residual reads have primary alignments to the other Staphylococcus aureus strains which are incorrect. If we were to stop the analysis at this point, we could potentially be lead to believe that our sample has increased microbial diversity when in actuality it does not. 
+Prior to the last step in the analysis, we will look at the primary alignments of the mapped reads in the filtered BAM file that we just created using the `filter_host_bowtie()` function. According to the [Bowtie2 manual](http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml), a primary alignment is described as the alignment that received the highest alignment score among all alignments for that read. When looking at the primary alignments of the mapped reads, we can see that the majority of reads have mapped to the correct *Staphylococcus aureus* RF122 strain. However, some residual reads have primary alignments to the other *S. aureus* strains which are incorrect. If we were to stop the analysis at this point, we could potentially be lead to believe that our sample has increased microbial diversity, when it actually does not.
 
-```{R bam primary alignment, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+```{R bam primary alignment}
 
 bamFile <- Rsamtools::BamFile(final_map)
 
@@ -211,19 +230,19 @@ aln <- Rsamtools::scanBam(bamFile, param = param)
 accession_all <- aln[[1]]$rname
 unique_accession_all <- unique(accession_all)
 accession_all_inds <- match(accession_all, unique_accession_all)
-unique_accession_taxid <-
-  suppressMessages(taxize::genbank2uid(unique_accession_all, batch_size = length(unique_accession_all)))
-unique_accession_genome_name <-
-  vapply(unique_accession_taxid, function(x)
-    attr(x, "name"), character(1))
-genome_name_all <- unique_accession_genome_name[accession_all_inds]
-genome_name_all <- gsub(',.*', '', genome_name_all)
-genome_name_all <- gsub("(ST398).*", "\\1", genome_name_all)
-genome_name_all <- gsub("(N315).*", "\\1", genome_name_all)
-genome_name_all <- gsub("(Newman).*", "\\1", genome_name_all)
-genome_name_all <- gsub("(Mu3).*", "\\1", genome_name_all)
-genome_name_all <- gsub("(Mu50).*", "\\1", genome_name_all)
-genome_name_all <- gsub("(RF122).*", "\\1", genome_name_all)
+unique_accession_genome_name <- suppressMessages(
+  taxize::genbank2uid(unique_accession_all,
+                      batch_size = length(unique_accession_all))) %>%
+  vapply(function(x) attr(x, "name"), character(1))
+
+genome_name_all <- unique_accession_genome_name[accession_all_inds] %>%
+  gsub(',.*', '', .) %>%
+  gsub("(ST398).*", "\\1", .) %>%
+  gsub("(N315).*", "\\1", .) %>%
+  gsub("(Newman).*", "\\1", .) %>%
+  gsub("(Mu3).*", "\\1", .) %>%
+  gsub("(Mu50).*", "\\1", .) %>%
+  gsub("(RF122).*", "\\1", .)
 read_count_table <- sort(table(genome_name_all), decreasing = TRUE)
 knitr::kable(
   read_count_table,
@@ -231,9 +250,9 @@ knitr::kable(
 
 ```
 
-We can also look at the secondary alignments of the mapped reads within our filtered BAM file. A secondary alignment occurs when a read maps to multiple different genomes. We can see that the majority of our secondary alignments are to the other Staphylococcus aureus strains, which makes sense considering that the majority of the primary alignments were to the correct Staphylococcus aureus RF122 strain.  
+We can also look at the secondary alignments of the mapped reads within our filtered BAM file. A secondary alignment occurs when a read maps to multiple different genomes. We can see that the majority of our secondary alignments are to the other Staphylococcus aureus strains, which makes sense considering that the majority of the primary alignments were to the correct Staphylococcus aureus RF122 strain.
 
-```{R bam secondary alignment, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+```{R bam secondary alignment}
 
 bamFile <- Rsamtools::BamFile(final_map)
 
@@ -267,22 +286,21 @@ knitr::kable(
 
 ```
 
+# Genome Identification
 
-## Genome Identification
+Following the proper alignment of a sample to all target and filter libraries of interest, we may proceed in identifying which genomes are most likely to be represented in the sample. This identification workflow is the core of MetaScope; it features a Bayesian read reassignment model which dramatically improves specificity and sensitivity over other methods (Francis et. al 2013). This is because such a method identifies reads with unique alignments and uses them to guide the reassignment of reads with ambiguous alignments.
 
-Following the proper alignment of a sample to all target and filter libraries of interest, we may proceed in identifying which genomes are most likely to be represented in the sample. This identification workflow is the core of MetaScope; it features a Bayesian read reassignment model which dramatically improves specificity and sensitivity over other methods (Francis et. al 2013). This is because such a method identifies reads with unique alignments and uses them to guide the reassignment of reads with ambiguous alignments. 
+The identification workflow consists of a single function, `MetaScope_ID()`, which reads in a .bam file, annotates the taxonomy and genome names, reduces the mapping ambiguity using a mixture model, and outputs a .csv file with the results. Currently, it assumes that the genome library/.bam files use NCBI accession names for reference names.
 
-The identification workflow consists of a single function, `MetaScope_ID()`, which reads in a .bam file, annotates the taxonomy and genome names, reduces the mapping ambiguity using a mixture model, and outputs a .csv file with the results. Currently, it assumes that the genome library/.bam files use NCBI accession names for reference names. 
-
-```{R identification, eval = TRUE, warning = FALSE, message = FALSE, results = FALSE}
-MetaScope::metascope_id(final_map, input_type = "bam", 
+```{R identification, message = FALSE}
+metascope_id(final_map, input_type = "bam", 
                         # change input_type to "csv.gz" when not creating a BAM
                         aligner = "bowtie2", num_species_plot = 0)
 ```
 
 We will now look at the read reassignment results reported in the output CSV file.
 
-```{R CSV summary, eval = TRUE, warning = FALSE, message = FALSE, echo = FALSE}
+```{R CSV summary}
 relevant_col <- read.csv(paste0(tools::file_path_sans_ext(final_map),
                                 ".metascope_id.csv"))[,2:4]
 
@@ -294,12 +312,13 @@ relevant_col |>
                 Genome = stringr::str_replace_all(Genome, "(Mu3).*", "\\1"),
                 Genome = stringr::str_replace_all(Genome, "(RF122).*", "\\1")) |>
   knitr::kable()
+unlink(".bowtie2.cerr.txt")
 ```
 
-We can see that the read reassignment function has reassigned the majority of the ambiguous alignments back to the Staphylococcus aureus RF122 strain, the correct strain of origin.
+We can see that the read reassignment function has reassigned the majority of the ambiguous alignments back to the *Staphylococcus aureus* RF122 strain, the correct strain of origin.
 
 # Session Info
+
 ```{r session info}
 sessionInfo()
-
 ```

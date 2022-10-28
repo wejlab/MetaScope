@@ -13,7 +13,7 @@ filter_host_bowtie(
   output = paste(tools::file_path_sans_ext(reads_bam), "filtered", sep = "."),
   bowtie2_options = NULL,
   YS = 1e+05,
-  threads = 8,
+  threads = 1,
   overwrite = FALSE
 )
 }
@@ -38,12 +38,11 @@ basename of \code{unfiltered_bam} + \code{.filtered} + extension.}
 
 \item{bowtie2_options}{Optional: Additional parameters that can be passed to
 the filter_host_bowtie() function. To see all the available parameters use
-Rbowtie2::bowtie2_usage(). Default parameters are the parameters are the
-default parameters that PathoScope 2.0 uses. NOTE: Users should pass all
-their parameters as one string and if optional parameters are given then
-the user is responsible for entering all the parameters to be used by
-Bowtie2. NOTE: The only parameters that should NOT be specified here is the
-threads.}
+Rbowtie2::bowtie2_usage(). Default parameters are --very-sensitive-local -k
+100 --score-min L,20,1.0. NOTE: Users should pass all their parameters as
+one string and if optional parameters are given then the user is
+responsible for entering all the parameters to be used by Bowtie2.
+The only parameters that should NOT be specified here is the threads.}
 
 \item{YS}{yieldSize, an integer. The number of alignments to be read in from
 the bam file at once for chunked functions. Default is 100000.}
@@ -78,34 +77,47 @@ with \code{metascope_id()}.
 #### Filter reads from bam file that align to any of the filter libraries
 
 ## Assuming a bam file has already been created with align_target_bowtie()
+# Create temporary filter library
+filter_ref_temp <- tempfile()
+dir.create(filter_ref_temp)
 
-## Create a temporary directory to store the filter library
-ref_temp <- tempfile()
-dir.create(ref_temp)
+MetaScope::download_refseq("Zaire ebolavirus",
+                           reference = FALSE,
+                           representative = FALSE,
+                           compress = TRUE,
+                           out_dir = filter_ref_temp
+)
 
-## Create a temporary directory to store the filter library index files
-lib_temp <- tempfile()
-dir.create(lib_temp)
+# Create temp directory to store the indices
+index_temp <- tempfile()
+dir.create(index_temp)
 
-## Create a temporary directory to store the filtered bam file
-align_temp <- tempfile()
-dir.create(align_temp)
+MetaScope::mk_bowtie_index(
+  ref_dir = filter_ref_temp,
+  lib_dir = index_temp,
+  lib_name = "filter",
+  overwrite = TRUE
+)
 
-## Create object with path to previously created bam file
-bamPath <- system.file("extdata", "bowtie_target.bam", package = "MetaScope")
+output_temp <- tempfile()
+dir.create(output_temp)
 
-## Create object with path to the filter library
-refPath <- system.file("extdata","filter.fasta", package = "MetaScope")
+# Get path to example bam
+bamPath <- system.file("extdata", "bowtie_target.bam",
+                       package = "MetaScope")
+target_copied <- file.path(output_temp, "bowtie_target.bam")
+file.copy(bamPath, target_copied)
 
-## Move the filter library to the temporary reference directory
-file.copy(from = refPath, to = file.path(ref_temp, "filter.fasta"))
+filter_out <-
+  filter_host_bowtie(
+    reads_bam = target_copied,
+    lib_dir = index_temp,
+    libs = "filter",
+    threads = 1
+  )
 
-## Create the bowtie index files in the temporary index directory
-mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "filter",
-                overwrite=FALSE)
-
-## Filter reads from the bam file that align to the filter library
-filter_host_bowtie(reads_bam = bamPath, lib_dir = lib_temp,
-                   libs = "filter", threads = 1)
+unlink(filter_ref_temp, recursive = TRUE)
+unlink(index_temp, recursive = TRUE)
+unlink(output_temp, recursive = TRUE)
 
 }

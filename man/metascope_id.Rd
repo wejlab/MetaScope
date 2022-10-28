@@ -18,17 +18,16 @@ metascope_id(
 \arguments{
 \item{input_file}{The .bam or .rds file that needs to be identified.}
 
-\item{input_type}{Extension of file input. Should be either "bam" or "csv.gz".
-Default is "csv.gz".}
+\item{input_type}{Extension of file input. Should be either "bam" or
+"csv.gz". Default is "csv.gz".}
 
 \item{aligner}{The aligner which was used to create the bam file. Default is
 "bowtie2" but can also be set to "subread" or "other".}
 
-\item{NCBI_key}{(character) NCBI Entrez API key. optional.
-See taxize::use_entrez(). Due to the high number of
-requests made to NCBI, this function will be less prone to errors
-if you obtain an NCBI key.
-You may enter the string as an input or set it as ENTREZ_KEY in .Renviron.}
+\item{NCBI_key}{(character) NCBI Entrez API key. optional. See
+taxize::use_entrez(). Due to the high number of requests made to NCBI, this
+function will be less prone to errors if you obtain an NCBI key. You may
+enter the string as an input or set it as ENTREZ_KEY in .Renviron.}
 
 \item{out_file}{The name of the .csv output file. Defaults to the input_file
 basename plus ".metascope_id.csv".}
@@ -37,58 +36,56 @@ basename plus ".metascope_id.csv".}
 \code{1/10000}.}
 
 \item{EMmaxIts}{The maximum number of EM iterations, regardless of whether
-the EMconv is below the threshhold. Default set at \code{50}.
-If set at \code{0}, the algorithm skips the EM step and summarizes the .bam
-file 'as is'}
+the EMconv is below the threshhold. Default set at \code{50}. If set at
+\code{0}, the algorithm skips the EM step and summarizes the .bam file 'as
+is'}
 
 \item{num_species_plot}{The number of genome coverage plots to be saved.
-Default is \code{NULL}, which saves coverage plots for the ten most
-highly abundant species.}
+Default is \code{NULL}, which saves coverage plots for the ten most highly
+abundant species.}
 }
 \value{
-This function returns a .csv file with annotated read counts to genomes with
-mapped reads. The function itself returns the output .csv file name.
+This function returns a .csv file with annotated read counts to
+  genomes with mapped reads. The function itself returns the output .csv file
+  name.
 }
 \description{
-This function will read in a .bam or .rds file, annotate the taxonomy and genome
-names, reduce the mapping ambiguity using a mixture model, and output a
-.csv file with the results. Currently, it assumes that the genome
+This function will read in a .bam or .rds file, annotate the taxonomy and
+genome names, reduce the mapping ambiguity using a mixture model, and output
+a .csv file with the results. Currently, it assumes that the genome
 library/.bam files use NCBI accession names for reference names (rnames in
 .bam file).
 }
 \examples{
 #### Align reads to reference library and then apply metascope_id()
-
 ## Assuming filtered bam files already exist
+file_temp <- tempfile()
+dir.create(file_temp)
 
 ## Subread aligned bam file
 
-## Create object with path to filtered subread bam file
-bamPath <- system.file("extdata","subread_target.filtered.bam",
-package = "MetaScope")
-
-## Run metascope id with the aligner option set to subread
-metascope_id(input_file = bamPath, aligner = "subread",
-             num_species_plot = 0)
-
-## Bowtie 2 aligned bam file
-
-## Create object with path to filtered subread bam file
-bamPath <- system.file("extdata","bowtie_target.filtered.bam",
+## Create object with path to filtered subread csv.gz file
+bamPath <- system.file("extdata","subread_target.filtered.csv.gz",
                        package = "MetaScope")
+copied_csv <- file.path(file_temp, "subread_target.filtered.csv.gz")
+file.copy(bamPath, copied_csv)
 
 ## Run metascope id with the aligner option set to bowtie2
-metascope_id(input_file = bamPath, aligner = "bowtie2",
-             num_species_plot = 0)
+metascope_id(input_file = copied_csv, aligner = "subread",
+             num_species_plot = 0, input_type = "csv.gz")
 
-## Different or unknown aligned bam file
+## Bowtie 2 aligned .csv.gz file
 
-## Create object with path to unknown origin bam file
-bamPath <- system.file("extdata","subread_target.filtered.bam",
+## Create object with path to filtered bowtie2 bam file
+bamPath <- system.file("extdata","bowtie_target.filtered.csv.gz",
                        package = "MetaScope")
+copied_csv <- file.path(file_temp, "bowtie_target.filtered.csv.gz")
+file.copy(bamPath, copied_csv)
 
-## Run metascope id with the aligner option set to other
-metascope_id(input_file = bamPath, aligner = "other",
-             num_species_plot = 0, input_type = "bam")
+## Run metascope id with the aligner option set to bowtie2
+metascope_id(input_file = copied_csv, aligner = "bowtie2",
+             num_species_plot = 0, input_type = "csv.gz")
+
+unlink(file_temp, recursive = TRUE)
 
 }

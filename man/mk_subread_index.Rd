@@ -31,25 +31,19 @@ indexes, with _1, _2, etc at the end of the ref_lib basename.
 }
 \examples{
 #### Create a subread index from the example reference library
+now <- Sys.time()
+## Create a temporary directory to store the reference library
+ref_temp <- tempfile()
+dir.create(ref_temp)
 
-## Create object with path to example reference library
-refPath <- system.file("extdata","target.fasta", package = "MetaScope")
-
-## Copy the example reference library to the current directory
-file.copy(from = refPath, to = file.path(".", "target.fasta"))
+## Download reference genome
+out_fasta <- download_refseq('Duck circovirus', reference = FALSE,
+                             representative = FALSE, out_dir = ref_temp,
+                             compress = TRUE, patho_out = FALSE)
 
 ## Make subread index of reference library
-mk_subread_index('target.fasta')
-
-#### Create multiple subread indexes from the example reference library
-
-## Create object with path to example reference library
-refPath <- system.file("extdata","target.fasta", package = "MetaScope")
-
-## Copy the example reference library to the current directory
-file.copy(from = refPath, to = file.path(".", "target.fasta"))
-
-## Make multiple subread indexes of reference library
-mk_subread_index('target.fasta', split = .02)
+mk_subread_index(out_fasta)
+unlink(ref_temp)
+now - Sys.time()
 
 }

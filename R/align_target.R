@@ -16,24 +16,27 @@ globalVariables(c("align_details"))
 #' @return This function will overwrite the existing .bam file with a new .bam
 #' file in the same location that has only mapped lines. The function itself
 #' returns the output .bam file name.
-#' 
+#'
 
 filter_unmapped_reads <- function(bamfile) {
-    message("Filtering unmapped reads")
-    sorted_bamfile <- Rsamtools::sortBam(
-        bamfile, paste(tools::file_path_sans_ext(bamfile),
-                       ".sorted", sep = ""))
-    bam_index <- Rsamtools::indexBam(sorted_bamfile)
-    filtered_bam <- Rsamtools::filterBam(
-        sorted_bamfile, destination = bamfile,
-        index = bam_index, indexDestination = FALSE,
-        param = Rsamtools::ScanBamParam(flag = Rsamtools::scanBamFlag(
-            isUnmappedQuery = FALSE)))
-    # clean up
-    file.remove(sorted_bamfile)
-    file.remove(bam_index)
-    # return filtered file name
-    return(filtered_bam)
+  message("Filtering unmapped reads")
+  sorted_bamfile <- Rsamtools::sortBam(bamfile,
+                                       paste(tools::file_path_sans_ext(bamfile),
+                                             ".sorted", sep = ""))
+  bam_index <- Rsamtools::indexBam(sorted_bamfile)
+  filtered_bam <- Rsamtools::filterBam(
+    sorted_bamfile,
+    destination = bamfile,
+    index = bam_index,
+    indexDestination = FALSE,
+    param = Rsamtools::ScanBamParam(flag = Rsamtools::scanBamFlag(
+      isUnmappedQuery = FALSE))
+  )
+  # clean up
+  file.remove(sorted_bamfile)
+  file.remove(bam_index)
+  # return filtered file name
+  return(filtered_bam)
 }
 
 #' Create a combined .bam header
@@ -52,7 +55,8 @@ filter_unmapped_reads <- function(bamfile) {
 #' .bam files.
 #'
 
-combined_header <- function(bam_files, header_file = "header_tmp.sam") {
+combined_header <-
+  function(bam_files, header_file = "header_tmp.sam") {
     message("Making a combined header file:", header_file)
     # get first and last line of header
     bam_head <- Rsamtools::scanBamHeader(bam_files[1])
@@ -60,23 +64,24 @@ combined_header <- function(bam_files, header_file = "header_tmp.sam") {
     last <- c(names(bam_head[[1]]$text)[n], bam_head[[1]]$text[[n]])
     # open and print the first line of header
     head_con <- file(header_file, open = "w")
-    cat(c(names(bam_head[[1]]$text)[1], bam_head[[1]]$text[[1]]),
-        file = head_con,
-        sep = "\t")
-    cat("\n", file = head_con, sep = "")
+    writeLines(c(names(bam_head[[1]]$text)[1], bam_head[[1]]$text[[1]]),
+               con = head_con,
+               sep = "\t")
+    writeLines("\n", con = head_con, sep = "")
     # print genomes from all .bam files
     for (bfile in bam_files) {
-        bam_head <- Rsamtools::scanBamHeader(bfile)
-        for (j in 2:(length(bam_head[[1]]$text) - 1)) {
-            cat(c(names(bam_head[[1]]$text)[j], bam_head[[1]]$text[[j]]),
-                file = head_con, sep = "\t")
-            cat("\n", file = head_con, sep = "")
-        }
+      bam_head <- Rsamtools::scanBamHeader(bfile)
+      for (j in 2:(length(bam_head[[1]]$text) - 1)) {
+        writeLines(c(names(bam_head[[1]]$text)[j], bam_head[[1]]$text[[j]]),
+                   con = head_con,
+                   sep = "\t")
+        writeLines("\n", con = head_con, sep = "")
+      }
     }
-    cat(last, file = head_con, sep = "\t")
+    writeLines(last, con = head_con, sep = "\t")
     close(head_con)
     return(header_file)
-}
+  }
 
 #' Replace the header from a .bam file
 #'
@@ -93,52 +98,52 @@ combined_header <- function(bam_files, header_file = "header_tmp.sam") {
 #'
 #' @return This function will return a new .bam file with a replaced header. The
 #' function also outputs the new .bam filename.
-#' 
+#'
 
-bam_reheader_R <- function(head, old_bam,
+bam_reheader_R <- function(head,
+                           old_bam,
                            new_bam = paste(tools::file_path_sans_ext(old_bam),
                                            "h.bam", sep = "")) {
-    message("Reheading bam file")
-    # system(paste('samtools reheader ' , head, ' ', old_bam,' > ',
-    # new_bam, sep=''))
-    new_sam <- paste(tools::file_path_sans_ext(new_bam), ".sam", sep = "")
-    new_sam_con <- file(new_sam, open = "w")
-    head_con <- file(head, open = "r")
-    while (length(oneLine <- readLines(head_con, n = 1, warn = FALSE)) > 0) {
-        writeLines(oneLine, new_sam_con)
-    }
-    close(head_con)
-    old_sam <- Rsamtools::asSam(old_bam, overwrite = TRUE)
-    old_sam_con <- file(old_sam, open = "r")
-    while (length(oneLine <- readLines(old_sam_con, n = 1, warn = FALSE)) > 0) {
-        if (substr(oneLine, 1, 1) != "@") writeLines(oneLine, new_sam_con)
-    }
-    close(new_sam_con)
-    close(old_sam_con)
-    file.remove(old_sam)
-    new_bam <- Rsamtools::asBam(new_sam, overwrite = TRUE)
-    file.remove(new_sam)
-    file.remove(paste(new_bam, ".bai", sep = ""))
-    return(new_bam)
+  message("Reheading bam file")
+  new_sam <- paste(tools::file_path_sans_ext(new_bam), ".sam", sep = "")
+  new_sam_con <- file(new_sam, open = "w")
+  head_con <- file(head, open = "r")
+  while (length(oneLine <- readLines(head_con, n = 1, warn = FALSE)) > 0) {
+    writeLines(oneLine, new_sam_con)
+  }
+  close(head_con)
+  old_sam <- Rsamtools::asSam(old_bam, overwrite = TRUE)
+  old_sam_con <- file(old_sam, open = "r")
+  while (length(oneLine <- readLines(old_sam_con, n = 1, warn = FALSE)) > 0) {
+    if (substr(oneLine, 1, 1) != "@") {
+      writeLines(oneLine, new_sam_con)
+  }}
+  close(new_sam_con)
+  close(old_sam_con)
+  file.remove(old_sam)
+  new_bam <- Rsamtools::asBam(new_sam, overwrite = TRUE)
+  file.remove(new_sam)
+  file.remove(paste(new_bam, ".bai", sep = ""))
+  return(new_bam)
 }
 
 #' Merge multiple .bam files
 #'
 #' This function merges .bam files. It first used the combined_header function
 #' to generate a combined header for all the files, reheaders the files, and
-#' then merges and sorts the .bam files. This is similar to the 'samtools merge'
+#' then merges and sorts the .bam files. It is similar to the 'samtools merge'
 #' function, but it allows the .bam files to have different headers. It is not
-#' intended for use by users.
+#' intended for direct use.
 #'
 #' @param bam_files A list of file names for the .bam files to be merged.
 #' @param destination A file name and location for the merged .bam file.
 #' @param head_file A file name and location for the combined header file.
-#'   Defaults to the destination . For example, 'example.bam' will be written as
+#'   Defaults to the destination. For example, 'example.bam' will be written as
 #'   'example.bam'.
 #'
 #' @return This function merges .bam files and combines them into a single file.
 #' The function also outputs the new .bam filename.
-#' 
+#'
 
 merge_bam_files <- function(bam_files, destination,
                             head_file = paste(destination, "_header.sam",
@@ -150,18 +155,16 @@ merge_bam_files <- function(bam_files, destination,
   unsortbam <- paste0(destination, "_unsorted.bam")
   if (check_samtools_exists()) {
     message("samtools found on system. Merging files using samtools")
-    lapply(bam_files,
-           function(bf) sys::exec_wait("samtools",
-                                       c("reheader", head_file, bf),
-                                       std_out = FALSE, std_err = TRUE))
+    lapply(bam_files, function(bf) sys::exec_wait(
+      "samtools", c("reheader", head_file, bf), std_out = FALSE,
+      std_err = TRUE))
     sys::exec_wait("samtools", c("merge", unsortbam, bam_files),
                    std_out = FALSE, std_err = TRUE)
     lapply(c(bam_files, head_file), unlink, force = TRUE, recursive = TRUE)
     message("Sorting merged bam file")
     merged_bam_sorted <- paste0(destination, ".bam")
-    sys::exec_wait("samtools",
-                   c("sort", "-o", merged_bam_sorted, unsortbam),
-                   std_out = TRUE, std_err = TRUE)
+    sys::exec_wait("samtools", c("sort", "-o", merged_bam_sorted, unsortbam),
+      std_out = TRUE, std_err = TRUE)
     lapply(unsortbam, unlink, force = TRUE, recursive = TRUE)
   } else {
     message("samtools not found on system. Merging files using Rsamtools.")
@@ -172,10 +175,9 @@ merge_bam_files <- function(bam_files, destination,
       file.remove(bam_files[i])
       # remove .bam and .vcf and .bam.summary files for each alignment
       file.remove(paste(bam_files[i], ".indel.vcf", sep = ""))
-      file.remove(paste(bam_files[i],".summary", sep = ""))
+      file.remove(paste(bam_files[i], ".summary", sep = ""))
     }
-    merged_bam <- Rsamtools::mergeBam(
-      bam_files_h, unsortbam, overwrite = TRUE)
+    merged_bam <- Rsamtools::mergeBam(bam_files_h, unsortbam, overwrite = TRUE)
     # clean up
     file.remove(com_head)
     lapply(bam_files_h, file.remove)
@@ -218,34 +220,40 @@ merge_bam_files <- function(bam_files, destination,
 #'
 #' @examples
 #' #### Align example reads to an example reference library using Rsubread
-#'
-#' ## Create object with path to example reference library
-#' refPath <- system.file("extdata","target.fasta", package = "MetaScope")
-#'
-#' ## Copy the example reference library to the current directory
-#' file.copy(from = refPath, to = file.path(".", "target.fasta"))
-#'
-#' ## Make and align to a single reference library
-#' mk_subread_index("target.fasta")
-#' readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
+#' \donttest{
+## Make and align to multiple reference libraries
+#' target_ref_temp <- tempfile()
+#' dir.create(target_ref_temp)
+#' tax <- "Mycoplasma genitalium G37"
+#' all_ref <- MetaScope::download_refseq(tax,
+#'                                       reference = FALSE,
+#'                                       representative = FALSE,
+#'                                       compress = TRUE,
+#'                                       out_dir = target_ref_temp
+#' )
+#' ind_out <- mk_subread_index(all_ref)
+#' # Get path to example reads
+#' readPath <- system.file("extdata", "reads.fastq",
+#'                         package = "MetaScope")
+#' ## Copy the example reads to the temp directory
+#' refPath <- file.path(target_ref_temp, "reads.fastq")
+#' file.copy(from = readPath, to = refPath)
 #' data("align_details")
 #' align_details[["type"]] <- "rna"
 #' align_details[["phredOffset"]] <- 50
-#' target_map <- align_target(readPath, libs = "target",
-#'                            align_file = "subread_target")
+#' # Just to get it to align - toy example!
+#' align_details[["maxMismatches"]] <- 100
 #'
-#' ## Make and align to multiple reference libraries
-#' mk_subread_index('target.fasta', split = .02)
-#' targLibs <- c("target_1", "target_2")
-#' readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
-#' data("align_details")
-#' align_details[["type"]] <- "rna"
-#' align_details[["phredOffset"]] <- 50
-#' target_map <- align_target(readPath, libs = targLibs,
-#'                            align_file = "subread_target")
+#' target_map <- align_target(refPath,
+#'                            libs = stringr::str_replace_all(tax, " ", "_"),
+#'                            lib_dir = target_ref_temp,
+#'                            subread_options = align_details)
+#' unlink(target_ref_temp, recursive = TRUE)
+#' }
 #'
 
 align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
+                         threads = 1,
                          align_file = tools::file_path_sans_ext(read1),
                          subread_options = align_details) {
   if (!is.null(lib_dir)) lib_dir <- tools::file_path_as_absolute(lib_dir)
@@ -255,25 +263,25 @@ align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
             " index")
     bam_files[i] <- paste(tools::file_path_sans_ext(read1), ".", libs[i],
                           ".bam", sep = "")
-    Rsubread::align(index = paste(lib_dir, libs[i], sep = ""),
-                    readfile1 = read1,
-                    readfile2 = read2,
-                    input_format = "fastq",
-                    output_format = "BAM",
-                    output_file = bam_files[i],
-                    type = subread_options[["type"]],
-                    nthreads = subread_options[["nthreads"]],
-                    maxMismatches = subread_options[["maxMismatches"]],
-                    nsubreads = subread_options[["nsubreads"]],
-                    phredOffset = subread_options[["phredOffset"]],
-                    unique = subread_options[["unique"]],
-                    nBestLocations = subread_options[["nBestLocations"]])
+    Rsubread::align(
+      index = file.path(lib_dir, libs[i]),
+      readfile1 = read1,
+      readfile2 = read2,
+      input_format = "fastq",
+      output_format = "BAM",
+      output_file = bam_files[i],
+      type = subread_options[["type"]],
+      nthreads = threads,
+      maxMismatches = subread_options[["maxMismatches"]],
+      nsubreads = subread_options[["nsubreads"]],
+      phredOffset = subread_options[["phredOffset"]],
+      unique = subread_options[["unique"]],
+      nBestLocations = subread_options[["nBestLocations"]]
+    )
     ## remove umapped reads
     filter_unmapped_reads(bam_files[i])
   }
   message("Library alignment complete")
-  
-  # This is the bowtie version
   # If more than one library was aligned, then combine bam files
   if (length(bam_files) > 1) {
     message("Merging the bam files into ", align_file, ".bam")
@@ -326,74 +334,88 @@ align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
 #' @examples
 #' #### Align example reads to an example reference library using Rbowtie2
 #'
-#' ## Create a temporary directory to store reference library
-#' ref_temp <- tempfile()
-#' dir.create(ref_temp)
+#' target_ref_temp <- tempfile()
+#' dir.create(target_ref_temp)
+#' MetaScope::download_refseq("Measles morbillivirus",
+#'                            reference = TRUE,
+#'                            representative = FALSE,
+#'                            compress = TRUE,
+#'                            out_dir = target_ref_temp
+#' )
 #'
-#' ## Create a temporary directory to store the reference library index files
-#' lib_temp <- tempfile()
-#' dir.create(lib_temp)
 #'
-#' ## Create a temporary directory to store the bam file
-#' align_temp <- tempfile()
-#' dir.create(align_temp)
+#' # Create temp directory to store the indices
+#' index_temp <- tempfile()
+#' dir.create(index_temp)
+#' MetaScope::mk_bowtie_index(
+#'   ref_dir = target_ref_temp,
+#'   lib_dir = index_temp,
+#'   lib_name = "target",
+#'   overwrite = TRUE
+#' )
 #'
-#' ## Create object with path to example reference library
-#' refPath <- system.file("extdata","target.fasta", package = "MetaScope")
+#' output_temp <- tempfile()
+#' dir.create(output_temp)
 #'
-#' ## Copy the reference library to the temporary directory
-#' file.copy(from = refPath, to = file.path(ref_temp, "target.fasta"))
+#' # Get path to example reads
+#' readPath <- system.file("extdata", "virus_example.fastq",
+#'                         package = "MetaScope")
+#' target_map <-
+#'   MetaScope::align_target_bowtie(
+#'     read1 = readPath,
+#'     lib_dir = index_temp,
+#'     libs = "target",
+#'     align_dir = output_temp,
+#'     align_file = "bowtie_target",
+#'     overwrite = TRUE
+#'   )
 #'
-#' ## Create the bowtie index files in the temporary index library directory
-#' mk_bowtie_index(ref_dir = ref_temp, lib_dir = lib_temp, lib_name = "target",
-#'                 overwrite = FALSE)
+#' unlink(target_ref_temp, recursive = TRUE)
+#' unlink(index_temp, recursive = TRUE)
+#' unlink(output_temp, recursive = TRUE)
 #'
-#' ## Create object with path to the example reads
-#' readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
-#'
-#' ## Align reads to the reference library
-#' align_target_bowtie(read1 = readPath, lib_dir = lib_temp,
-#' libs = "target", align_dir = align_temp, align_file = "bowtie_target",
-#' overwrite = TRUE)
 
-align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs, align_dir,
-                                align_file, bowtie2_options = NULL,
-                                threads = 8, overwrite = FALSE) {
-  # Convert user specified paths to absolute paths for debugging purposes
-  lib_dir <- tools::file_path_as_absolute(lib_dir)
-  align_dir <- tools::file_path_as_absolute(align_dir)
-  # If user does not specify parameters, specify for them
-  if (missing(bowtie2_options)) {
-    bowtie2_options <- paste("--very-sensitive-local -k 100",
-                             "--score-min L,20,1.0 --threads",
-                             threads)
-  } else bowtie2_options <- paste(bowtie2_options, "--threads", threads)
-  
-  bam_files <- numeric(length(libs))
-  for (i in seq_along(libs)) {
-    # Don't attach .bam extension - Rbowtie2 does this already
-    bam_files[i] <-
-      file.path(align_dir,
-                paste(basename(tools::file_path_sans_ext(read1)),
-                      ".", libs[i], sep = ""))
-    message("Attempting to perform Bowtie2 alignment on ", libs[i],
-            " index")
-    Rbowtie2::bowtie2_samtools(bt2Index = file.path(lib_dir, libs[i]),
-                               output = bam_files[i], outputType = "bam",
-                               seq1 = read1, seq2 = read2,
-                               overwrite = overwrite,
-                               ... = bowtie2_options)
-    # Attach .bam extension to bam files to call function
-    filter_unmapped_reads(paste0(bam_files[i], ".bam"))
+align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs,
+                                align_dir, align_file, bowtie2_options = NULL,
+                                threads = 1, overwrite = FALSE) {
+    # Convert user specified paths to absolute paths for debugging purposes
+    lib_dir <- tools::file_path_as_absolute(lib_dir)
+    align_dir <- tools::file_path_as_absolute(align_dir)
+    # If user does not specify parameters, specify for them
+    if (missing(bowtie2_options)) {
+      bowtie2_options <- paste("--very-sensitive-local -k 100",
+                               "--score-min L,20,1.0 --threads",
+                               threads)
+    } else bowtie2_options <- paste(bowtie2_options, "--threads", threads)
+    bam_files <- numeric(length(libs))
+    for (i in seq_along(libs)) {
+      # Don't attach .bam extension - Rbowtie2 does this already
+      bam_files[i] <- file.path(
+        align_dir, paste(basename(tools::file_path_sans_ext(read1)),
+                         ".", libs[i], sep = ""))
+      message("Attempting to perform Bowtie2 alignment on ", libs[i],
+              " index")
+      Rbowtie2::bowtie2_samtools(
+        bt2Index = file.path(lib_dir, libs[i]),
+        output = bam_files[i],
+        outputType = "bam",
+        seq1 = read1,
+        seq2 = read2,
+        overwrite = overwrite,
+        ... = bowtie2_options
+      )
+      unlink(".bowtie2.cerr.txt")
+      # Attach .bam extension to bam files to call function
+      filter_unmapped_reads(paste0(bam_files[i], ".bam"))
+    }
+    message("Library alignment complete")
+    outputFile <- file.path(align_dir, paste0(align_file, ".bam"))
+    bam_files <- paste0(bam_files, ".bam")
+    # If more than one library was aligned, then combine bam files
+    if (length(bam_files) > 1) {
+      message("Merging the bam files into ", align_file, ".bam")
+      merge_bam_files(bam_files, tools::file_path_sans_ext(outputFile))
+    } else file.rename(bam_files, outputFile)
+    message("DONE! Alignments written to ", outputFile)
+    return(outputFile)
   }
-  message("Library alignment complete")
-  outputFile <- file.path(align_dir, paste0(align_file, ".bam"))
-  bam_files <- paste0(bam_files, ".bam")
-  # If more than one library was aligned, then combine bam files
-  if (length(bam_files) > 1) {
-    message("Merging the bam files into ", align_file, ".bam")
-    merge_bam_files(bam_files, tools::file_path_sans_ext(outputFile))
-  } else file.rename(bam_files, outputFile)
-  message("DONE! Alignments written to ", outputFile)
-  return(outputFile)
-}

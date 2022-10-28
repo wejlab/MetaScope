@@ -16,7 +16,7 @@ merge_bam_files(
 \item{destination}{A file name and location for the merged .bam file.}
 
 \item{head_file}{A file name and location for the combined header file.
-Defaults to the destination . For example, 'example.bam' will be written as
+Defaults to the destination. For example, 'example.bam' will be written as
 'example.bam'.}
 }
 \value{
@@ -26,7 +26,7 @@ The function also outputs the new .bam filename.
 \description{
 This function merges .bam files. It first used the combined_header function
 to generate a combined header for all the files, reheaders the files, and
-then merges and sorts the .bam files. This is similar to the 'samtools merge'
+then merges and sorts the .bam files. It is similar to the 'samtools merge'
 function, but it allows the .bam files to have different headers. It is not
-intended for use by users.
+intended for direct use.
 }

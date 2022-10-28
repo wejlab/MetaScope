@@ -1,14 +1,10 @@
-# MetaScope 0.0.99
+# MetaScope 0.99.0 (Date)
 
 * Pre-Release version of MetaScope
 
 ## Bug Fixes
-* Updates here
 
 ## Major Changes
-* updates here
+* Submitted to Bioconductor
 
 ## Minor Changes
-* Updates here
-
-

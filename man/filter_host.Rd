@@ -13,7 +13,7 @@ filter_host(
   output = paste(tools::file_path_sans_ext(reads_bam), "filtered", sep = "."),
   subread_options = align_details,
   YS = 1e+05,
-  threads = 8
+  threads = 1
 )
 }
 \arguments{
@@ -67,21 +67,33 @@ be used upstream for further analysis.
 #### Filter reads from bam file that align to any of the filter libraries
 
 ## Assuming a bam file has been created previously with align_target()
+\donttest{
+filter_ref_temp <- tempfile()
+dir.create(filter_ref_temp)
 
-## Create object with path to the example filter library
-refPath <- system.file("extdata", "filter.fasta", package = "MetaScope")
-
-## Copy the example filter library to the current directory
-file.copy(from = refPath, to = file.path(".", "filter.fasta"))
-
-## Make subread index of filter library
-mk_subread_index('filter.fasta')
-
-## Create object with path to the previously aligned bam file
+all_species <- c("Staphylococcus aureus subsp. aureus str. Newman")
+all_ref <- vapply(all_species, MetaScope::download_refseq, 
+                  reference = FALSE, representative = FALSE, compress = TRUE,
+                  out_dir = filter_ref_temp, FUN.VALUE = character(1))
+ind_out <- vapply(all_ref, mk_subread_index, FUN.VALUE = character(1))
+# Get path to example reads
 readPath <- system.file("extdata", "subread_target.bam",
                         package = "MetaScope")
+## Copy the example reads to the temp directory
+refPath <- file.path(filter_ref_temp, "subread_target.bam")
+file.copy(from = readPath, to = refPath)
+data("align_details")
+align_details[["type"]] <- "rna"
+align_details[["phredOffset"]] <- 10
+# Just to get it to align - toy example!
+align_details[["maxMismatches"]] <- 10
 
-## Filter bam file
-filter_host(readPath, libs = "filter", threads = 1)
+filtered_map <- filter_host(
+  refPath, lib_dir = filter_ref_temp,
+  libs = stringr::str_replace_all(all_species, " ", "_"),
+  threads = 1, subread_options = align_details)
+
+unlink(filter_ref_temp, recursive = TRUE)
+}
 
 }

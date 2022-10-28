@@ -1,0 +1,245 @@
+---
+title: "Explanation of extdata files"
+author: "Aubrey Odom-Mabey"
+date: '2022-10-27'
+output: html_document
+---
+
+## Toy data
+
+### Demultiplexing
+
+`inst/extdata/barcodes.txt`
+
+`inst/extdata/virus_example.fastq`
+
+`inst/extdata/virus_example_index.fastq`
+
+These files are all from a toy example created by a member of the Johnson lab. The `virus_example.fastq` file contains 150 reads from six different samples, all labeled according to different viruses. The files `barcodes.txt` and `virus_example_index.fastq` are used in the demultiplexing process. Detailed information on how to reproduce this data is unfortunately unavailable, but it is a relatively small dataset and only intended for use as a toy example.
+
+### Vignette data
+
+`inst/extdata/reads.fastq`
+
+The example reads provided in this package are simulated reads obtained through the wgsim function of SAMtools ([https://doi.org/10.1093/bioinformatics/btp352).](https://doi.org/10.1093/bioinformatics/btp352).) Using wgsim, 1000 simulated reads of Staphylococcus aureus strain RF122 were obtained. In addition, 500 simulated reads of Staphylococcus epidermidis strain RP62A were also obtained to act as a filter target.
+
+Below are the steps to recreating the reads.
+
+#### Inside R
+
+```{R, eval = FALSE}
+library(MetaScope)
+
+download_refseq(taxon = "Staphylococcus aureus RF122", representative = FALSE, reference = FALSE, compress = FALSE)
+
+download_refseq(taxon = "Staphylococcus epidermidis RP62A", representative = FALSE, reference = FALSE, compress = FALSE)
+
+```
+
+#### Command line code (UNIX)
+
+```{bash, eval = FALSE}
+mv Staphylococcus\\ aureus\\ RF122.fasta Staphylococcus_aureus_RF122.fasta
+
+mv Staphylococcus\\ epidermidis\\ RP62A.fasta Staphylococcus_epidermidis_RP62A.fasta
+
+wgsim -N 1000 -1 250 -2 250 -S 32 Staphylococcus_aureus_RF122.fasta read1.fq read2.fq
+
+wgsim -N 500 -1 250 -2 250 -S 32 Staphylococcus_epidermidis_RP62A.fasta read3.fq read4.fq
+
+cat read1.fq read3.fq \> reads.fastq
+
+```
+
+Files created: reads.fastq
+
+### Files used in examples
+
+`bowtie_target.bam`
+
+```{R, eval = FALSE}
+#### Align example reads to an example reference library using Rbowtie2
+
+target_ref_temp <- tempfile()
+dir.create(target_ref_temp)
+MetaScope::download_refseq("Measles morbillivirus",
+                           reference = TRUE,
+                           representative = FALSE,
+                           compress = TRUE,
+                           out_dir = target_ref_temp
+)
+
+MetaScope::download_refseq("Zaire ebolavirus",
+                           reference = FALSE,
+                           representative = FALSE,
+                           compress = TRUE,
+                           out_dir = target_ref_temp
+)
+
+# Create temp directory to store the indices
+index_temp <- tempfile()
+dir.create(index_temp)
+MetaScope::mk_bowtie_index(
+  ref_dir = target_ref_temp,
+  lib_dir = index_temp,
+  lib_name = "target",
+  overwrite = TRUE
+)
+
+output_temp <- tempfile()
+dir.create(output_temp)
+
+# Get path to example reads
+readPath <- system.file("extdata", "virus_example.fastq",
+                        package = "MetaScope")
+data("bt2_loose_params")
+target_map <-
+  MetaScope::align_target_bowtie(
+    read1 = readPath,
+    lib_dir = index_temp,
+    libs = "target",
+    align_dir = output_temp,
+    align_file = "bowtie_target",
+    overwrite = TRUE,
+    bowtie2_options = bt2_loose_params
+  )
+
+# Copy the file from output_temp into your directory
+stem <- getwd()
+file.copy(target_map, file.path(stem, "..",
+                                "extdata", "bowtie_target.bam"))
+
+unlink(target_ref_temp, recursive = TRUE)
+unlink(index_temp, recursive = TRUE)
+unlink(output_temp, recursive = TRUE)
+```
+
+`bowtie_target.filtered.csv.gz`
+
+```{R, eval = FALSE}
+# Create temporary filter library
+filter_ref_temp <- tempfile()
+dir.create(filter_ref_temp)
+
+MetaScope::download_refseq("Zaire ebolavirus",
+                           reference = FALSE,
+                           representative = FALSE,
+                           compress = TRUE,
+                           out_dir = filter_ref_temp
+)
+
+# Create temp directory to store the indices
+index_temp <- tempfile()
+dir.create(index_temp)
+
+MetaScope::mk_bowtie_index(
+  ref_dir = filter_ref_temp,
+  lib_dir = index_temp,
+  lib_name = "filter",
+  overwrite = TRUE
+)
+
+output_temp <- tempfile()
+dir.create(output_temp)
+
+# Get path to example bam
+bamPath <- system.file("extdata", "bowtie_target.bam",
+                       package = "MetaScope")
+target_copied <- file.path(output_temp, "bowtie_target.bam")
+file.copy(bamPath, target_copied)
+
+filter_out <-
+  filter_host_bowtie(
+    reads_bam = target_copied,
+    lib_dir = index_temp,
+    libs = "filter",
+    threads = 1
+  )
+
+stem <- getwd()
+file.copy(target_map,
+          file.path(stem, "..",
+                    "extdata", "bowtie_target.filtered.csv.gz"))
+
+unlink(filter_ref_temp, recursive = TRUE)
+unlink(index_temp, recursive = TRUE)
+unlink(output_temp, recursive = TRUE)
+```
+
+`subread_target.bam`
+
+```{R}
+## Make and align to multiple reference libraries                  
+target_ref_temp <- tempfile()
+dir.create(target_ref_temp)
+all_species <- c("Staphylococcus aureus RF122",
+                 "Staphylococcus aureus subsp. aureus Mu3")
+all_ref <- vapply(all_species, MetaScope::download_refseq, 
+       reference = FALSE, representative = FALSE, compress = TRUE,
+       out_dir = target_ref_temp, FUN.VALUE = character(1))
+ind_out <- vapply(all_ref, mk_subread_index, FUN.VALUE = character(1))
+# Get path to example reads
+readPath <- system.file("extdata", "reads.fastq",
+                        package = "MetaScope")
+## Copy the example reads to the temp directory
+refPath <- file.path(target_ref_temp, "reads.fastq")
+file.copy(from = readPath, to = refPath)
+data("align_details")
+align_details[["type"]] <- "rna"
+align_details[["phredOffset"]] <- 50
+# Just to get it to align - toy example!
+align_details[["maxMismatches"]] <- 10
+
+target_map <- align_target(refPath,
+                           libs = stringr::str_replace_all(all_species, " ", "_"),
+                           lib_dir = target_ref_temp,
+                           subread_options = align_details)
+
+stem <- getwd()
+file.copy(target_map,
+          file.path(stem, "..",
+                    "extdata", "subread_target.bam"))
+
+unlink(target_ref_temp, recursive = TRUE)
+unlink(index_temp, recursive = TRUE)
+unlink(output_temp, recursive = TRUE)
+```
+
+`subread_target.filtered.csv.gz`
+
+```{R}
+## Make and align to multiple reference libraries                  
+filter_ref_temp <- tempfile()
+dir.create(filter_ref_temp)
+
+all_species <- c("Staphylococcus aureus subsp. aureus str. Newman")
+all_ref <- vapply(all_species, MetaScope::download_refseq, 
+       reference = FALSE, representative = FALSE, compress = TRUE,
+       out_dir = filter_ref_temp, FUN.VALUE = character(1))
+ind_out <- vapply(all_ref, mk_subread_index, FUN.VALUE = character(1))
+# Get path to example reads
+readPath <- system.file("extdata", "subread_target.bam",
+                        package = "MetaScope")
+## Copy the example reads to the temp directory
+refPath <- file.path(filter_ref_temp, "subread_target.bam")
+file.copy(from = readPath, to = refPath)
+data("align_details")
+align_details[["type"]] <- "rna"
+align_details[["phredOffset"]] <- 10
+# Just to get it to align - toy example!
+align_details[["maxMismatches"]] <- 10
+
+filtered_map <- filter_host(refPath, lib_dir = filter_ref_temp,
+            libs = stringr::str_replace_all(all_species, " ", "_"),
+            threads = 1, subread_options = align_details)
+
+stem <- getwd()
+file.copy(filtered_map,
+          file.path(stem, "..",
+                    "extdata", "subread_target.filtered.csv.gz"))
+
+unlink(filter_ref_temp, recursive = TRUE)
+unlink(index_temp, recursive = TRUE)
+unlink(output_temp, recursive = TRUE)
+```
+

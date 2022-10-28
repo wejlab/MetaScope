@@ -17,54 +17,49 @@
 #'   file. If multiple indexes are created, the libraries will be named the
 #'   ref_lib basename plus _1, _2, etc. The function returns the names of the
 #'   folders holding these files.
-#'   
+#'
 #' @export
 #'
 #' @examples
 #' #### Create a subread index from the example reference library
+#' now <- Sys.time()
+#' ## Create a temporary directory to store the reference library
+#' ref_temp <- tempfile()
+#' dir.create(ref_temp)
 #'
-#' ## Create object with path to example reference library
-#' refPath <- system.file("extdata","target.fasta", package = "MetaScope")
-#'
-#' ## Copy the example reference library to the current directory
-#' file.copy(from = refPath, to = file.path(".", "target.fasta"))
+#' ## Download reference genome
+#' out_fasta <- download_refseq('Duck circovirus', reference = FALSE,
+#'                              representative = FALSE, out_dir = ref_temp,
+#'                              compress = TRUE, patho_out = FALSE)
 #'
 #' ## Make subread index of reference library
-#' mk_subread_index('target.fasta')
-#'
-#' #### Create multiple subread indexes from the example reference library
-#'
-#' ## Create object with path to example reference library
-#' refPath <- system.file("extdata","target.fasta", package = "MetaScope")
-#'
-#' ## Copy the example reference library to the current directory
-#' file.copy(from = refPath, to = file.path(".", "target.fasta"))
-#'
-#' ## Make multiple subread indexes of reference library
-#' mk_subread_index('target.fasta', split = .02)
-#'
+#' mk_subread_index(out_fasta)
+#' unlink(ref_temp)
+#' now - Sys.time()
+#' 
 
 mk_subread_index <- function(ref_lib, split = 4, mem = 8000) {
   GB <- 1073741824
   ref_size <- file.info(ref_lib)$size
   split_libs <- ceiling(ref_size / (split * GB))
   if (ref_size > (split * GB)) {
-    message("Library size is ", round(ref_size / GB, 1),
-            " GBs. Splitting the library into ", split_libs,
-            " separate components.")
-    ## Making connections to the .fasta library and generating the new split
-    ## .fasta files
+    message( "Library size is ", round(ref_size / GB, 1),
+    " GBs. Splitting the library into ", split_libs,
+      " separate components.")
+    # Making connections to the .fasta library
+    # generating the new split .fasta files
     con <- file(ref_lib, open = "r")
     out_cons <- paste("outcon_", seq_len(split_libs), sep = "")
-    out_files <- paste(tools::file_path_sans_ext(ref_lib), "_",
-                       seq_len(split_libs), ".",
-                       tools::file_ext(ref_lib), sep = "")
+    out_files <- paste(tools::file_path_sans_ext(ref_lib),
+      "_", seq_len(split_libs), ".", tools::file_ext(ref_lib),
+      sep = "")
     for (i in seq_len(split_libs)) {
       assign(out_cons[i], file(out_files[i], open = "w"))
     }
     ## Reading ref library and splitting to split libraries
     nGenomes <- -1
-    while ((length(oneLine <- readLines(con, n = 1, warn = FALSE)) > 0)) {
+    while ((length(oneLine <-
+                   readLines(con, n = 1, warn = FALSE)) > 0)) {
       if (substr(oneLine, 1, 1) == ">") {
         nGenomes <- nGenomes + 1
       }
@@ -72,19 +67,19 @@ mk_subread_index <- function(ref_lib, split = 4, mem = 8000) {
     }
     message("Printed ", nGenomes + 1, " sequences to ", split_libs,
             " genome files")
-    ## Closing file connections
     close(con)
     for (ocon in out_cons) close(get(ocon))
-    ## Building Rsubread indexes--should parallelize this!
     for (lib in out_files) Rsubread::buildindex(
       basename = tools::file_path_sans_ext(lib),
       reference = lib, memory = mem)
   } else {
     message("Library size is ", round(ref_size / GB, 1),
             " GBs. Building the Rsubread index")
-    Rsubread::buildindex(basename = tools::file_path_sans_ext(ref_lib),
-                         reference = ref_lib, memory = mem)
+    Rsubread::buildindex(
+      basename = tools::file_path_sans_ext(ref_lib, compression = TRUE),
+      reference = ref_lib, memory = mem)
   }
-  return(paste(tools::file_path_sans_ext(ref_lib),
-               "_", seq_len(split_libs), sep = ""))
+  return(
+    paste(tools::file_path_sans_ext(ref_lib, compression = TRUE),
+    "_", seq_len(split_libs), sep = ""))
 }

@@ -9,7 +9,6 @@
 #' extracts all reads for the indexed barcode and writes all the reads from
 #' that barcode to a separate .fastq file.
 #'
-#' @import BiocParallel
 #' @param barcodeIndex Which barcode (integer number or index) in the barcodes
 #' or sample name to use for read extraction
 #' @param barcodes A list of all barcodes in the sequencing dataset. Correlates
@@ -36,10 +35,12 @@
 #' matches the barcode specified. This file will be written to the location
 #' directory, and will be named based on the specified sampleName and barcode,
 #' e.g. './demultiplex_fastq/SampleName1_GGAATTATCGGT.fastq.gz'
-#'
+#' @export
 #' @examples
 #'
 #' ## Load example barcode, index, and read data into R session:
+#' ref_temp <- tempfile()
+#' dir.create(ref_temp)
 #' barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
 #' bcFile <- read.table(barcodePath, sep = "\t", header = TRUE)
 #'
@@ -53,22 +54,13 @@
 #'
 #' ## Extract reads from the first barcode
 #' results <- extractReads(1, bcFile[, 2], bcFile[, 1], inds, reads,
-#'                         rcBarcodes = FALSE, location = ".")
-#' results
+#'                         rcBarcodes = FALSE, location = ref_temp)
 #'
 #' ## Extract reads from multiple barcodes
 #' more_results <- lapply(1:6, extractReads, bcFile[, 2], bcFile[, 1], inds,
-#'                        reads, rcBarcodes = FALSE, location = ".")
+#'                        reads, rcBarcodes = FALSE, location = ref_temp)
 #'
-#' ## BiocParallel application
-#' multicoreParam <- BiocParallel::MulticoreParam(workers = 3)
-#' parallel_results <- BiocParallel::bplapply(1:6, extractReads, bcFile[, 2],
-#'                                            bcFile[, 1], inds, reads,
-#'                                            rcBarcodes = FALSE,
-#'                                            location = ".",
-#'                                            BPPARAM = multicoreParam)
-#'
-#' @export
+#' unlink(ref_temp, recursive = TRUE)
 #'
 
 extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads,
@@ -100,47 +92,61 @@ extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads,
                 matchedIndexes = ind_match))
 }
 
+errmessages <- function(barcodes, samNames, numReads) {
+  message("Did not find any reads for the following barcodes: ",
+          paste(barcodes[numReads == 0], collapse = " "))
+  message("Did not find any reads for the following samples: ",
+          paste(samNames[numReads == 0], collapse = " "))
+  write(paste("Did not find any reads for the following barcodes:",
+              paste(barcodes[numReads == 0], collapse = " "), "\n",
+              "Did not find any reads for the following samples: ",
+              paste(samNames[numReads == 0], collapse = " ")),
+        file = "demultiplex_fastq/unmapped_barcodes_samples.txt")
+}
+
 #' Demultiplexing sequencing reads
 #'
 #' Function for demultiplexing sequencing reads arranged in a common format
 #' provided by sequencers (such as Illumina) generally for 16S data. This
 #' function takes a matrix of sample names/barcodes, a .fastq file of barcodes
-#' by sequence header, and a .fastq file of reads corresponding to the
-#' barcodes. Based on the barcodes given, the function extracts all reads for
-#' the indexed barcode and writes all the reads from that barcode to separate
-#' .fastq files.
+#' by sequence header, and a .fastq file of reads corresponding to the barcodes.
+#' Based on the barcodes given, the function extracts all reads for the indexed
+#' barcode and writes all the reads from that barcode to separate .fastq files.
 #' @param barcodeFile File name for a file containing a .tsv matrix with a
-#' header row, and then sample names (column 1) and barcodes (column 2).
-#' @param indexFile Location to a .fastq file that contains the barcodes
-#' for each read. The headers should be the same (and in the same order)
-#' as \code{readFile}, and the sequence in the \code{indexFile} should be the
-#' corresponding barcode for each read. Quality scores are not considered.
+#'   header row, and then sample names (column 1) and barcodes (column 2).
+#' @param indexFile Location to a .fastq file that contains the barcodes for
+#'   each read. The headers should be the same (and in the same order) as
+#'   \code{readFile}, and the sequence in the \code{indexFile} should be the
+#'   corresponding barcode for each read. Quality scores are not considered.
 #' @param readFile Location to the sequencing read .fastq file that corresponds
-#' to the \code{indexFile}.
+#'   to the \code{indexFile}.
 #' @param rcBarcodes Should the barcode indexes in the barcodeFile be reverse
-#' complemented to match the sequences in the \code{indexFile}?
-#' Defaults to \code{TRUE}.
+#'   complemented to match the sequences in the \code{indexFile}? Defaults to
+#'   \code{TRUE}.
 #' @param location A directory location to store the demultiplexed read files.
-#' Defaults to generate a new subdirectory at './demultiplex_fastq'
-#' @param cores The number of cores to use for parallelization (BiocParallel).
-#' This function will parallelize over the barcodes and extract reads for each
-#' barcode separately and write them to separate demultiplexed files.
+#'   Defaults to generate a new subdirectory at './demultiplex_fastq'
+#' @param threads The number of threads to use for parallelization
+#'   (BiocParallel). This function will parallelize over the barcodes and
+#'   extract reads for each barcode separately and write them to separate
+#'   demultiplexed files.
 #' @param hammingDist Uses a Hamming Distance or number of base differences to
-#' allow for inexact matches for the barcodes/indexes. Defaults to \code{0}.
-#' Warning: if the Hamming Distance is \code{>=1} and this leads to inexact index
-#' matches to more than one barcode, that read will be written to more than
-#' one demultiplexed read files
+#'   allow for inexact matches for the barcodes/indexes. Defaults to \code{0}.
+#'   Warning: if the Hamming Distance is \code{>=1} and this leads to inexact
+#'   index matches to more than one barcode, that read will be written to more
+#'   than one demultiplexed read files
 #'
 #' @return Returns multiple .fastq files that contain all reads whose index
-#' matches the barcodes given. These files will be written to the location
-#' directory, and will be named based on the given sampleNames and barcodes,
-#' e.g. './demultiplex_fastq/SampleName1_GGAATTATCGGT.fastq.gz'
-#'
+#'   matches the barcodes given. These files will be written to the location
+#'   directory, and will be named based on the given sampleNames and barcodes,
+#'   e.g. './demultiplex_fastq/SampleName1_GGAATTATCGGT.fastq.gz'
+#'   
 #' @export
 #'
 #' @examples
 #'
 #' ## Get barcode, index, and read data locations
+#' ref_temp <- tempfile()
+#' dir.create(ref_temp)
 #' barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
 #' indexPath <- system.file("extdata", "virus_example_index.fastq",
 #'                          package = "MetaScope")
@@ -149,12 +155,13 @@ extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads,
 #'
 #' ## Get barcode, index, and read data locations
 #' demult <- demultiplex(barcodePath, indexPath, readPath, rcBarcodes = FALSE,
-#'                       hammingDist = 2)
+#'                       hammingDist = 2, location = ref_temp)
 #' demult
+#' unlink(ref_temp, recursive = TRUE)
 #'
 
 demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
-                        location = "./demultiplex_fastq", cores = 1,
+                        location = "./demultiplex_fastq", threads = 1,
                         hammingDist = 0) {
     message("Reading Sample Names and Barcodes from: ", barcodeFile)
     bcFile <- utils::read.table(barcodeFile, sep = "\t", header = TRUE)
@@ -173,9 +180,9 @@ demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
     numReads <- NULL
     ind_no_match <- numeric(length(reads))
     for (i in seq_along(barcodes)) {
-        extracted <- extractReads(i, barcodes, samNames, inds, reads,
-                                  rcBarcodes = rcBarcodes, location = location,
-                                  hDist = hammingDist)
+        extracted <- extractReads(
+          i, barcodes, samNames, inds, reads,rcBarcodes = rcBarcodes,
+          location = location, hDist = hammingDist)
         numReads <- c(numReads, extracted$numberOfReads)
         ind_no_match <- ind_no_match + extracted$matchedIndexes
     }
@@ -183,15 +190,7 @@ demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
     ind_no_match <- (ind_no_match == 0)
     # number of reads for each barcode
     if (any(numReads == 0)) {
-        message("Did not find any reads for the following barcodes: ",
-                paste(barcodes[numReads == 0], collapse = " "))
-        message("Did not find any reads for the following samples: ",
-                paste(samNames[numReads == 0], collapse = " "))
-        write(paste("Did not find any reads for the following barcodes:",
-                    paste(barcodes[numReads == 0], collapse = " "), "\n",
-                    "Did not find any reads for the following samples: ",
-                    paste(samNames[numReads == 0], collapse = " ")),
-              file = "demultiplex_fastq/unmapped_barcodes_samples.txt")
+        errmessages(barcodes, samNames, numReads)
     }
     # Track reads without matches, and write them to an 'orphan' file
     message("Found ", sum(ind_no_match), " reads without a matching barcode (",

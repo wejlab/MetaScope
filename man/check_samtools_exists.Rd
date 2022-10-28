@@ -10,6 +10,6 @@ check_samtools_exists()
 Returns TRUE if samtools exists on the system, else FALSE.
 }
 \description{
-This is an internal function that is not meant to be used outside
-of the package. It checks whether samtools exists on the system.
+This is an internal function that is not meant to be used
+  outside of the package. It checks whether samtools exists on the system.
 }

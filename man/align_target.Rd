@@ -9,6 +9,7 @@ align_target(
   read2 = NULL,
   lib_dir = NULL,
   libs,
+  threads = 1,
   align_file = tools::file_path_sans_ext(read1),
   subread_options = align_details
 )
@@ -24,6 +25,9 @@ align_target(
 index files for alignment. If ALL indices to be used are located in the
 current working directory, set \code{lib_dir = NULL}. Default is
 \code{lib_dir = NULL}.}
+
+\item{threads}{The number of threads that can be utilized by the function.
+Default is 8 threads.}
 
 \item{align_file}{The basename of the output alignment file (without trailing
 .bam extension).}
@@ -50,30 +54,34 @@ library into one output file. If desired, output can be passed to
 }
 \examples{
 #### Align example reads to an example reference library using Rsubread
-
-## Create object with path to example reference library
-refPath <- system.file("extdata","target.fasta", package = "MetaScope")
-
-## Copy the example reference library to the current directory
-file.copy(from = refPath, to = file.path(".", "target.fasta"))
-
-## Make and align to a single reference library
-mk_subread_index("target.fasta")
-readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
+\donttest{
+target_ref_temp <- tempfile()
+dir.create(target_ref_temp)
+tax <- "Mycoplasma genitalium G37"
+all_ref <- MetaScope::download_refseq(tax,
+                                      reference = FALSE,
+                                      representative = FALSE,
+                                      compress = TRUE,
+                                      out_dir = target_ref_temp
+)
+ind_out <- mk_subread_index(all_ref)
+# Get path to example reads
+readPath <- system.file("extdata", "reads.fastq",
+                        package = "MetaScope")
+## Copy the example reads to the temp directory
+refPath <- file.path(target_ref_temp, "reads.fastq")
+file.copy(from = readPath, to = refPath)
 data("align_details")
 align_details[["type"]] <- "rna"
 align_details[["phredOffset"]] <- 50
-target_map <- align_target(readPath, libs = "target",
-                           align_file = "subread_target")
+# Just to get it to align - toy example!
+align_details[["maxMismatches"]] <- 100
 
-## Make and align to multiple reference libraries
-mk_subread_index('target.fasta', split = .02)
-targLibs <- c("target_1", "target_2")
-readPath <- system.file("extdata", "reads.fastq", package = "MetaScope")
-data("align_details")
-align_details[["type"]] <- "rna"
-align_details[["phredOffset"]] <- 50
-target_map <- align_target(readPath, libs = targLibs,
-                           align_file = "subread_target")
+target_map <- align_target(refPath,
+                           libs = stringr::str_replace_all(tax, " ", "_"),
+                           lib_dir = target_ref_temp,
+                           subread_options = align_details)
+unlink(target_ref_temp, recursive = TRUE)
+}
 
 }

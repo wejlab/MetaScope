@@ -2,7 +2,8 @@
 % Please edit documentation in R/convert_animalcules.R
 \name{convert_animalcules}
 \alias{convert_animalcules}
-\title{Create a multi-assay experiment from MetaScope output for usage with animalcules}
+\title{Create a multi-assay experiment from MetaScope output for usage with
+animalcules}
 \usage{
 convert_animalcules(
   meta_counts,
@@ -15,38 +16,36 @@ convert_animalcules(
 )
 }
 \arguments{
-\item{meta_counts}{A vector of filepaths to the counts ID CSVs output
-by MetaScope}
+\item{meta_counts}{A vector of filepaths to the counts ID CSVs output by
+MetaScope}
 
 \item{annot_path}{The filepath to the CSV annotation file for the samples}
 
 \item{which_annot_col}{The name of the column of the annotation file
-containing the sample IDs.
-These should be the same as the \code{meta_counts} root filenames.}
+containing the sample IDs. These should be the same as the
+\code{meta_counts} root filenames.}
 
-\item{end_string}{The end string used at the end of the metascope_id
-files. Default is ".filtered.metascope_id.csv"}
+\item{end_string}{The end string used at the end of the metascope_id files.
+Default is ".filtered.metascope_id.csv"}
 
 \item{qiime_biom_out}{Would you also like a qiime-compatible biom file
-output? If yes, two files will be saved: one is a biom file of the
-counts table, and the other is a specifically formatted mapping file
-of metadata information.
-Default is \code{FALSE}.}
+output? If yes, two files will be saved: one is a biom file of the counts
+table, and the other is a specifically formatted mapping file of metadata
+information. Default is \code{FALSE}.}
 
-\item{path_to_write}{Where should output animalcules and/or QIIME files
-be written to? Should be a character string of the folder path.
-Default is '.', i.e. the current working directory.}
+\item{path_to_write}{Where should output animalcules and/or QIIME files be
+written to? Should be a character string of the folder path. Default is
+'.', i.e. the current working directory.}
 
-\item{NCBI_key}{(character) NCBI Entrez API key. optional.
-See taxize::use_entrez(). Due to the high number of
-requests made to NCBI, this function will be less prone to errors
-if you obtain an NCBI key.}
+\item{NCBI_key}{(character) NCBI Entrez API key. optional. See
+taxize::use_entrez(). Due to the high number of requests made to NCBI, this
+function will be less prone to errors if you obtain an NCBI key.}
 }
 \value{
-returns a multi-assay experiment file of combined sample counts
-data and/or biom file and mapping file for analysis with QIIME.
-The multi-assay experiment will have
-assays for the counts ("MGX"), log counts, CPM, and log CPM.
+returns a multi-assay experiment file of combined sample counts data
+  and/or biom file and mapping file for analysis with QIIME. The multi-assay
+  experiment will have assays for the counts ("MGX"), log counts, CPM, and
+  log CPM.
 }
 \description{
 Upon completion of the MetaScope pipeline, users can analyze and visualize
@@ -55,14 +54,52 @@ allows interoperability of metascope_id output with both animalcules and
 QIIME.
 }
 \examples{
-#donotrun{
-#all_files <- list.files("~/decamp/analysis/aodom/Novartis_COPD/MetaScope_run/Output",
-#                         pattern = "*.filtered.metascope_id.csv",
-#                         full.names = TRUE)
-#out <- convert_animalcules(meta_counts = all_files,
-#annot_path = "~/decamp/analysis/aodom/Novartis_COPD/Data/DECAMP_patho_annotation.csv",
-# end_string = ".filtered.metascope_id.csv", which_annot_col = "DECAMP_ID")
-#}
- # coming soon!
+tempfolder <- tempfile()
+dir.create(tempfolder)
+
+# Create three different samples
+samp_names <- c("X123", "X456", "X789")
+all_files <- file.path(tempfolder,
+                       paste0(samp_names, ".csv"))
+
+create_IDcsv <- function (out_file) {
+  final_taxids <- c("273036", "418127", "11234")
+  final_genomes <- c(
+    "Staphylococcus aureus RF122, complete sequence",
+    "Staphylococcus aureus subsp. aureus Mu3, complete sequence",
+    "Measles virus, complete genome")
+  best_hit <- sample(seq(100, 1050), 3)
+  proportion <- best_hit/sum(best_hit) |> round(2)
+  EMreads <- best_hit + round(runif(3), 1)
+  EMprop <- proportion + 0.003
+  dplyr::tibble(TaxonomyID = final_taxids,
+                Genome = final_genomes,
+                read_count = best_hit, Proportion = proportion,
+                EMreads = EMreads, EMProportion = EMprop) |>
+    dplyr::arrange(dplyr::desc(.data$read_count)) |>
+    utils::write.csv(file = out_file, row.names = FALSE)
+  message("Done!")
+  return(out_file)
+}
+out_files <- vapply(all_files, create_IDcsv, FUN.VALUE = character(1))
+
+# Create annotation data for samples
+annot_dat <- file.path(tempfolder, "annot.csv")
+dplyr::tibble(Sample = samp_names, RSV = c("pos", "neg", "pos"),
+              month = c("March", "July", "Aug"),
+              yrsold = c(0.5, 0.6, 0.2)) |>
+  utils::write.csv(file = annot_dat,
+                   row.names = FALSE)
+
+# Convert samples to MAE
+outMAE <- convert_animalcules(meta_counts = out_files,
+                              annot_path = annot_dat,
+                              which_annot_col = "Sample",
+                              end_string = ".filtered.metascope_id.csv",
+                              qiime_biom_out = FALSE,
+                              path_to_write = tempfolder,
+                              NCBI_key = NULL)
+
+unlink(tempfolder, recursive = TRUE)
 
 }

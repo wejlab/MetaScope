@@ -9,27 +9,31 @@ download_refseq(
   reference = TRUE,
   representative = FALSE,
   compress = TRUE,
-  patho_out = FALSE
+  patho_out = FALSE,
+  out_dir = NULL
 )
 }
 \arguments{
 \item{taxon}{Select one taxon to download. The taxon name should be a
-recognized NCBI scientific or common name, with no grammatical or capitalization
-inconsistencies. All available taxonomies are visible by accessing the
-\code{taxonomy_table} object included in the package.}
+recognized NCBI scientific or common name, with no grammatical or
+capitalization inconsistencies. All available taxonomies are visible by
+accessing the \code{taxonomy_table} object included in the package.}
 
-\item{reference}{Download only RefSeq reference genomes?
-Defaults to \code{TRUE}.
-Automatically set to \code{TRUE} if \code{representative = TRUE}.}
+\item{reference}{Download only RefSeq reference genomes? Defaults to
+\code{TRUE}. Automatically set to \code{TRUE} if \code{representative =
+TRUE}.}
 
-\item{representative}{Download only RefSeq representative genomes?
-Defaults to \code{FALSE}. If \code{TRUE}, reference is automatically
-set at \code{TRUE}.}
+\item{representative}{Download only RefSeq representative genomes? Defaults
+to \code{FALSE}. If \code{TRUE}, reference is automatically set at
+\code{TRUE}.}
 
 \item{compress}{Compress the output .fasta file? Defaults to \code{TRUE}.}
 
 \item{patho_out}{Create duplicate outpute files compatible with PathoScope?
 Defaults to \code{FALSE}.}
+
+\item{out_dir}{Character string giving the name of the directory to which
+libraries should be output.}
 }
 \value{
 Returns a .fasta or .fasta.gz file of the desired RefSeq genomes.
@@ -39,12 +43,12 @@ a .fasta file formatted for PathoScope as well
 (e.g. bacteria.pathoscope.fasta.gz') if \code{path_out = TRUE}.
 }
 \description{
-This function will automatically download RefSeq genome libraries in a
-.fasta format from the specified taxon. The function will first
-download the summary report at:
+This function will automatically download RefSeq genome libraries in a fasta
+format from the specified taxon. The function will first download the
+summary report at:
 ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/**kingdom**/assembly_summary.txt,
-and then use this file to download the genome(s) and combine them in a single
-compressed or uncompressed .fasta file.
+and then use this file to download the genome(s) and combine them in a
+single compressed or uncompressed .fasta file.
 }
 \details{
 When selecting the \code{taxon} to be downloaded, if you receive an error
@@ -55,21 +59,14 @@ at any level of the table will be acknowledged.
 }
 \examples{
 #### Download RefSeq genomes
+## Create a temporary directory to store libraries
+ref_temp <- tempfile()
+dir.create(ref_temp)
 
-## Download all RefSeq reference viral superkingdom genomes
-download_refseq('viruses', reference = TRUE, representative = FALSE)
+## Download all RefSeq reference Shotokuvirae kingdom genomes
+download_refseq('Shotokuvirae', reference = TRUE, representative = FALSE,
+                out_dir = ref_temp, compress = TRUE, patho_out = FALSE)
 
-## Download all RefSeq representative mononegavirales genomes
-download_refseq('mononegavirales', representative = TRUE)
-
-## Download all RefSeq morbillivirus genomes
-download_refseq('morbillivirus', reference = FALSE)
-
-## Download all RefSeq bacilli reference genomes, uncompressed
-download_refseq('Bacilli', reference = TRUE,
-                representative = FALSE, compress = FALSE)
-
-## Download RefSeq Escherichia coli IAI1 strain
-download_refseq('Escherichia coli IAI1', reference = FALSE, compress = FALSE)
+unlink(ref_temp)
 
 }

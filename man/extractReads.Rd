@@ -64,6 +64,8 @@ that barcode to a separate .fastq file.
 \examples{
 
 ## Load example barcode, index, and read data into R session:
+ref_temp <- tempfile()
+dir.create(ref_temp)
 barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
 bcFile <- read.table(barcodePath, sep = "\t", header = TRUE)
 
@@ -77,19 +79,12 @@ reads <- Biostrings::readQualityScaledDNAStringSet(readPath)
 
 ## Extract reads from the first barcode
 results <- extractReads(1, bcFile[, 2], bcFile[, 1], inds, reads,
-                        rcBarcodes = FALSE, location = ".")
-results
+                        rcBarcodes = FALSE, location = ref_temp)
 
 ## Extract reads from multiple barcodes
 more_results <- lapply(1:6, extractReads, bcFile[, 2], bcFile[, 1], inds,
-                       reads, rcBarcodes = FALSE, location = ".")
+                       reads, rcBarcodes = FALSE, location = ref_temp)
 
-## BiocParallel application
-multicoreParam <- BiocParallel::MulticoreParam(workers = 3)
-parallel_results <- BiocParallel::bplapply(1:6, extractReads, bcFile[, 2],
-                                           bcFile[, 1], inds, reads,
-                                           rcBarcodes = FALSE,
-                                           location = ".",
-                                           BPPARAM = multicoreParam)
+unlink(ref_temp, recursive = TRUE)
 
 }
