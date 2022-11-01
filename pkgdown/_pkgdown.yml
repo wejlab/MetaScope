@@ -23,10 +23,12 @@ reference:
    desc: "Mapping sequencing reads to the target & filter libraries."
    contents:
      - align_target
-     - align_target_bowtie
-     - align_details
-     - filter_host_bowtie
      - filter_host
+     - align_details
+     - align_target_bowtie
+     - filter_host_bowtie
+     - bt2_16S_params 
+     - bt2_loose_params
  - title: "Genome Identification"
    desc: "Identify which genomes are most likely to be represented in the sample."
    contents:
@@ -39,17 +41,15 @@ reference:
    desc: "These functions were developed to aid in carrying out other primary functions."
    contents:
     - remove_matches
-    - mk_table
     - combined_header
     - bam_reheader_R
     - get_children
     - merge_bam_files
     - count_matches
-    - mk_interim_fastq
     - extractReads
-    - generate_taxonomy_table
     - locations
     - filter_unmapped_reads
+    - check_samtools_exists
 
 navbar:
   bg: dark

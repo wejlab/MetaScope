@@ -11,8 +11,8 @@ mk_subread_index(ref_lib, split = 4, mem = 8000)
 (uncompressed) .fasta format.}
 
 \item{split}{The maximum allowed size of the genome file (in GB). If the
-ref_lib file is larger than this, the function will split the library into
-multiple parts.}
+\code{ref_lib} file is larger than this, the function will split the
+library into multiple parts.}
 
 \item{mem}{The maximum amount of memory (in MB) that can be used by the index
 generation process (used by the Rsubread::buildindex function).}
@@ -20,7 +20,7 @@ generation process (used by the Rsubread::buildindex function).}
 \value{
 Creates one or more Subread indexes for the supplied reference .fasta
   file. If multiple indexes are created, the libraries will be named the
-  ref_lib basename plus _1, _2, etc. The function returns the names of the
+  \code{ref_lib} basename + "_1", "_2", etc. The function returns the names of the
   folders holding these files.
 }
 \description{

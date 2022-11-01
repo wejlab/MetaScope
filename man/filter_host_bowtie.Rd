@@ -2,8 +2,8 @@
 % Please edit documentation in R/filter_host.R
 \name{filter_host_bowtie}
 \alias{filter_host_bowtie}
-\title{Align reads against one or more filter libraries and subsequently remove
-mapped reads}
+\title{Use Rbowtie2 to align reads against one or more filter libraries and
+subsequently remove mapped reads}
 \usage{
 filter_host_bowtie(
   reads_bam,
@@ -65,14 +65,14 @@ After a sample is aligned to a target library with
 \code{align_target_bowtie()}, we may use \code{filter_host_bowtie()} to
 remove unwelcome host contamination using filter reference libraries. This
 function takes as input the name of the .bam file produced via
-\code{align_target_bowtie()}, and produces a sorted .bam file with any reads
-that match the filter libraries removed. This resulting .bam file may be used
-downstream for further analysis.
+\code{align_target_bowtie()}, and produces a sorted .bam or .csv.gz file with
+any reads that match the filter libraries removed. This resulting .bam file
+may be used downstream for further analysis. This function uses Rbowtie2 For
+the Rsubread equivalent of this function, see \code{filter_host}.
 }
 \details{
-Alternatively, an RDS data frame can be output for a smaller output file that
-is created more efficiently (through parallelization) and is still compatible
-with \code{metascope_id()}.
+A compressed .csv can be created to produce a smaller output file that is
+created more efficiently and is still compatible with \code{metascope_id()}.
 }
 \examples{
 #### Filter reads from bam file that align to any of the filter libraries

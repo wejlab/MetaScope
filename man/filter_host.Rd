@@ -2,8 +2,8 @@
 % Please edit documentation in R/filter_host.R
 \name{filter_host}
 \alias{filter_host}
-\title{Align reads against one or more filter libraries and subsequently remove
-mapped reads}
+\title{Use Rsubread to align reads against one or more filter libraries and
+subsequently remove mapped reads}
 \usage{
 filter_host(
   reads_bam,
@@ -62,7 +62,12 @@ use \code{filter_host()} to remove unwelcome host contamination using filter
 reference libraries. This function takes as input the name of the .bam file
 produced via \code{align_target()}, and produces a sorted .bam file with any
 reads that match the filter libraries removed. This resulting .bam file may
-be used upstream for further analysis.
+be used upstream for further analysis. This function uses Rsubread. For the
+Rbowtie2 equivalent of this function, see \code{filter_host_bowtie}.
+}
+\details{
+A compressed .csv can be created to produce a smaller output file that is
+created more efficiently and is still compatible with \code{metascope_id()}.
 }
 \examples{
 #### Filter reads from bam file that align to any of the filter libraries
@@ -73,7 +78,7 @@ be used upstream for further analysis.
 filter_ref_temp <- tempfile()
 dir.create(filter_ref_temp)
 
-# Download filter genome
+## Download filter genome
 all_species <- c("Staphylococcus aureus subsp. aureus str. Newman")
 all_ref <- vapply(all_species, MetaScope::download_refseq, 
                   reference = FALSE, representative = FALSE, compress = TRUE,

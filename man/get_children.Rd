@@ -21,8 +21,8 @@ Returns a vector of all the child species and/or strains of the
 input taxon.
 }
 \description{
-This function will utilize a organism classification table to obtain all
-chidren species and/or strains with available NCBI reference sequences given
+This function will utilize an organism classification table to obtain all
+children species and/or strains with available NCBI reference sequences given
 a parent taxon and its rank.
 }
 \examples{

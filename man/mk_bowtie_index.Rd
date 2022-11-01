@@ -58,6 +58,8 @@ download_refseq('Shotokuvirae', reference = TRUE, representative = FALSE,
 ## Create the reference library index files in the current directory
 mk_bowtie_index(ref_dir = ref_temp, lib_dir = ref_temp,
                 lib_name = "target", threads = 1, overwrite = FALSE)
+
+## Remove temporary directory
 unlink(ref_temp, recursive = TRUE)
 
 }
