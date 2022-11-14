@@ -235,11 +235,21 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
   if (is.null(out_dir)) out_dir <- getwd()
   message("Finding ", taxon)
   # Get input taxon rank
-  tryCatch({
-    classification_table <- taxize::classification(
-      taxize::get_uid(taxon, messages = FALSE)[[1]], db = "ncbi")[[1]]},
-    warning = function(w) stop("Your input is not a valid taxon")
-  )
+  success <- FALSE
+  attempt <- 0
+  # Attempt to get taxid up to three times for each chunk
+  while (!success) {
+    try({
+      attempt <- attempt + 1
+      tryCatch({
+        classification_table <- taxize::classification(
+          taxize::get_uid(taxon, messages = FALSE)[[1]], db = "ncbi")[[1]]},
+        warning = function(w) stop("Your input is not a valid taxon")
+      )
+      Sys.sleep(1)
+      success <- TRUE
+    })
+  }
   rank_input <- classification_table$rank[nrow(classification_table)]
   parent_kingdom <- id_kingdom_rank(classification_table, taxon, rank_input)
   refseq_table <- download_parentkingdom(parent_kingdom)
