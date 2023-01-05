@@ -214,7 +214,8 @@ remove_matches <- function(reads_bam, read_names, output, YS, threads,
 #' all_species <- c("Staphylococcus aureus subsp. aureus str. Newman")
 #' all_ref <- vapply(all_species, MetaScope::download_refseq, 
 #'                   reference = FALSE, representative = FALSE, compress = TRUE,
-#'                   out_dir = filter_ref_temp, FUN.VALUE = character(1))
+#'                   out_dir = filter_ref_temp, caching = TRUE,
+#'                   FUN.VALUE = character(1))
 #' ind_out <- vapply(all_ref, mk_subread_index, FUN.VALUE = character(1))
 #'
 #' ## Get path to example reads
@@ -348,7 +349,8 @@ filter_host <- function(reads_bam, lib_dir = NULL, libs, make_bam = FALSE,
 #'                            reference = FALSE,
 #'                            representative = FALSE,
 #'                            compress = TRUE,
-#'                            out_dir = filter_ref_temp
+#'                            out_dir = filter_ref_temp,
+#'                            caching = TRUE
 #' )
 #'
 #' ## Create temp directory to store the indices

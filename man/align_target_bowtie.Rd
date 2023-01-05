@@ -70,7 +70,8 @@ MetaScope::download_refseq("Measles morbillivirus",
                            reference = TRUE,
                            representative = FALSE,
                            compress = TRUE,
-                           out_dir = target_ref_temp
+                           out_dir = target_ref_temp,
+                           caching = TRUE
 )
 
 ## Create temporary directory to store the indices

@@ -1,4 +1,5 @@
 BAM
+BiocFileCache
 BiocParallel
 Bowtie
 CPM
@@ -47,7 +48,6 @@ bowtie
 bp
 bt
 buildindex
-chidren
 convEM
 csv
 demultiplex
@@ -81,7 +81,6 @@ parallelize
 pathoscope
 phredOffset
 qiime
-rds
 reheader
 reheaders
 rnames

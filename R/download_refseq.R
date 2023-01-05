@@ -93,9 +93,16 @@ get_speciestab <- function(children_list, refseq_table, taxon,
   return(species_table)
 }
 
+# Helper function to get cache for BiocFileCache
+.get_cache <- function() {
+  cache <- tools::R_user_dir("MetaScope", which = "cache")
+  BiocFileCache::BiocFileCache(cache)
+}
+
+
 # Another helper function to download genomes
 download_genomes <- function(species_table, taxon, patho_out, compress,
-                             out_dir) {
+                             out_dir, caching) {
   total_genomes <- nrow(species_table)
   if (total_genomes == 0) {
     stop("No available genome for ", taxon,
@@ -133,18 +140,35 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
   # Download the genome
   for (i in seq_len(nrow(species_table))) {
     tryCatch({
-      if (i %% 10 == 0) {
-        message("Number of Genomes Downloaded: ", i, "/",
-                total_genomes, " (",
-                round(100 * i / total_genomes, 2), "%)")
-      }
       genome_file <- paste(basename(as.character(
         species_table[i, ]$ftp_path)), "genomic.fna.gz", sep = "_")
       location <- paste(species_table[i, ]$ftp_path, genome_file,
                         sep = "/")
-      destination <- paste(download_dir, genome_file, sep = "/")
-      if (!dir.exists(download_dir)) dir.create(download_dir)
-      utils::download.file(location, destination)
+      if (!caching) {
+        if (!dir.exists(download_dir)) dir.create(download_dir)
+        destination <- paste(download_dir, genome_file, sep = "/")
+        utils::download.file(location, destination)
+      } else if (caching) {
+        bfc <- .get_cache()
+        rid <- BiocFileCache::bfcquery(bfc, genome_file, "rname")$rid
+        if (!length(rid)) {
+          if (i %% 10 == 0) {
+            message("Number of Genomes Downloaded: ", i, "/",
+                    total_genomes, " (",
+                    round(100 * i / total_genomes, 2), "%)")
+            }
+          rid <- names(BiocFileCache::bfcadd(bfc, genome_file, location))
+        }
+        if (!isFALSE(BiocFileCache::bfcneedsupdate(bfc, rid))) {
+          BiocFileCache::bfcdownload(bfc, rid)
+          BiocFileCache::bfcrpath(bfc, rids = rid)
+        } else {
+          message("Caching is set to TRUE, ",
+                  "and it appears that this file is already downloaded ",
+                  "in the cache. It will not be downloaded again.")
+        }
+        destination <- BiocFileCache::bfcrpath(bfc, rids = rid)
+      }
       # Write genome to concatenated file
       in_con <- file(destination, open = "rb")
       ref <- gzcon(in_con) %>% base::readLines()
@@ -173,8 +197,8 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
   }
   unlink(file.path(download_dir, "*"), force = TRUE)
   unlink(file.path(download_dir), recursive = TRUE, force = TRUE)
-  message("DONE! Downloaded ", i, " genomes to ",
-          file.path(out_dir, combined_fasta))
+  message("DONE! ", i, " genome(s) saved to file ",
+          file.path(combined_fasta))
   return(combined_fasta)
 }
 
@@ -208,6 +232,8 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
 #'   Defaults to \code{FALSE}.
 #' @param out_dir Character string giving the name of the directory to which
 #'   libraries should be output.
+#' @param caching Whether to use BiocFileCache when downloading genomes.
+#'   Default is \code{FALSE}.
 #'
 #' @return Returns a .fasta or .fasta.gz file of the desired RefSeq genomes.
 #' This file is named after the kingdom selected and saved to the current
@@ -224,14 +250,15 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
 #'
 #' ## Download all RefSeq reference Shotokuvirae kingdom genomes
 #' download_refseq('Shotokuvirae', reference = TRUE, representative = FALSE,
-#'                 out_dir = ref_temp, compress = TRUE, patho_out = FALSE)
+#'                 out_dir = ref_temp, compress = TRUE, patho_out = FALSE,
+#'                 caching = TRUE)
 #'
 #' unlink(ref_temp)
 #'
 
 download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
                             compress = TRUE, patho_out = FALSE,
-                            out_dir = NULL) {
+                            out_dir = NULL, caching = FALSE) {
   if (is.null(out_dir)) out_dir <- getwd()
   message("Finding ", taxon)
   # Get input taxon rank
@@ -259,6 +286,6 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
   species_table <- get_speciestab(children_list, refseq_table, taxon,
                                   representative, reference)
   combined_fasta <- download_genomes(species_table, taxon, patho_out,
-                                     compress, out_dir)
+                                     compress, out_dir, caching)
   return(combined_fasta)
 }

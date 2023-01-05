@@ -53,7 +53,8 @@ dir.create(ref_temp)
 
 ## Download reference genome
 download_refseq('Shotokuvirae', reference = TRUE, representative = FALSE,
-                out_dir = ref_temp, compress = TRUE, patho_out = FALSE)
+                out_dir = ref_temp, compress = TRUE, patho_out = FALSE,
+                caching = TRUE)
 
 ## Create the reference library index files in the current directory
 mk_bowtie_index(ref_dir = ref_temp, lib_dir = ref_temp,

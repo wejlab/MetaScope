@@ -2,7 +2,7 @@ Type: Package
 Package: MetaScope
 Title: Tools and functions for preprocessing 16S and metagenomic
     sequencing microbiome data
-Version: 0.99.1
+Version: 0.99.2
 Authors@R: c(
     person("Aubrey", "Odom-Mabey", , "aodom@bu.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-7113-7598")),
@@ -22,6 +22,7 @@ BugReports: https://github.com/compbiomed/MetaScope/issues
 Depends:
     R (>= 4.2.0)
 Imports:
+    BiocFileCache,
     Biostrings,
     data.table,
     dplyr,

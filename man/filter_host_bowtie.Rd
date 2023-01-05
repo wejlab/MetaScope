@@ -87,7 +87,8 @@ MetaScope::download_refseq("Zaire ebolavirus",
                            reference = FALSE,
                            representative = FALSE,
                            compress = TRUE,
-                           out_dir = filter_ref_temp
+                           out_dir = filter_ref_temp,
+                           caching = TRUE
 )
 
 ## Create temp directory to store the indices

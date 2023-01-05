@@ -39,7 +39,8 @@ dir.create(ref_temp)
 ## Download reference genome
 out_fasta <- download_refseq('Duck circovirus', reference = FALSE,
                              representative = FALSE, out_dir = ref_temp,
-                             compress = TRUE, patho_out = FALSE)
+                             compress = TRUE, patho_out = FALSE,
+                             caching = TRUE)
 
 ## Make subread index of reference library
 mk_subread_index(out_fasta)

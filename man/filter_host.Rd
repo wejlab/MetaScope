@@ -82,7 +82,8 @@ dir.create(filter_ref_temp)
 all_species <- c("Staphylococcus aureus subsp. aureus str. Newman")
 all_ref <- vapply(all_species, MetaScope::download_refseq, 
                   reference = FALSE, representative = FALSE, compress = TRUE,
-                  out_dir = filter_ref_temp, FUN.VALUE = character(1))
+                  out_dir = filter_ref_temp, caching = TRUE,
+                  FUN.VALUE = character(1))
 ind_out <- vapply(all_ref, mk_subread_index, FUN.VALUE = character(1))
 
 ## Get path to example reads

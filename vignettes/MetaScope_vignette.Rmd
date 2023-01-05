@@ -91,7 +91,7 @@ all_species <- c("Staphylococcus aureus RF122",
                  "Staphylococcus aureus subsp. aureus Mu3")
 sapply(all_species, download_refseq, 
        reference = FALSE, representative = FALSE, compress = TRUE,
-       out_dir = target_ref_temp)
+       out_dir = target_ref_temp, caching = TRUE)
 ```
 
 ## Downloading filter genomes
@@ -105,7 +105,8 @@ dir.create(filter_ref_temp)
 download_refseq(
   taxon = "Staphylococcus epidermidis RP62A",
   representative = FALSE, reference = FALSE,
-  compress = TRUE, out_dir = filter_ref_temp)
+  compress = TRUE, out_dir = filter_ref_temp,
+  caching = TRUE)
 ```
 
 # Demultiplex

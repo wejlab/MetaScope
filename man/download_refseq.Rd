@@ -10,7 +10,8 @@ download_refseq(
   representative = FALSE,
   compress = TRUE,
   patho_out = FALSE,
-  out_dir = NULL
+  out_dir = NULL,
+  caching = FALSE
 )
 }
 \arguments{
@@ -34,6 +35,9 @@ Defaults to \code{FALSE}.}
 
 \item{out_dir}{Character string giving the name of the directory to which
 libraries should be output.}
+
+\item{caching}{Whether to use BiocFileCache when downloading genomes.
+Default is \code{FALSE}.}
 }
 \value{
 Returns a .fasta or .fasta.gz file of the desired RefSeq genomes.
@@ -65,7 +69,8 @@ dir.create(ref_temp)
 
 ## Download all RefSeq reference Shotokuvirae kingdom genomes
 download_refseq('Shotokuvirae', reference = TRUE, representative = FALSE,
-                out_dir = ref_temp, compress = TRUE, patho_out = FALSE)
+                out_dir = ref_temp, compress = TRUE, patho_out = FALSE,
+                caching = TRUE)
 
 unlink(ref_temp)
 

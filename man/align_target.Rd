@@ -60,13 +60,13 @@ target_ref_temp <- tempfile()
 dir.create(target_ref_temp)
 
 ## Download genome
-tax <- "Mycoplasma genitalium G37"
+tax <- "Ovine atadenovirus D"
 all_ref <- MetaScope::download_refseq(tax,
                                       reference = FALSE,
                                       representative = FALSE,
                                       compress = TRUE,
-                                      out_dir = target_ref_temp
-)
+                                      out_dir = target_ref_temp,
+                                      caching = TRUE)
 
 ## Create subread index
 ind_out <- mk_subread_index(all_ref)
