@@ -81,3 +81,37 @@ The `download_refseq()` function automatically extracts custom reference genome 
 ## Downloading target genomes
 
 Even though in this scenario we know exactly from where the reads in the mock data (`reads.fastq`) originate, in most cases we may only have a general idea of read origins. Therefore, in the following code, we will download the genome of the *Staphylococcus aureus* RF122 strain along with the genomes of a few other closely related *Staphylococcus aureus* strains from the NCBI RefSeq database. These genomes together will act as our target genome library.
+
+```{R target lib, eval = TRUE, warning = FALSE, message = FALSE}
+target_ref_temp <- tempfile()
+dir.create(target_ref_temp)
+
+all_species <- c("Staphylococcus aureus RF122",
+                 "Staphylococcus aureus subsp. aureus ST398",
+                 "Staphylococcus aureus subsp. aureus Mu3")
+sapply(all_species, download_refseq, 
+       reference = FALSE, representative = FALSE, compress = TRUE,
+       out_dir = target_ref_temp, caching = TRUE)
+```
+
+## Downloading filter genomes
+
+We will also download the genome of the *Staphylococcus epidermidis* RP62A strain from the NCBI nucleotide database, in an uncompressed FASTA format. This genome will act as our filter library.
+
+```{R filter lib, warning = FALSE, message = FALSE}
+filter_ref_temp <- tempfile()
+dir.create(filter_ref_temp)
+
+download_refseq(
+  taxon = "Staphylococcus epidermidis RP62A",
+  representative = FALSE, reference = FALSE,
+  compress = TRUE, out_dir = filter_ref_temp,
+  caching = TRUE)
+```
+
+# Demultiplex
+
+Sequence runs on NGS instruments are typically carried out with multiple samples pooled together. An index tag (also called a barcode) consisting of a unique sequence of between 6 and 12bp is added to each sample so that the sequence reads from different samples can be identified. For 16s experiments or sequencing conducted using an Illumina machine, the process of demultiplexing (dividing your sequence reads into separate files for each index tag/sample) and generating the FASTQ data files required for downstream analysis can be done using the MetaScope demultiplexing workflow. This consists of the `demultiplex()` function, which takes as arguments a matrix of sample names/barcodes, a FASTQ file of barcodes by sequence header, and a FASTQ file of reads corresponding to the barcodes. Based on the barcodes given, the function extracts all reads for the indexed barcode and writes all the reads from that barcode to separate FASTQ files.
+
+This is an optional step in the analysis process depending on whether your reads are multiplexed. The reads which we are currently trying to analyze are not multiplexed and therefore this step is skipped in our analysis. The example shown below is using different reads that are barcoded in order to show the utility of the function.
+
