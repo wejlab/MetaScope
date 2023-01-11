@@ -115,3 +115,211 @@ Sequence runs on NGS instruments are typically carried out with multiple samples
 
 This is an optional step in the analysis process depending on whether your reads are multiplexed. The reads which we are currently trying to analyze are not multiplexed and therefore this step is skipped in our analysis. The example shown below is using different reads that are barcoded in order to show the utility of the function.
 
+```{R demultiplex, message = FALSE}
+loc_temp <- tempfile()
+dir.create(loc_temp)
+
+# Get barcode, index, and read data locations
+barcodePath <-
+  system.file("extdata", "barcodes.txt", package = "MetaScope")
+indexPath <- system.file("extdata", "virus_example_index.fastq",
+                         package = "MetaScope")
+readPath <-
+  system.file("extdata", "virus_example.fastq", package = "MetaScope")
+
+# Get barcode, index, and read data locations
+demult <-
+  demultiplex(barcodePath,
+              indexPath,
+              readPath,
+              rcBarcodes = FALSE,
+              hammingDist = 2,
+              location = loc_temp)
+demult
+
+unlink(loc_temp)
+```
+
+# Alignment with Reference Libraries
+
+After acquiring the target and filter genome libraries, we then take the sequencing reads from our sample and map them first to the target library and then to the filter library. MetaScope's Rbowtie2 mapping function utilizes the [Bowtie2](https://www.nature.com/articles/nmeth.1923) aligner (Langmead 2012) which maps reads to a reference genome using a full-text minute index based approach. Essentially, the algorithm extracts substrings which are referred to as "seeds" from the reads and aligns them to the reference genomes with the assistance from the full-text minute index. Seed alignments to the reference genomes are prioritized and then finally extended into full alignments using dynamic programming.
+
+The MetaScope Rbowtie2 mapping workflow incorporates three functions - `mk_bowtie_index()`, `align_target_bowtie()`, and `filter_host_bowtie()` (analogous Rsubread mapping workflow also incorporates three functions - `mk_subread_index()`, `align_target()`, and `filter_host`). First, we use `mk_bowtie_index()`, a wrapper for the `Rbowtie2::bowtie2_build` function, to generate Bowtie2 compatible indexes from the reference genomes that were previously downloaded. The target and reference genome files (.fasta or .fasta.gz extension) must be placed into their own separate empty directories prior to using the function. This is due to the fact that the function will attempt to build the indexes from all the files present in the directory. The function will give an error if other files (other than .fasta or .fasta.gz) are present in the directory. Depending on the combined size of the reference genomes, the function will automatically create either small (.bt2) or large (.bt2l) Bowtie2 indexes.
+
+The target and filter reference genomes downloaded in the previous step have been combined and renamed to target.fasta and filter.fasta respectively for convenience. These are the files from which the Bowtie2 indexes will be made from.
+
+```{R makeindexes, eval = TRUE}
+# Create temp directory to store the Bowtie2 indices
+index_temp <- tempfile()
+dir.create(index_temp)
+
+# Create target index
+mk_bowtie_index(
+  ref_dir = target_ref_temp,
+  lib_dir = index_temp,
+  lib_name = "target",
+  overwrite = TRUE
+)
+
+# Create filter index
+mk_bowtie_index(
+  ref_dir = filter_ref_temp,
+  lib_dir = index_temp,
+  lib_name = "filter",
+  overwrite = TRUE
+)
+
+```
+
+Following index creation, we will use the Bowtie2 aligner to map the reads to the target genomes with the `align_target_bowtie()` function (Rsubread equivalent: `align_target()`). The function takes as an input the location of the FASTQ file to align, the directory where the indexes are stored, the names of the indexes to align against, the directory where the BAM file should be written, and the basename of the output BAM file. In practice, `align_target_bowtie()` maps reads to each target library separately, removes the unmapped reads from each file, and finally merges and sorts by chromosome the BAM files from each library into a single output file (same with `align_target`). If SAMtools is installed on the machine and can be found by the `Sys.which("samtools")` R command, the BAM file will be directly created, otherwise an intermediate SAM file will be created prior to the creation of the BAM file which could potentially create issues if the SAM file is large and there is limited disk space. The default alignment parameters are the same as PathoScope 2.0's default alignment parameters, but users can provide their own Bowtie 2 alignment settings if desired.
+
+We will now align the sample reads (reads.fastq) to the target reference genomes using the Bowtie 2 indexes that we just built.
+
+```{R alignment align}
+
+# Create a temp directory to store output bam file
+output_temp <- tempfile()
+dir.create(output_temp)
+
+# Get path to example reads
+readPath <-
+  system.file("extdata", "reads.fastq", package = "MetaScope")
+
+# Align reads to the target genomes
+target_map <-
+  align_target_bowtie(
+    read1 = readPath,
+    lib_dir = index_temp,
+    libs = "target",
+    align_dir = output_temp,
+    align_file = "bowtie_target",
+    overwrite = TRUE
+  )
+```
+
+The last step in the mapping workflow is to filter the output BAM file according to the reference genome for the filter/host species. Although we have already filtered out any unmapped reads, which may belong to one or more host species or otherwise, there may still remain some sort of unwelcome contamination in the data from the filter species which we wish to remove. To do this, we employ `filter_host_bowtie()` (Rsubread equivalent: `filter_host()`), which takes as an input the location of the BAM file created from `align_target_bowtie()`, the directory where the indexes are stored, and the names of the filter indexes to align against, to produce a sorted BAM file with any reads that match the filter libraries removed. We will then use this final BAM file downstream for further analysis.
+
+```{R alignment filter}
+
+final_map <-
+  filter_host_bowtie(
+    reads_bam = target_map,
+    lib_dir = index_temp,
+    libs = "filter",
+    make_bam = TRUE, # Set to true to create BAM output
+    # Default is to create simplified .csv.gz output
+    # The .csv.gz output is much quicker to create!
+    overwrite = TRUE,
+    threads = 1
+  )
+
+```
+
+Prior to the last step in the analysis, we will look at the primary alignments of the mapped reads in the filtered BAM file that we just created using the `filter_host_bowtie()` function. According to the [Bowtie2 manual](http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml), a primary alignment is described as the alignment that received the highest alignment score among all alignments for that read. When looking at the primary alignments of the mapped reads, we can see that the majority of reads have mapped to the correct *Staphylococcus aureus* RF122 strain. However, some residual reads have primary alignments to the other *S. aureus* strains which are incorrect. If we were to stop the analysis at this point, we could potentially be lead to believe that our sample has increased microbial diversity, when it actually does not.
+
+```{R bam primary alignment}
+
+bamFile <- Rsamtools::BamFile(final_map)
+
+param <-
+  Rsamtools::ScanBamParam(
+    flag = Rsamtools::scanBamFlag(isSecondaryAlignment = FALSE),
+    what = c("flag", "rname")
+  ) #Gets info about primary alignments
+
+aln <- Rsamtools::scanBam(bamFile, param = param)
+accession_all <- aln[[1]]$rname
+unique_accession_all <- unique(accession_all)
+accession_all_inds <- match(accession_all, unique_accession_all)
+unique_accession_genome_name <- suppressMessages(
+  taxize::genbank2uid(unique_accession_all,
+                      batch_size = length(unique_accession_all))) %>%
+  vapply(function(x) attr(x, "name"), character(1))
+
+genome_name_all <- unique_accession_genome_name[accession_all_inds] %>%
+  gsub(',.*', '', .) %>%
+  gsub("(ST398).*", "\\1", .) %>%
+  gsub("(N315).*", "\\1", .) %>%
+  gsub("(Newman).*", "\\1", .) %>%
+  gsub("(Mu3).*", "\\1", .) %>%
+  gsub("(Mu50).*", "\\1", .) %>%
+  gsub("(RF122).*", "\\1", .)
+read_count_table <- sort(table(genome_name_all), decreasing = TRUE)
+knitr::kable(
+  read_count_table,
+  col.names = c("Genome Assigned", "Read Count"))
+
+```
+
+We can also look at the secondary alignments of the mapped reads within our filtered BAM file. A secondary alignment occurs when a read maps to multiple different genomes. We can see that the majority of our secondary alignments are to the other Staphylococcus aureus strains, which makes sense considering that the majority of the primary alignments were to the correct Staphylococcus aureus RF122 strain.
+
+```{R bam secondary alignment}
+
+bamFile <- Rsamtools::BamFile(final_map)
+
+param <-
+  Rsamtools::ScanBamParam(
+    flag = Rsamtools::scanBamFlag(isSecondaryAlignment = TRUE),
+    what = c("flag", "rname")
+  ) #Gets info about secondary alignments
+
+aln <- Rsamtools::scanBam(bamFile, param = param)
+accession_all <- aln[[1]]$rname
+unique_accession_all <- unique(accession_all)
+accession_all_inds <- match(accession_all, unique_accession_all)
+unique_accession_taxid <-
+  suppressMessages(taxize::genbank2uid(unique_accession_all, batch_size = length(unique_accession_all)))
+unique_accession_genome_name <-
+  vapply(unique_accession_taxid, function(x)
+    attr(x, "name"), character(1))
+genome_name_all <- unique_accession_genome_name[accession_all_inds]
+genome_name_all <- gsub(',.*', '', genome_name_all)
+genome_name_all <- gsub("(ST398).*", "\\1", genome_name_all)
+genome_name_all <- gsub("(N315).*", "\\1", genome_name_all)
+genome_name_all <- gsub("(Newman).*", "\\1", genome_name_all)
+genome_name_all <- gsub("(Mu3).*", "\\1", genome_name_all)
+genome_name_all <- gsub("(Mu50).*", "\\1", genome_name_all)
+genome_name_all <- gsub("(RF122).*", "\\1", genome_name_all)
+read_count_table <- sort(table(genome_name_all), decreasing = TRUE)
+knitr::kable(
+  read_count_table,
+  col.names = c("Genome Assigned", "Read Count"))
+
+```
+
+# Genome Identification
+
+Following the proper alignment of a sample to all target and filter libraries of interest, we may proceed in identifying which genomes are most likely to be represented in the sample. This identification workflow is the core of MetaScope; it features a Bayesian read reassignment model which dramatically improves specificity and sensitivity over other methods (Francis et. al 2013). This is because such a method identifies reads with unique alignments and uses them to guide the reassignment of reads with ambiguous alignments.
+
+The identification workflow consists of a single function, `MetaScope_ID()`, which reads in a .bam file, annotates the taxonomy and genome names, reduces the mapping ambiguity using a mixture model, and outputs a .csv file with the results. Currently, it assumes that the genome library/.bam files use NCBI accession names for reference names.
+
+```{R identification, message = FALSE}
+metascope_id(final_map, input_type = "bam", 
+                        # change input_type to "csv.gz" when not creating a BAM
+                        aligner = "bowtie2", num_species_plot = 0)
+```
+
+We will now look at the read reassignment results reported in the output CSV file.
+
+```{R CSV summary}
+relevant_col <- read.csv(paste0(tools::file_path_sans_ext(final_map),
+                                ".metascope_id.csv"))[,2:4]
+
+relevant_col |>
+  dplyr::mutate(Genome = stringr::str_replace_all(Genome, ',.*', ''),
+                Genome = stringr::str_replace_all(Genome, "(ST398).*", "\\1"),
+                Genome = stringr::str_replace_all(Genome, "(N315).*", "\\1"),
+                Genome = stringr::str_replace_all(Genome, "(Newman).*", "\\1"),
+                Genome = stringr::str_replace_all(Genome, "(Mu3).*", "\\1"),
+                Genome = stringr::str_replace_all(Genome, "(RF122).*", "\\1")) |>
+  knitr::kable()
+unlink(".bowtie2.cerr.txt")
+```
+
+We can see that the read reassignment function has reassigned the majority of the ambiguous alignments back to the *Staphylococcus aureus* RF122 strain, the correct strain of origin.
+
+# Session Info
+
+```{r session info}
+sessionInfo()
+```
