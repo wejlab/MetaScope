@@ -115,3 +115,59 @@ Sequence runs on NGS instruments are typically carried out with multiple samples
 
 This is an optional step in the analysis process depending on whether your reads are multiplexed. The reads which we are currently trying to analyze are not multiplexed and therefore this step is skipped in our analysis. The example shown below is using different reads that are barcoded in order to show the utility of the function.
 
+```{R demultiplex, message = FALSE}
+loc_temp <- tempfile()
+dir.create(loc_temp)
+
+# Get barcode, index, and read data locations
+barcodePath <-
+  system.file("extdata", "barcodes.txt", package = "MetaScope")
+indexPath <- system.file("extdata", "virus_example_index.fastq",
+                         package = "MetaScope")
+readPath <-
+  system.file("extdata", "virus_example.fastq", package = "MetaScope")
+
+# Get barcode, index, and read data locations
+demult <-
+  demultiplex(barcodePath,
+              indexPath,
+              readPath,
+              rcBarcodes = FALSE,
+              hammingDist = 2,
+              location = loc_temp)
+demult
+
+unlink(loc_temp)
+```
+
+# Alignment with Reference Libraries
+
+After acquiring the target and filter genome libraries, we then take the sequencing reads from our sample and map them first to the target library and then to the filter library. MetaScope's Rbowtie2 mapping function utilizes the [Bowtie2](https://www.nature.com/articles/nmeth.1923) aligner (Langmead 2012) which maps reads to a reference genome using a full-text minute index based approach. Essentially, the algorithm extracts substrings which are referred to as "seeds" from the reads and aligns them to the reference genomes with the assistance from the full-text minute index. Seed alignments to the reference genomes are prioritized and then finally extended into full alignments using dynamic programming.
+
+The MetaScope Rbowtie2 mapping workflow incorporates three functions - `mk_bowtie_index()`, `align_target_bowtie()`, and `filter_host_bowtie()` (analogous Rsubread mapping workflow also incorporates three functions - `mk_subread_index()`, `align_target()`, and `filter_host`). First, we use `mk_bowtie_index()`, a wrapper for the `Rbowtie2::bowtie2_build` function, to generate Bowtie2 compatible indexes from the reference genomes that were previously downloaded. The target and reference genome files (.fasta or .fasta.gz extension) must be placed into their own separate empty directories prior to using the function. This is due to the fact that the function will attempt to build the indexes from all the files present in the directory. The function will give an error if other files (other than .fasta or .fasta.gz) are present in the directory. Depending on the combined size of the reference genomes, the function will automatically create either small (.bt2) or large (.bt2l) Bowtie2 indexes.
+
+The target and filter reference genomes downloaded in the previous step have been combined and renamed to target.fasta and filter.fasta respectively for convenience. These are the files from which the Bowtie2 indexes will be made from.
+
+```{R makeindexes, eval = TRUE}
+# Create temp directory to store the Bowtie2 indices
+index_temp <- tempfile()
+dir.create(index_temp)
+
+# Create target index
+mk_bowtie_index(
+  ref_dir = target_ref_temp,
+  lib_dir = index_temp,
+  lib_name = "target",
+  overwrite = TRUE
+)
+
+# Create filter index
+mk_bowtie_index(
+  ref_dir = filter_ref_temp,
+  lib_dir = index_temp,
+  lib_name = "filter",
+  overwrite = TRUE
+)
+
+```
+
