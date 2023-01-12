@@ -30,6 +30,7 @@
 #'   the Hamming Distance is >=1 and this leads to inexact index matches to more
 #'   than one barcode, that read will be written to more than one demultiplexed
 #'   read files.
+#' @param quiet Turns off most messages. Default is \code{TRUE}.
 #'
 #' @return Writes a single .fastq file that contains all reads whose index
 #'   matches the barcode specified. This file will be written to the location
@@ -39,8 +40,7 @@
 #' @examples
 #'
 #' ## Create temporary directory
-#' ref_temp <- tempfile()
-#' dir.create(ref_temp)
+#' ref_temp <- tempdir()
 #'
 #' ## Load example barcode, index, and read data into R session
 #' barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
@@ -68,10 +68,10 @@
 
 extract_reads <- function(barcodeIndex, barcodes, sampleNames, index, reads,
                          location = "./demultiplex_fastq", rcBarcodes = TRUE,
-                         hDist = 0) {
+                         hDist = 0, quiet = TRUE) {
     barcode <- barcodes[barcodeIndex]
     sampleName <- sampleNames[barcodeIndex]
-    message("Finding reads for barcode: ", barcode)
+    if(!quiet) message("Finding reads for barcode: ", barcode)
     if (rcBarcodes) {
         rci <- as.character(Biostrings::reverseComplement(
             Biostrings::DNAString(barcode)))
@@ -82,22 +82,22 @@ extract_reads <- function(barcodeIndex, barcodes, sampleNames, index, reads,
     numReads <- sum(ind_match)
     outFileName <- paste(location, "/", sampleName, "_", barcode,
                          ".fastq.gz", sep = "")
-    if (numReads == 0) {
-        message("\tFound 0 reads for this barcode, no file will be written")
+    if (numReads == 0 && !quiet) {
+        message("\tFound 0 reads for this barcode; no file will be written.")
     } else {
-        message("\tFound ", sum(ind_match), " reads, writing reads to: ",
-                outFileName)
-        Biostrings::writeQualityScaledXStringSet(reads[c(ind_match)],
-                                                 outFileName, compress = TRUE)
+        if (!quiet) message("\tFound ", sum(ind_match),
+                            " reads, writing reads to: ", outFileName)
+        Biostrings::writeQualityScaledXStringSet(
+          reads[c(ind_match)], outFileName, compress = TRUE)
     }
     return(list(output_file = outFileName, numberOfReads = numReads,
                 matchedIndexes = ind_match))
 }
 
 errmessages <- function(barcodes, samNames, numReads) {
-  message("Did not find any reads for the following barcodes: ",
+  warning("Did not find any reads for the following barcodes: ",
           paste(barcodes[numReads == 0], collapse = " "))
-  message("Did not find any reads for the following samples: ",
+  warning("Did not find any reads for the following samples: ",
           paste(samNames[numReads == 0], collapse = " "))
   write(paste("Did not find any reads for the following barcodes:",
               paste(barcodes[numReads == 0], collapse = " "), "\n",
@@ -126,7 +126,7 @@ errmessages <- function(barcodes, samNames, numReads) {
 #'   complemented to match the sequences in the \code{indexFile}? Defaults to
 #'   \code{TRUE}.
 #' @param location A directory location to store the demultiplexed read files.
-#'   Defaults to generate a new subdirectory at './demultiplex_fastq'
+#'   Defaults to generate a new temporary directory.
 #' @param threads The number of threads to use for parallelization
 #'   (BiocParallel). This function will parallelize over the barcodes and
 #'   extract reads for each barcode separately and write them to separate
@@ -136,6 +136,7 @@ errmessages <- function(barcodes, samNames, numReads) {
 #'   Warning: if the Hamming Distance is \code{>=1} and this leads to inexact
 #'   index matches to more than one barcode, that read will be written to more
 #'   than one demultiplexed read files.
+#' @param quiet Turns off most messages. Default is \code{TRUE}.
 #'
 #' @return Returns multiple .fastq files that contain all reads whose index
 #'   matches the barcodes given. These files will be written to the location
@@ -146,10 +147,6 @@ errmessages <- function(barcodes, samNames, numReads) {
 #'
 #' @examples
 #'
-#' ## Create temporary directory
-#' ref_temp <- tempfile()
-#' dir.create(ref_temp)
-#'
 #' ## Get barcode, index, and read data locations
 #' barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
 #' indexPath <- system.file("extdata", "virus_example_index.fastq",
@@ -159,27 +156,26 @@ errmessages <- function(barcodes, samNames, numReads) {
 #'
 #' ## Demultiplex
 #' demult <- demultiplex(barcodePath, indexPath, readPath, rcBarcodes = FALSE,
-#'                       hammingDist = 2, location = ref_temp)
+#'                       hammingDist = 2, location = tempdir())
 #' demult
-#'
-#' # Remove temporary directory
-#' unlink(ref_temp, recursive = TRUE)
 #'
 
 demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
-                        location = "./demultiplex_fastq", threads = 1,
-                        hammingDist = 0) {
-    message("Reading Sample Names and Barcodes from: ", barcodeFile)
+                        location = tempdir(), threads = 1,
+                        hammingDist = 0, quiet = TRUE) {
+    if (!quiet) message("Reading Sample Names and Barcodes from: ",
+                        barcodeFile)
     bcFile <- utils::read.table(barcodeFile, sep = "\t", header = TRUE)
     barcodes <- bcFile[, 2]
     samNames <- bcFile[, 1]
-    message("\tFound information for ", length(barcodes), " samples/barcodes")
-    message("Reading Index File: ", indexFile)
+    if (!quiet) message("\tFound information for ", length(barcodes),
+                        " samples/barcodes")
+    if (!quiet) message("Reading Index File: ", indexFile)
     inds <- Biostrings::readDNAStringSet(indexFile, format = "fastq")
-    message("\tFound indexes for ", length(inds), " reads")
-    message("Reading Sequence File: ", readFile)
+    if (!quiet) message("\tFound indexes for ", length(inds), " reads")
+    if (!quiet) message("Reading Sequence File: ", readFile)
     reads <- Biostrings::readQualityScaledDNAStringSet(readFile)
-    message("\tFound ", length(reads), " reads")
+    if (!quiet) message("\tFound ", length(reads), " reads")
     ## make output directory if necessary
     if (!dir.exists(location)) dir.create(location)
     # Loop over barcodes
@@ -188,18 +184,19 @@ demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
     for (i in seq_along(barcodes)) {
         extracted <- extract_reads(
           i, barcodes, samNames, inds, reads, rcBarcodes = rcBarcodes,
-          location = location, hDist = hammingDist)
+          location = location, hDist = hammingDist, quiet = quiet)
         numReads <- c(numReads, extracted$numberOfReads)
         ind_no_match <- ind_no_match + extracted$matchedIndexes
     }
-    message(sum(ind_no_match > 1))
+    if (!quiet) message(sum(ind_no_match > 1))
     ind_no_match <- (ind_no_match == 0)
     # number of reads for each barcode
     if (any(numReads == 0)) {
         errmessages(barcodes, samNames, numReads)
     }
     # Track reads without matches, and write them to an 'orphan' file
-    message("Found ", sum(ind_no_match), " reads without a matching barcode (",
+    if (!quiet) message("Found ", sum(ind_no_match),
+                        " reads without a matching barcode (",
             100 * round(mean(ind_no_match), 4), "%), writing reads to: ",
             location, "/orphans.fastq.gz")
     Biostrings::writeQualityScaledXStringSet(

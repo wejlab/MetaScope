@@ -34,7 +34,7 @@ create_qiime_biom <- function(se_colData, taxonomy_table, which_annot_col,
           .data$`#SampleID`, .data$BarcodeSequence, .data$LinkerPrimerSequence)
     # Write files
     out_map <- paste(path_to_write, "QIIME_metadata_map.tsv", sep = "/")
-    message("Writing mapping TSV to ", out_map)
+    message("Writing TSV mapping file to ", out_map)
     utils::write.table(alt_col2, out_map, sep = "\t",
       row.names = FALSE, quote = FALSE)
     # Write counts table to biom

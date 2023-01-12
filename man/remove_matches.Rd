@@ -4,7 +4,16 @@
 \alias{remove_matches}
 \title{Helper function to remove reads matched to filter libraries}
 \usage{
-remove_matches(reads_bam, read_names, output, YS, threads, aligner, make_bam)
+remove_matches(
+  reads_bam,
+  read_names,
+  output,
+  YS,
+  threads,
+  aligner,
+  make_bam,
+  quiet
+)
 }
 \arguments{
 \item{reads_bam}{The name of a merged, sorted .bam file that has previously
@@ -30,6 +39,8 @@ Default is 1.}
 filtered out. A .csv.gz file will be created instead if \code{FALSE}.
 Creating a bam file is costly on resources over creating a compressed
 csv file with only relevant information, so default is \code{FALSE}.}
+
+\item{quiet}{Turns off most messages. Default is \code{TRUE}.}
 }
 \value{
 Depending on input \code{make_bam}, either the name of a filtered,

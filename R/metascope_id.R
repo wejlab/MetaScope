@@ -1,7 +1,7 @@
-obtain_reads <- function(input_file, input_type, aligner) {
+obtain_reads <- function(input_file, input_type, aligner, quiet) {
   to_pull <- c("qname", "rname", "cigar", "qwidth", "pos")
   if (identical(input_type, "bam")) {
-    message("Reading .bam file: ", input_file)
+    if (!quiet) message("Reading .bam file: ", input_file)
     if (identical(aligner, "bowtie2")) {
       params <- Rsamtools::ScanBamParam(what = to_pull, tag = c("AS"))
     } else if (identical(aligner, "subread")) {
@@ -11,7 +11,7 @@ obtain_reads <- function(input_file, input_type, aligner) {
     }
     reads <- Rsamtools::scanBam(input_file, param = params)
   } else if (identical(input_type, "csv.gz")) {
-    message("Reading .csv.gz file: ", input_file)
+    if (!quiet) message("Reading .csv.gz file: ", input_file)
     reads <- data.table::fread(input_file, sep = ",", header = FALSE) %>%
       magrittr::set_colnames(c(to_pull, "tag")) %>% as.list() %>% list()
     if (identical(aligner, "bowtie2")) {
@@ -41,15 +41,16 @@ identify_rnames <- function(reads, unmapped) {
   return(mapped_rname)
 }
 
-find_accessions <- function(accessions, NCBI_key) {
+find_accessions <- function(accessions, NCBI_key, quiet) {
   # Convert accessions to taxids and get genome names
-  message("Obtaining taxonomy and genome names")
+  if (!quiet) message("Obtaining taxonomy and genome names")
   # If URI length is greater than 2500 characters then split accession list
   URI_length <- nchar(paste(accessions, collapse = "+"))
   if (URI_length > 2500) {
     chunks <- split(accessions, ceiling(seq_along(accessions) / 100))
     tax_id_all <- c()
-    message("Accession list broken into ", length(chunks), " chunks")
+    if (!quiet) message("Accession list broken into ", length(chunks),
+                        " chunks")
     for (i in seq_along(chunks)) {
       success <- FALSE
       attempt <- 0
@@ -57,7 +58,8 @@ find_accessions <- function(accessions, NCBI_key) {
       while (!success) {
         try({
           attempt <- attempt + 1
-          if (attempt > 1) message("Attempt #", attempt, " Chunk #", i)
+          if (attempt > 1 && !quiet) message(
+            "Attempt #", attempt, " Chunk #", i)
           tax_id_chunk <- taxize::genbank2uid(id = chunks[[i]],
                                               key = NCBI_key)
           Sys.sleep(1)
@@ -94,7 +96,7 @@ get_alignscore <- function(aligner, cigar_strings, count_matches, scores,
 }
 
 get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
-                            unique_genome_names) {
+                            unique_genome_names, quiet) {
   input_distinct <- dplyr::distinct(combined, .data$qname, .data$rname,
                                     .keep_all = TRUE)
   qname_inds_2 <- input_distinct$qname
@@ -110,7 +112,7 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
   pi_new <- theta_new <- Matrix::colMeans(gammas)
   conv <- max(abs(pi_new - pi_old) / pi_old)
   it <- 0
-  message("Starting EM iterations")
+  if (!quiet) message("Starting EM iterations")
   while (conv > convEM && it < maxitsEM) {
     # Expectation Step: Estimate expected value for each read to ea genome
     pi_mat <- Matrix::sparseMatrix(qname_inds_2, rname_tax_inds_2,
@@ -128,9 +130,9 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
     it <- it + 1
     conv <- max(abs(pi_new - pi_old) / pi_old, na.rm = TRUE)
     pi_old <- pi_new
-    message(c(it, conv))
+    if (!quiet) message(c(it, conv))
   }
-  message("\tDONE! Converged in ", it, " iterations.")
+  if (!quiet) message("\tDONE! Converged in ", it, " iterations.")
   hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which
   best_hit <- Matrix::colSums(hit_which)
   names(best_hit) <- seq_along(best_hit)
@@ -146,7 +148,7 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
                            read_count = best_hit, Proportion = proportion,
                            readsEM = readsEM, EMProportion = propEM) %>%
     dplyr::arrange(dplyr::desc(.data$read_count))
-  message("Found reads for ", nrow(results), " genomes")
+  if (!quiet) message("Found reads for ", nrow(results), " genomes")
   return(results)
 }
 
@@ -277,6 +279,7 @@ locations <- function(which_taxid, which_genome,
 #' @param num_species_plot The number of genome coverage plots to be saved.
 #'   Default is \code{NULL}, which saves coverage plots for the ten most highly
 #'   abundant species.
+#' @param quiet Turns off most messages. Default is \code{TRUE}.
 #'
 #' @return This function returns a .csv file with annotated read counts to
 #'   genomes with mapped reads. The function itself returns the output .csv file
@@ -289,31 +292,29 @@ locations <- function(which_taxid, which_genome,
 #' ## Assuming filtered bam files already exist
 #'
 #' ## Create temporary directory
-#' file_temp <- tempfile()
-#' dir.create(file_temp)
+#' file_temp <- tempdir()
 #'
 #' #### Subread aligned bam file
 #'
 #' ## Create object with path to filtered subread csv.gz file
-#' bamPath <- system.file("extdata","subread_target.filtered.csv.gz",
-#'                        package = "MetaScope")
-#' copied_csv <- file.path(file_temp, "subread_target.filtered.csv.gz")
-#' file.copy(bamPath, copied_csv)
+#' filt_file <- "subread_target.filtered.csv.gz"
+#' bamPath <- system.file("extdata", filt_file, package = "MetaScope")
+#' file.copy(bamPath, file_temp)
 #'
 #' ## Run metascope id with the aligner option set to bowtie2
-#' metascope_id(input_file = copied_csv, aligner = "subread",
-#'              num_species_plot = 0, input_type = "csv.gz")
+#' metascope_id(input_file = file.path(file_temp, filt_file),
+#'              aligner = "subread", num_species_plot = 0,
+#'              input_type = "csv.gz")
 #'
 #' #### Bowtie 2 aligned .csv.gz file
 #'
 #' ## Create object with path to filtered bowtie2 bam file
-#' bamPath <- system.file("extdata","bowtie_target.filtered.csv.gz",
-#'                        package = "MetaScope")
-#' copied_csv <- file.path(file_temp, "bowtie_target.filtered.csv.gz")
-#' file.copy(bamPath, copied_csv)
+#' bowtie_file <- "bowtie_target.filtered.csv.gz"
+#' bamPath <- system.file("extdata", bowtie_file, package = "MetaScope")
+#' file.copy(bamPath, file_temp)
 #'
 #' ## Run metascope id with the aligner option set to bowtie2
-#' metascope_id(input_file = copied_csv, aligner = "bowtie2",
+#' metascope_id(file.path(file_temp, bowtie_file), aligner = "bowtie2",
 #'              num_species_plot = 0, input_type = "csv.gz")
 #'
 #' ## Remove temporary directory
@@ -327,13 +328,14 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                            tools::file_path_sans_ext(input_file),
                            ".metascope_id.csv"),
                          convEM = 1 / 10000, maxitsEM = 25,
-                         num_species_plot = NULL) {
+                         num_species_plot = NULL,
+                         quiet = TRUE) {
   # Check to make sure valid aligner is specified
   if (aligner != "bowtie2" && aligner != "subread" && aligner != "other") {
     stop("Please make sure aligner is set to either 'bowtie2', 'subread',",
          " or 'other'")
   }
-  reads <- obtain_reads(input_file, input_type, aligner)
+  reads <- obtain_reads(input_file, input_type, aligner, quiet)
   unmapped <- is.na(reads[[1]]$rname)
   mapped_rname <- identify_rnames(reads, unmapped)
   mapped_qname <- reads[[1]]$qname[!unmapped]
@@ -346,18 +348,18 @@ metascope_id <- function(input_file, input_type = "csv.gz",
     reads[[1]][["tag"]][["NM"]][!unmapped] # mapped edits used
   read_names <- unique(mapped_qname)
   accessions <- as.character(unique(mapped_rname))
-  message("\tFound ", length(read_names), " reads aligned to ",
+  if (!quiet) message("\tFound ", length(read_names), " reads aligned to ",
           length(accessions), " NCBI accessions")
-  tax_id_all <- find_accessions(accessions, NCBI_key)
+  tax_id_all <- find_accessions(accessions, NCBI_key, quiet = quiet)
   taxids <- vapply(tax_id_all, function(x) x[1], character(1))
   unique_taxids <- unique(taxids)
   taxid_inds <- match(taxids, unique_taxids)
   genome_names <- vapply(tax_id_all, function(x) attr(x, "name"),
                          character(1))
   unique_genome_names <- genome_names[!duplicated(taxid_inds)]
-  message("\tFound ", length(unique_taxids), " unique NCBI taxonomy IDs")
+  if(!quiet) message("\tFound ", length(unique_taxids), " unique NCBI taxonomy IDs")
   # Make an aligment matrix (rows: reads, cols: unique taxids)
-  message("Setting up the EM algorithm")
+  if (!quiet) message("Setting up the EM algorithm")
   qname_inds <- match(mapped_qname, read_names)
   rname_inds <- match(mapped_rname, accessions)
   rname_tax_inds <- taxid_inds[rname_inds] #accession to taxid
@@ -379,18 +381,18 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                                "rname" = rname_tax_inds,
                                "scores" = exp_alignment_scores)
   results <- get_assignments(combined, convEM, maxitsEM, unique_taxids,
-                             unique_genome_names)
+                             unique_genome_names, quiet = quiet)
   utils::write.csv(results, file = out_file, row.names = FALSE)
-  message("Results written to ", out_file)
+  if (!quiet) message("Results written to ", out_file)
   # PLotting genome locations
   num_plot <- num_species_plot
   if (is.null(num_plot)) num_plot <- min(nrow(results), 10)
   if (num_plot > 0) {
-    message("Creating coverage plots")
+    if (!quiet) message("Creating coverage plots")
     lapply(seq_along(results$TaxonomyID)[seq_len(num_plot)], function(x) {
       locations(as.numeric(results$TaxonomyID)[x],
                 which_genome = results$Genome[x],
                 accessions, taxids, reads, input_file)})
-  } else message("No coverage plots created")
+  } else if (!quiet) message("No coverage plots created")
   return(results)
 }

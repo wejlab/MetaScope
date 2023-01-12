@@ -13,7 +13,8 @@ filter_host(
   output = paste(tools::file_path_sans_ext(reads_bam), "filtered", sep = "."),
   subread_options = align_details,
   YS = 1e+05,
-  threads = 1
+  threads = 1,
+  quiet = TRUE
 )
 }
 \arguments{
@@ -49,6 +50,8 @@ the bam file at once for chunked functions. Default is 100000.}
 
 \item{threads}{The amount of threads available for the function. Default is 1
 thread.}
+
+\item{quiet}{Turns off most messages. Default is \code{TRUE}.}
 }
 \value{
 The name of a filtered, sorted .bam file written to the user's
@@ -75,8 +78,7 @@ created more efficiently and is still compatible with \code{metascope_id()}.
 ## Assuming a bam file has been created previously with align_target()
 \donttest{
 ## Create temporary directory
-filter_ref_temp <- tempfile()
-dir.create(filter_ref_temp)
+filter_ref_temp <- tempdir()
 
 ## Download filter genome
 all_species <- c("Staphylococcus aureus subsp. aureus str. Newman")

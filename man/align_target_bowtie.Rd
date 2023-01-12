@@ -13,7 +13,8 @@ align_target_bowtie(
   align_file,
   bowtie2_options = NULL,
   threads = 1,
-  overwrite = FALSE
+  overwrite = FALSE,
+  quiet = TRUE
 )
 }
 \arguments{
@@ -46,6 +47,8 @@ Default is 1 thread.}
 
 \item{overwrite}{Whether existing files should be overwritten. Default is
 FALSE.}
+
+\item{quiet}{Turns off most messages. Default is \code{TRUE}.}
 }
 \value{
 Returns the path to where the output alignment file is stored.
@@ -62,8 +65,7 @@ genomes.
 #### Align example reads to an example reference library using Rbowtie2
 
 ## Create temporary directory to store file
-target_ref_temp <- tempfile()
-dir.create(target_ref_temp)
+target_ref_temp <- tempdir()
 
 ## Dowload reference genome
 MetaScope::download_refseq("Measles morbillivirus",
@@ -75,8 +77,7 @@ MetaScope::download_refseq("Measles morbillivirus",
 )
 
 ## Create temporary directory to store the indices
-index_temp <- tempfile()
-dir.create(index_temp)
+index_temp <- tempdir()
 
 ## Create bowtie2 index
 MetaScope::mk_bowtie_index(
@@ -87,8 +88,7 @@ MetaScope::mk_bowtie_index(
 )
 
 ## Create temporary directory for final file
-output_temp <- tempfile()
-dir.create(output_temp)
+output_temp <- tempdir()
 
 ## Get path to example reads
 readPath <- system.file("extdata", "virus_example.fastq",

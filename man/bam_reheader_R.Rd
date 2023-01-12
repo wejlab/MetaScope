@@ -13,8 +13,7 @@ bam_reheader_R(
 \arguments{
 \item{head}{A file name and location for the .sam file with the new header.}
 
-\item{old_bam}{A file name and location for the .bam file which you would
-like to reheader.}
+\item{old_bam}{A file name and location for the .bam file which you would}
 
 \item{new_bam}{A file name for the new .bam file with a replaced header.
 Defaults to the same base filename plus 'h.bam'. For example, 'example.bam'

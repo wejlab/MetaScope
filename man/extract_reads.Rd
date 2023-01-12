@@ -12,7 +12,8 @@ extract_reads(
   reads,
   location = "./demultiplex_fastq",
   rcBarcodes = TRUE,
-  hDist = 0
+  hDist = 0,
+  quiet = TRUE
 )
 }
 \arguments{
@@ -44,6 +45,8 @@ for inexact matches for the barcodes/indexes. Defaults to 0. Warning: if
 the Hamming Distance is >=1 and this leads to inexact index matches to more
 than one barcode, that read will be written to more than one demultiplexed
 read files.}
+
+\item{quiet}{Turns off most messages. Default is \code{TRUE}.}
 }
 \value{
 Writes a single .fastq file that contains all reads whose index
@@ -64,8 +67,7 @@ to a separate .fastq file.
 \examples{
 
 ## Create temporary directory
-ref_temp <- tempfile()
-dir.create(ref_temp)
+ref_temp <- tempdir()
 
 ## Load example barcode, index, and read data into R session
 barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")

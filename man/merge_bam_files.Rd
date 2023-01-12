@@ -7,7 +7,8 @@
 merge_bam_files(
   bam_files,
   destination,
-  head_file = paste(destination, "_header.sam", sep = "")
+  head_file = paste(destination, "_header.sam", sep = ""),
+  quiet
 )
 }
 \arguments{
@@ -18,6 +19,8 @@ merge_bam_files(
 \item{head_file}{A file name and location for the combined header file.
 Defaults to the destination. For example, 'example.bam' will be written as
 'example.bam'.}
+
+\item{quiet}{Turns off most messages. Default is \code{TRUE}.}
 }
 \value{
 This function merges .bam files and combines them into a single file.

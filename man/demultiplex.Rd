@@ -9,9 +9,10 @@ demultiplex(
   indexFile,
   readFile,
   rcBarcodes = TRUE,
-  location = "./demultiplex_fastq",
+  location = tempdir(),
   threads = 1,
-  hammingDist = 0
+  hammingDist = 0,
+  quiet = TRUE
 )
 }
 \arguments{
@@ -31,7 +32,7 @@ complemented to match the sequences in the \code{indexFile}? Defaults to
 \code{TRUE}.}
 
 \item{location}{A directory location to store the demultiplexed read files.
-Defaults to generate a new subdirectory at './demultiplex_fastq'}
+Defaults to generate a new temporary directory.}
 
 \item{threads}{The number of threads to use for parallelization
 (BiocParallel). This function will parallelize over the barcodes and
@@ -43,6 +44,8 @@ allow for inexact matches for the barcodes/indexes. Defaults to \code{0}.
 Warning: if the Hamming Distance is \code{>=1} and this leads to inexact
 index matches to more than one barcode, that read will be written to more
 than one demultiplexed read files.}
+
+\item{quiet}{Turns off most messages. Default is \code{TRUE}.}
 }
 \value{
 Returns multiple .fastq files that contain all reads whose index
@@ -60,10 +63,6 @@ barcode and writes all the reads from that barcode to separate .fastq files.
 }
 \examples{
 
-## Create temporary directory
-ref_temp <- tempfile()
-dir.create(ref_temp)
-
 ## Get barcode, index, and read data locations
 barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
 indexPath <- system.file("extdata", "virus_example_index.fastq",
@@ -73,10 +72,7 @@ readPath <- system.file("extdata", "virus_example.fastq",
 
 ## Demultiplex
 demult <- demultiplex(barcodePath, indexPath, readPath, rcBarcodes = FALSE,
-                      hammingDist = 2, location = ref_temp)
+                      hammingDist = 2, location = tempdir())
 demult
-
-# Remove temporary directory
-unlink(ref_temp, recursive = TRUE)
 
 }

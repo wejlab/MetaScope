@@ -14,7 +14,8 @@ filter_host_bowtie(
   bowtie2_options = NULL,
   YS = 1e+05,
   threads = 1,
-  overwrite = FALSE
+  overwrite = FALSE,
+  quiet = TRUE
 )
 }
 \arguments{
@@ -53,6 +54,8 @@ thread.}
 
 \item{overwrite}{Whether existing files should be overwritten. Default is
 FALSE.}
+
+\item{quiet}{Turns off most messages. Default is \code{TRUE}.}
 }
 \value{
 The name of a filtered, sorted .bam file written to the user's
@@ -79,8 +82,7 @@ created more efficiently and is still compatible with \code{metascope_id()}.
 
 ## Assuming a bam file has already been created with align_target_bowtie()
 # Create temporary filter library
-filter_ref_temp <- tempfile()
-dir.create(filter_ref_temp)
+filter_ref_temp <- tempdir()
 
 ## Download reference genome
 MetaScope::download_refseq("Zaire ebolavirus",
@@ -88,12 +90,10 @@ MetaScope::download_refseq("Zaire ebolavirus",
                            representative = FALSE,
                            compress = TRUE,
                            out_dir = filter_ref_temp,
-                           caching = TRUE
-)
+                           caching = TRUE)
 
 ## Create temp directory to store the indices
-index_temp <- tempfile()
-dir.create(index_temp)
+index_temp <- tempdir()
 
 ## Create filter index
 MetaScope::mk_bowtie_index(
@@ -104,8 +104,7 @@ MetaScope::mk_bowtie_index(
 )
 
 ## Create temporary folder to hold final output file
-output_temp <- tempfile()
-dir.create(output_temp)
+output_temp <- tempdir()
 
 ## Get path to example bam
 bamPath <- system.file("extdata", "bowtie_target.bam",

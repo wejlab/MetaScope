@@ -11,7 +11,8 @@ align_target(
   libs,
   threads = 1,
   align_file = tools::file_path_sans_ext(read1),
-  subread_options = align_details
+  subread_options = align_details,
+  quiet = TRUE
 )
 }
 \arguments{
@@ -39,6 +40,8 @@ maxMismatches, nsubreads, phredOffset, unique, and nBestLocations.
 Descriptions of these parameters are available under
 \code{?Rsubread::align}. Defaults to the global \code{align_details}
 object.}
+
+\item{quiet}{Turns off most messages. Default is \code{TRUE}.}
 }
 \value{
 This function writes a merged and sorted .bam file after aligning to
@@ -56,8 +59,7 @@ library into one output file. If desired, output can be passed to
 #### Align example reads to an example reference library using Rsubread
 \donttest{
 ## Create temporary directory
-target_ref_temp <- tempfile()
-dir.create(target_ref_temp)
+target_ref_temp <- tempdir()
 
 ## Download genome
 tax <- "Ovine atadenovirus D"

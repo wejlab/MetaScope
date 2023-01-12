@@ -10,8 +10,9 @@ download_refseq(
   representative = FALSE,
   compress = TRUE,
   patho_out = FALSE,
-  out_dir = NULL,
-  caching = FALSE
+  out_dir = tempdir(),
+  caching = FALSE,
+  quiet = TRUE
 )
 }
 \arguments{
@@ -34,10 +35,13 @@ to \code{FALSE}. If \code{TRUE}, reference is automatically set at
 Defaults to \code{FALSE}.}
 
 \item{out_dir}{Character string giving the name of the directory to which
-libraries should be output.}
+libraries should be output. Defaults to creation of a new temporary
+directory.}
 
 \item{caching}{Whether to use BiocFileCache when downloading genomes.
 Default is \code{FALSE}.}
+
+\item{quiet}{Turns off most messages. Default is \code{TRUE}.}
 }
 \value{
 Returns a .fasta or .fasta.gz file of the desired RefSeq genomes.
@@ -63,15 +67,10 @@ at any level of the table will be acknowledged.
 }
 \examples{
 #### Download RefSeq genomes
-## Create a temporary directory to store libraries
-ref_temp <- tempfile()
-dir.create(ref_temp)
 
 ## Download all RefSeq reference Shotokuvirae kingdom genomes
 download_refseq('Shotokuvirae', reference = TRUE, representative = FALSE,
-                out_dir = ref_temp, compress = TRUE, patho_out = FALSE,
+                out_dir = tempdir(), compress = TRUE, patho_out = FALSE,
                 caching = TRUE)
-
-unlink(ref_temp)
 
 }

@@ -61,6 +61,6 @@ mk_bowtie_index <- function(ref_dir, lib_dir, lib_name, bowtie2_build_options,
                             bt2Index = file.path(lib_dir, lib_name),
                             ... = bowtie2_build_options,
                             overwrite = overwrite)
-    message("Successfully built the Bowtie2 indexes")
+    message("Index building complete")
     return(tools::file_path_as_absolute(lib_dir))
 }

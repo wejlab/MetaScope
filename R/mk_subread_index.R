@@ -12,6 +12,7 @@
 #'   library into multiple parts.
 #' @param mem The maximum amount of memory (in MB) that can be used by the index
 #'   generation process (used by the Rsubread::buildindex function).
+#' @param quiet Turns off most messages. Default is \code{TRUE}.
 #'
 #' @return Creates one or more Subread indexes for the supplied reference .fasta
 #'   file. If multiple indexes are created, the libraries will be named the
@@ -22,10 +23,9 @@
 #'
 #' @examples
 #' #### Create a subread index from the example reference library
-#' now <- Sys.time()
+#'
 #' ## Create a temporary directory to store the reference library
-#' ref_temp <- tempfile()
-#' dir.create(ref_temp)
+#' ref_temp <- tempdir()
 #'
 #' ## Download reference genome
 #' out_fasta <- download_refseq('Duck circovirus', reference = FALSE,
@@ -36,24 +36,23 @@
 #' ## Make subread index of reference library
 #' mk_subread_index(out_fasta)
 #' unlink(ref_temp)
-#' now - Sys.time()
 #'
 
-mk_subread_index <- function(ref_lib, split = 4, mem = 8000) {
+mk_subread_index <- function(ref_lib, split = 4, mem = 8000, quiet = TRUE) {
   gb <- 1073741824
   ref_size <- file.info(ref_lib)$size
   split_libs <- ceiling(ref_size / (split * gb))
   if (ref_size > (split * gb)) {
-    message("Library size is ", round(ref_size / gb, 1),
-    " GBs. Splitting the library into ", split_libs,
-      " separate components.")
+    if (!quiet) message("Library size is ", round(ref_size / gb, 1),
+                        " GBs. Splitting the library into ", split_libs,
+                        " separate components.")
     # Making connections to the .fasta library
     # generating the new split .fasta files
     con <- file(ref_lib, open = "r")
     out_cons <- paste("outcon_", seq_len(split_libs), sep = "")
     out_files <- paste(tools::file_path_sans_ext(ref_lib),
-      "_", seq_len(split_libs), ".", tools::file_ext(ref_lib),
-      sep = "")
+                       "_", seq_len(split_libs), ".",
+                       tools::file_ext(ref_lib), sep = "")
     for (i in seq_len(split_libs)) {
       assign(out_cons[i], file(out_files[i], open = "w"))
     }
@@ -66,21 +65,21 @@ mk_subread_index <- function(ref_lib, split = 4, mem = 8000) {
       }
       writeLines(one_line, get(out_cons[(ngenomes %% split_libs) + 1]))
     }
-    message("Printed ", ngenomes + 1, " sequences to ", split_libs,
-            " genome files")
+    if (!quiet) message("Printed ", ngenomes + 1, " sequences to ",
+                        split_libs, " genome files")
     close(con)
     for (ocon in out_cons) close(get(ocon))
     for (lib in out_files) Rsubread::buildindex(
       basename = tools::file_path_sans_ext(lib),
       reference = lib, memory = mem)
   } else {
-    message("Library size is ", round(ref_size / gb, 1),
-            " GBs. Building the Rsubread index")
+    if (!quiet) message("Library size is ", round(ref_size / gb, 1),
+                        " GBs. Building the Rsubread index")
     Rsubread::buildindex(
       basename = tools::file_path_sans_ext(ref_lib, compression = TRUE),
       reference = ref_lib, memory = mem)
   }
   return(
     paste(tools::file_path_sans_ext(ref_lib, compression = TRUE),
-    "_", seq_len(split_libs), sep = ""))
+          "_", seq_len(split_libs), sep = ""))
 }

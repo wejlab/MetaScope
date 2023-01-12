@@ -1,5 +1,5 @@
 # Helper function to identify parent kingdom, rank
-id_kingdom_rank <- function(classification_table, taxon, rank_input) {
+id_kingdom_rank <- function(classification_table, taxon, rank_input, quiet) {
   # Get the parent taxon in super kingdom rank
   parent_kingdom <- classification_table$name[
     classification_table$rank == "superkingdom"]
@@ -27,8 +27,8 @@ id_kingdom_rank <- function(classification_table, taxon, rank_input) {
       parent_rank <- "Superkingdom"
     }
   }
-  message(taxon, " is a ", rank_input, " under the ", parent_kingdom, " ",
-          parent_rank)
+  if (!quiet) message(taxon, " is a ", rank_input, " under the ",
+                      parent_kingdom, " ", parent_rank)
   parent_kingdom <- tolower(parent_kingdom)
   # Some folders on the NCBI FTP site don't match the parent kingdom taken
   # from the classification table. We'll apply some modifications.
@@ -48,10 +48,10 @@ get_table <- function(what_tax) {
 }
 
 # Helper function to obtain refseq table
-download_parentkingdom <- function(parent_kingdom) {
+download_parentkingdom <- function(parent_kingdom, quiet) {
   # Download assembly summary refseq table from NCBI
   # (includes genome download link)
-  message("Loading the refseq table for ", parent_kingdom)
+  if (!quiet) message("Loading the refseq table for ", parent_kingdom)
   to_grab <- c("archaea", "bacteria", "fungi", "plant", "viral")
   if (parent_kingdom %in% to_grab) {
     refseq_table <- get_table(parent_kingdom)
@@ -67,8 +67,8 @@ download_parentkingdom <- function(parent_kingdom) {
 
 # Helper function to get species table
 get_speciestab <- function(children_list, refseq_table, taxon,
-                           representative, reference) {
-  message("Creating table of relevant taxa")
+                           representative, reference, quiet) {
+  if (!quiet) message("Creating table of relevant taxa")
   # Filter table, keep lines with species or strains of input
   # If the taxon specified is a strain or species with no strain,
   # filter table by the taxon
@@ -102,15 +102,15 @@ get_speciestab <- function(children_list, refseq_table, taxon,
 
 # Another helper function to download genomes
 download_genomes <- function(species_table, taxon, patho_out, compress,
-                             out_dir, caching) {
+                             out_dir, caching, quiet) {
   total_genomes <- nrow(species_table)
   if (total_genomes == 0) {
     stop("No available genome for ", taxon,
          " - try setting both `representative` and `reference`",
          " to either TRUE or FALSE")
   } else {
-    message("Downloading ", total_genomes, " ", taxon,
-            " genome(s) from NCBI")
+    if (!quiet) message("Downloading ", total_genomes, " ", taxon,
+                        " genome(s) from NCBI")
     # Delete existing genome files and combined fasta
     taxon <- taxon %>%
       stringr::str_replace_all("/", "_") %>%
@@ -152,7 +152,7 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
         bfc <- .get_cache()
         rid <- BiocFileCache::bfcquery(bfc, genome_file, "rname")$rid
         if (!length(rid)) {
-          if (i %% 10 == 0) {
+          if (i %% 10 == 0 && !quiet) {
             message("Number of Genomes Downloaded: ", i, "/",
                     total_genomes, " (",
                     round(100 * i / total_genomes, 2), "%)")
@@ -163,9 +163,9 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
           BiocFileCache::bfcdownload(bfc, rid)
           BiocFileCache::bfcrpath(bfc, rids = rid)
         } else {
-          message("Caching is set to TRUE, ",
-                  "and it appears that this file is already downloaded ",
-                  "in the cache. It will not be downloaded again.")
+          if (!quiet) message("Caching is set to TRUE, ",
+                              "and it appears that this file is already downloaded ",
+                              "in the cache. It will not be downloaded again.")
         }
         destination <- BiocFileCache::bfcrpath(bfc, rids = rid)
       }
@@ -197,8 +197,8 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
   }
   unlink(file.path(download_dir, "*"), force = TRUE)
   unlink(file.path(download_dir), recursive = TRUE, force = TRUE)
-  message("DONE! ", i, " genome(s) saved to file ",
-          file.path(combined_fasta))
+  if (!quiet) message("DONE! ", i, " genome(s) saved to file ",
+                      file.path(combined_fasta))
   return(combined_fasta)
 }
 
@@ -231,9 +231,11 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
 #' @param patho_out Create duplicate outpute files compatible with PathoScope?
 #'   Defaults to \code{FALSE}.
 #' @param out_dir Character string giving the name of the directory to which
-#'   libraries should be output.
+#'   libraries should be output. Defaults to creation of a new temporary
+#'   directory.
 #' @param caching Whether to use BiocFileCache when downloading genomes.
 #'   Default is \code{FALSE}.
+#' @param quiet Turns off most messages. Default is \code{TRUE}.
 #'
 #' @return Returns a .fasta or .fasta.gz file of the desired RefSeq genomes.
 #' This file is named after the kingdom selected and saved to the current
@@ -244,23 +246,18 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
 #' @export
 #' @examples
 #' #### Download RefSeq genomes
-#' ## Create a temporary directory to store libraries
-#' ref_temp <- tempfile()
-#' dir.create(ref_temp)
 #'
 #' ## Download all RefSeq reference Shotokuvirae kingdom genomes
 #' download_refseq('Shotokuvirae', reference = TRUE, representative = FALSE,
-#'                 out_dir = ref_temp, compress = TRUE, patho_out = FALSE,
+#'                 out_dir = tempdir(), compress = TRUE, patho_out = FALSE,
 #'                 caching = TRUE)
-#'
-#' unlink(ref_temp)
 #'
 
 download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
                             compress = TRUE, patho_out = FALSE,
-                            out_dir = NULL, caching = FALSE) {
-  if (is.null(out_dir)) out_dir <- getwd()
-  message("Finding ", taxon)
+                            out_dir = tempdir(), caching = FALSE,
+                            quiet = TRUE) {
+  if (!quiet) message("Finding ", taxon)
   # Get input taxon rank
   success <- FALSE
   attempt <- 0
@@ -278,14 +275,14 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
     })
   }
   rank_input <- classification_table$rank[nrow(classification_table)]
-  parent_kingdom <- id_kingdom_rank(classification_table, taxon, rank_input)
-  refseq_table <- download_parentkingdom(parent_kingdom)
+  parent_kingdom <- id_kingdom_rank(classification_table, taxon, rank_input, quiet)
+  refseq_table <- download_parentkingdom(parent_kingdom, quiet)
   # Get NCBI scientific names of children species or strains
   taxonomy_table <- get0("taxonomy_table", envir = asNamespace("MetaScope"))
   children_list <- get_children(taxon, rank_input, tax_dat = taxonomy_table)
   species_table <- get_speciestab(children_list, refseq_table, taxon,
-                                  representative, reference)
+                                  representative, reference, quiet)
   combined_fasta <- download_genomes(species_table, taxon, patho_out,
-                                     compress, out_dir, caching)
+                                     compress, out_dir, caching, quiet)
   return(combined_fasta)
 }

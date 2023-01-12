@@ -4,7 +4,7 @@
 \alias{mk_subread_index}
 \title{Make a Subread index}
 \usage{
-mk_subread_index(ref_lib, split = 4, mem = 8000)
+mk_subread_index(ref_lib, split = 4, mem = 8000, quiet = TRUE)
 }
 \arguments{
 \item{ref_lib}{The name/location of the reference library file, in
@@ -16,6 +16,8 @@ library into multiple parts.}
 
 \item{mem}{The maximum amount of memory (in MB) that can be used by the index
 generation process (used by the Rsubread::buildindex function).}
+
+\item{quiet}{Turns off most messages. Default is \code{TRUE}.}
 }
 \value{
 Creates one or more Subread indexes for the supplied reference .fasta
@@ -31,10 +33,9 @@ indexes, with _1, _2, etc at the end of the ref_lib basename.
 }
 \examples{
 #### Create a subread index from the example reference library
-now <- Sys.time()
+
 ## Create a temporary directory to store the reference library
-ref_temp <- tempfile()
-dir.create(ref_temp)
+ref_temp <- tempdir()
 
 ## Download reference genome
 out_fasta <- download_refseq('Duck circovirus', reference = FALSE,
@@ -45,6 +46,5 @@ out_fasta <- download_refseq('Duck circovirus', reference = FALSE,
 ## Make subread index of reference library
 mk_subread_index(out_fasta)
 unlink(ref_temp)
-now - Sys.time()
 
 }
