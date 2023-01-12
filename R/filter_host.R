@@ -105,7 +105,7 @@ mk_interim_fastq <- function(reads_bam, read_loc, YS, quiet) {
 #' @param threads The number of threads to be used in filtering the bam file.
 #'   Default is 1.
 #' @param aligner The aligner which was used to create the bam file.
-#'   
+#'
 #' @return Depending on input \code{make_bam}, either the name of a filtered,
 #'   sorted .bam file written to the user's current working directory, or an RDS
 #'   file containing a data frame of only requisite information to run
@@ -170,7 +170,7 @@ remove_matches <- function(reads_bam, read_names, output, YS, threads,
 
 #' Use Rsubread to align reads against one or more filter libraries and
 #' subsequently remove mapped reads
-#' 
+#'
 #' After aligning your sample to a target library with \code{align_target()},
 #' use \code{filter_host()} to remove unwelcome host contamination using filter
 #' reference libraries. This function takes as input the name of the .bam file
@@ -204,13 +204,14 @@ remove_matches <- function(reads_bam, read_names, output, YS, threads,
 #' ## Assuming a bam file has been created previously with align_target()
 #' \donttest{
 #' ## Create temporary directory
-#' filter_ref_temp <- tempdir()
+#' filter_ref_temp <- tempfile()
+#' dir.create(filter_ref_temp)
 #'
 #' ## Download filter genome
 #' all_species <- c("Staphylococcus aureus subsp. aureus str. Newman")
-#' all_ref <- vapply(all_species, MetaScope::download_refseq, 
+#' all_ref <- vapply(all_species, MetaScope::download_refseq,
 #'                   reference = FALSE, representative = FALSE, compress = TRUE,
-#'                   out_dir = filter_ref_temp, caching = TRUE,
+#'                   out_dir = filter_ref_temp, caching = FALSE,
 #'                   FUN.VALUE = character(1))
 #' ind_out <- vapply(all_ref, mk_subread_index, FUN.VALUE = character(1))
 #'
@@ -341,7 +342,8 @@ filter_host <- function(reads_bam, lib_dir = NULL, libs, make_bam = FALSE,
 #'
 #' ## Assuming a bam file has already been created with align_target_bowtie()
 #' # Create temporary filter library
-#' filter_ref_temp <- tempdir()
+#' filter_ref_temp <- tempfile()
+#' dir.create(filter_ref_temp)
 #'
 #' ## Download reference genome
 #' MetaScope::download_refseq("Zaire ebolavirus",
@@ -352,7 +354,8 @@ filter_host <- function(reads_bam, lib_dir = NULL, libs, make_bam = FALSE,
 #'                            caching = TRUE)
 #'
 #' ## Create temp directory to store the indices
-#' index_temp <- tempdir()
+#' index_temp <- tempfile()
+#' dir.create(index_temp)
 #'
 #' ## Create filter index
 #' MetaScope::mk_bowtie_index(
@@ -363,7 +366,8 @@ filter_host <- function(reads_bam, lib_dir = NULL, libs, make_bam = FALSE,
 #' )
 #'
 #' ## Create temporary folder to hold final output file
-#' output_temp <- tempdir()
+#' output_temp <- tempfile()
+#' dir.create(output_temp)
 #'
 #' ## Get path to example bam
 #' bamPath <- system.file("extdata", "bowtie_target.bam",

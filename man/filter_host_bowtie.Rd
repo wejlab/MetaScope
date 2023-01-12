@@ -82,7 +82,8 @@ created more efficiently and is still compatible with \code{metascope_id()}.
 
 ## Assuming a bam file has already been created with align_target_bowtie()
 # Create temporary filter library
-filter_ref_temp <- tempdir()
+filter_ref_temp <- tempfile()
+dir.create(filter_ref_temp)
 
 ## Download reference genome
 MetaScope::download_refseq("Zaire ebolavirus",
@@ -93,7 +94,8 @@ MetaScope::download_refseq("Zaire ebolavirus",
                            caching = TRUE)
 
 ## Create temp directory to store the indices
-index_temp <- tempdir()
+index_temp <- tempfile()
+dir.create(index_temp)
 
 ## Create filter index
 MetaScope::mk_bowtie_index(
@@ -104,7 +106,8 @@ MetaScope::mk_bowtie_index(
 )
 
 ## Create temporary folder to hold final output file
-output_temp <- tempdir()
+output_temp <- tempfile()
+dir.create(output_temp)
 
 ## Get path to example bam
 bamPath <- system.file("extdata", "bowtie_target.bam",

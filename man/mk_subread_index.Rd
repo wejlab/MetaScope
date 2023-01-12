@@ -35,7 +35,8 @@ indexes, with _1, _2, etc at the end of the ref_lib basename.
 #### Create a subread index from the example reference library
 
 ## Create a temporary directory to store the reference library
-ref_temp <- tempdir()
+ref_temp <- tempfile()
+create.dir(ref_temp)
 
 ## Download reference genome
 out_fasta <- download_refseq('Duck circovirus', reference = FALSE,

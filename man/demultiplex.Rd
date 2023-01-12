@@ -9,7 +9,7 @@ demultiplex(
   indexFile,
   readFile,
   rcBarcodes = TRUE,
-  location = tempdir(),
+  location = NULL,
   threads = 1,
   hammingDist = 0,
   quiet = TRUE
@@ -72,7 +72,7 @@ readPath <- system.file("extdata", "virus_example.fastq",
 
 ## Demultiplex
 demult <- demultiplex(barcodePath, indexPath, readPath, rcBarcodes = FALSE,
-                      hammingDist = 2, location = tempdir())
+                      hammingDist = 2)
 demult
 
 }

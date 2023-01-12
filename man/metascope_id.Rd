@@ -64,7 +64,8 @@ library/.bam files use NCBI accession names for reference names (rnames in
 ## Assuming filtered bam files already exist
 
 ## Create temporary directory
-file_temp <- tempdir()
+file_temp <- tempfile()
+dir.create(file_temp)
 
 #### Subread aligned bam file
 

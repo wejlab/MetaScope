@@ -65,7 +65,8 @@ genomes.
 #### Align example reads to an example reference library using Rbowtie2
 
 ## Create temporary directory to store file
-target_ref_temp <- tempdir()
+target_ref_temp <- tempfile()
+dir.create(target_ref_temp)
 
 ## Dowload reference genome
 MetaScope::download_refseq("Measles morbillivirus",
@@ -77,7 +78,8 @@ MetaScope::download_refseq("Measles morbillivirus",
 )
 
 ## Create temporary directory to store the indices
-index_temp <- tempdir()
+index_temp <- tempfile()
+dir.create(index_temp)
 
 ## Create bowtie2 index
 MetaScope::mk_bowtie_index(
@@ -88,7 +90,8 @@ MetaScope::mk_bowtie_index(
 )
 
 ## Create temporary directory for final file
-output_temp <- tempdir()
+output_temp <- tempfile()
+dir.create(output_temp)
 
 ## Get path to example reads
 readPath <- system.file("extdata", "virus_example.fastq",

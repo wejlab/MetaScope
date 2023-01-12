@@ -10,7 +10,7 @@ download_refseq(
   representative = FALSE,
   compress = TRUE,
   patho_out = FALSE,
-  out_dir = tempdir(),
+  out_dir = NULL,
   caching = FALSE,
   quiet = TRUE
 )
@@ -70,7 +70,7 @@ at any level of the table will be acknowledged.
 
 ## Download all RefSeq reference Shotokuvirae kingdom genomes
 download_refseq('Shotokuvirae', reference = TRUE, representative = FALSE,
-                out_dir = tempdir(), compress = TRUE, patho_out = FALSE,
+                out_dir = NULL, compress = TRUE, patho_out = FALSE,
                 caching = TRUE)
 
 }

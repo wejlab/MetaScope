@@ -292,7 +292,8 @@ locations <- function(which_taxid, which_genome,
 #' ## Assuming filtered bam files already exist
 #'
 #' ## Create temporary directory
-#' file_temp <- tempdir()
+#' file_temp <- tempfile()
+#' dir.create(file_temp)
 #'
 #' #### Subread aligned bam file
 #'
@@ -357,7 +358,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   genome_names <- vapply(tax_id_all, function(x) attr(x, "name"),
                          character(1))
   unique_genome_names <- genome_names[!duplicated(taxid_inds)]
-  if(!quiet) message("\tFound ", length(unique_taxids), " unique NCBI taxonomy IDs")
+  if (!quiet) message("\tFound ", length(unique_taxids), " unique NCBI taxonomy IDs")
   # Make an aligment matrix (rows: reads, cols: unique taxids)
   if (!quiet) message("Setting up the EM algorithm")
   qname_inds <- match(mapped_qname, read_names)

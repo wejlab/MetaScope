@@ -67,7 +67,8 @@ to a separate .fastq file.
 \examples{
 
 ## Create temporary directory
-ref_temp <- tempdir()
+ref_temp <- tempfile()
+dir.create(ref_temp)
 
 ## Load example barcode, index, and read data into R session
 barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")

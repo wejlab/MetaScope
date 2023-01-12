@@ -249,14 +249,18 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
 #'
 #' ## Download all RefSeq reference Shotokuvirae kingdom genomes
 #' download_refseq('Shotokuvirae', reference = TRUE, representative = FALSE,
-#'                 out_dir = tempdir(), compress = TRUE, patho_out = FALSE,
+#'                 out_dir = NULL, compress = TRUE, patho_out = FALSE,
 #'                 caching = TRUE)
 #'
 
 download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
                             compress = TRUE, patho_out = FALSE,
-                            out_dir = tempdir(), caching = FALSE,
+                            out_dir = NULL, caching = FALSE,
                             quiet = TRUE) {
+  if (is.null(out_dir)) {
+    out_dir <- tempfile()
+    dir.create(out_dir)
+  }
   if (!quiet) message("Finding ", taxon)
   # Get input taxon rank
   success <- FALSE

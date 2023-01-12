@@ -78,13 +78,14 @@ created more efficiently and is still compatible with \code{metascope_id()}.
 ## Assuming a bam file has been created previously with align_target()
 \donttest{
 ## Create temporary directory
-filter_ref_temp <- tempdir()
+filter_ref_temp <- tempfile()
+dir.create(filter_ref_temp)
 
 ## Download filter genome
 all_species <- c("Staphylococcus aureus subsp. aureus str. Newman")
-all_ref <- vapply(all_species, MetaScope::download_refseq, 
+all_ref <- vapply(all_species, MetaScope::download_refseq,
                   reference = FALSE, representative = FALSE, compress = TRUE,
-                  out_dir = filter_ref_temp, caching = TRUE,
+                  out_dir = filter_ref_temp, caching = FALSE,
                   FUN.VALUE = character(1))
 ind_out <- vapply(all_ref, mk_subread_index, FUN.VALUE = character(1))
 

@@ -8,7 +8,7 @@
 #' corresponding to the barcodes. Based on the barcode index given, it extracts
 #' all reads for the indexed barcode and writes all the reads from that barcode
 #' to a separate .fastq file.
-#' 
+#'
 #' @param barcodeIndex Which barcode (integer number or index) in the barcodes
 #'   or sample name to use for read extraction.
 #' @param barcodes A list of all barcodes in the sequencing dataset. Correlates
@@ -40,7 +40,8 @@
 #' @examples
 #'
 #' ## Create temporary directory
-#' ref_temp <- tempdir()
+#' ref_temp <- tempfile()
+#' dir.create(ref_temp)
 #'
 #' ## Load example barcode, index, and read data into R session
 #' barcodePath <- system.file("extdata", "barcodes.txt", package = "MetaScope")
@@ -71,7 +72,7 @@ extract_reads <- function(barcodeIndex, barcodes, sampleNames, index, reads,
                          hDist = 0, quiet = TRUE) {
     barcode <- barcodes[barcodeIndex]
     sampleName <- sampleNames[barcodeIndex]
-    if(!quiet) message("Finding reads for barcode: ", barcode)
+    if (!quiet) message("Finding reads for barcode: ", barcode)
     if (rcBarcodes) {
         rci <- as.character(Biostrings::reverseComplement(
             Biostrings::DNAString(barcode)))
@@ -156,13 +157,17 @@ errmessages <- function(barcodes, samNames, numReads) {
 #'
 #' ## Demultiplex
 #' demult <- demultiplex(barcodePath, indexPath, readPath, rcBarcodes = FALSE,
-#'                       hammingDist = 2, location = tempdir())
+#'                       hammingDist = 2)
 #' demult
 #'
 
 demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
-                        location = tempdir(), threads = 1,
+                        location = NULL, threads = 1,
                         hammingDist = 0, quiet = TRUE) {
+    if (is.null(location)) {
+      location <- tempfile()
+      dir.create(location)
+    }
     if (!quiet) message("Reading Sample Names and Barcodes from: ",
                         barcodeFile)
     bcFile <- utils::read.table(barcodeFile, sep = "\t", header = TRUE)

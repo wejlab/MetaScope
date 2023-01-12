@@ -59,7 +59,8 @@ library into one output file. If desired, output can be passed to
 #### Align example reads to an example reference library using Rsubread
 \donttest{
 ## Create temporary directory
-target_ref_temp <- tempdir()
+target_ref_temp <- tempfile()
+dir.create(target_ref_temp)
 
 ## Download genome
 tax <- "Ovine atadenovirus D"
