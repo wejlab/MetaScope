@@ -1,5 +1,3 @@
-globalVariables(c("qname", "rname"))
-
 obtain_reads <- function(input_file, input_type, aligner) {
   to_pull <- c("qname", "rname", "cigar", "qwidth", "pos")
   if (identical(input_type, "bam")) {
@@ -97,7 +95,8 @@ get_alignscore <- function(aligner, cigar_strings, count_matches, scores,
 
 get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
                             unique_genome_names) {
-  input_distinct <- dplyr::distinct(combined, qname, rname, .keep_all = TRUE)
+  input_distinct <- dplyr::distinct(combined, .data$qname, .data$rname,
+                                    .keep_all = TRUE)
   qname_inds_2 <- input_distinct$qname
   rname_tax_inds_2 <- input_distinct$rname
   scores_2 <- input_distinct$scores

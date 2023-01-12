@@ -9,7 +9,7 @@ create_qiime_biom <- function(se_colData, taxonomy_table, which_annot_col,
       dplyr::group_by(.data$genus) %>%
       dplyr::summarise(dplyr::across(.fns = sum)) %>% as.data.frame()
     rownames(counts_table_g) <- counts_table_g$genus
-    counts_table_g %<>% dplyr::select(-.data$genus)
+    counts_table_g <- counts_table_g %>% dplyr::select(-.data$genus)
     # Match Indices
     ind <- base::match(se_colData[, which_annot_col], colnames(counts_table_g))
     counts_table_match <- counts_table_g[, c(ind)]
@@ -68,9 +68,6 @@ create_MAE <- function(annot_path, which_annot_col, combined_list,
     experiments = S4Vectors::SimpleList(MicrobeGenetics = microbe_se),
     colData = se_colData
   )
-  out_MAE <- paste(path_to_write, "metascope_animalcules_MAE.RDS", sep = "/")
-  message("Writing animalcules Multi-Assay Experiment to ", out_MAE)
-  saveRDS(MAE, out_MAE)
   if (qiime_biom_out) create_qiime_biom(
     se_colData, taxonomy_table, which_annot_col, counts_table, path_to_write)
   return(MAE)
@@ -93,7 +90,9 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #' Upon completion of the MetaScope pipeline, users can analyze and visualize
 #' abundances in their samples using the animalcules package. This function
 #' allows interoperability of \code{metascope_id} output with both animalcules
-#' and QIIME.
+#' and QIIME. After running this function, the user should save the returned MAE
+#' to an RDS file using a function like \code{saveRDS} to upload the output into
+#' the \code{animalcules} package.
 #'
 #' @param meta_counts A vector of filepaths to the counts ID CSVs output by
 #'   \code{metascope_id()}.
@@ -107,8 +106,8 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #'   output? If yes, two files will be saved: one is a biom file of the counts
 #'   table, and the other is a specifically formatted mapping file of metadata
 #'   information. Default is \code{FALSE}.
-#' @param path_to_write Where should output animalcules and/or QIIME files be
-#'   written? Should be a character string of the folder path. Default is
+#' @param path_to_write If \code{qiime_biom_out = TRUE}, where should output QIIME
+#'   files be written? Should be a character string of the folder path. Default is
 #'   '.', i.e. the current working directory.
 #' @param NCBI_key (character) NCBI Entrez API key. optional. See
 #'   taxize::use_entrez(). Due to the high number of requests made to NCBI, this
@@ -118,7 +117,6 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #'   experiment will have assays for the counts ("MGX"), log counts, CPM, and
 #'   log CPM.
 #' @export
-#' @importFrom magrittr %<>%
 #' @importFrom rlang .data
 #' @examples
 #' tempfolder <- tempfile()
@@ -203,8 +201,10 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
         all_ind <- which(taxonomy_table$species == this_sp)
         counts_table[all_ind[1], ] <- base::colSums(counts_table[all_ind, ])
       }
-      counts_table %<>% dplyr::filter(!duplicated(taxonomy_table$species))
-      taxonomy_table %<>% dplyr::filter(!duplicated(.data$species))
+      counts_table <- counts_table %>%
+        dplyr::filter(!duplicated(taxonomy_table$species))
+      taxonomy_table <- taxonomy_table %>%
+        dplyr::filter(!duplicated(.data$species))
     }
     rownames(taxonomy_table) <- stringr::str_replace(taxonomy_table$species,
                                                      " ", "_")

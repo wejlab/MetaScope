@@ -55,18 +55,18 @@
 #' reads <- Biostrings::readQualityScaledDNAStringSet(readPath)
 #'
 #' ## Extract reads from the first barcode
-#' results <- extractReads(1, bcFile[, 2], bcFile[, 1], inds, reads,
+#' results <- extract_reads(1, bcFile[, 2], bcFile[, 1], inds, reads,
 #'                         rcBarcodes = FALSE, location = ref_temp)
 #'
 #' ## Extract reads from multiple barcodes
-#' more_results <- lapply(1:6, extractReads, bcFile[, 2], bcFile[, 1], inds,
+#' more_results <- lapply(1:6, extract_reads, bcFile[, 2], bcFile[, 1], inds,
 #'                        reads, rcBarcodes = FALSE, location = ref_temp)
 #'
 #' ## Remove temporary directory
 #' unlink(ref_temp, recursive = TRUE)
 #'
 
-extractReads <- function(barcodeIndex, barcodes, sampleNames, index, reads,
+extract_reads <- function(barcodeIndex, barcodes, sampleNames, index, reads,
                          location = "./demultiplex_fastq", rcBarcodes = TRUE,
                          hDist = 0) {
     barcode <- barcodes[barcodeIndex]
@@ -186,7 +186,7 @@ demultiplex <- function(barcodeFile, indexFile, readFile, rcBarcodes = TRUE,
     numReads <- NULL
     ind_no_match <- numeric(length(reads))
     for (i in seq_along(barcodes)) {
-        extracted <- extractReads(
+        extracted <- extract_reads(
           i, barcodes, samNames, inds, reads, rcBarcodes = rcBarcodes,
           location = location, hDist = hammingDist)
         numReads <- c(numReads, extracted$numberOfReads)

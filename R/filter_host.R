@@ -1,5 +1,3 @@
-globalVariables(c("align_details"))
-
 # Helper function for remove_matches
 reduceByYield_RM <- function(X, YIELD, MAP, DONE, filter_names, num_reads) {
   if (!Rsamtools::isOpen(X)) {
@@ -158,7 +156,7 @@ remove_matches <- function(reads_bam, read_names, output, YS, threads,
     }
     MAP <- function(value, filter_names) {
       value %>%
-        dplyr::filter(!(qname %in% filter_names)) %>%
+        dplyr::filter(!(.data$qname %in% filter_names)) %>%
         data.table::fwrite(file = name_out, compress = "gzip",
                            col.names = FALSE, quote = TRUE, append = TRUE,
                            nThread = threads)
@@ -225,7 +223,7 @@ remove_matches <- function(reads_bam, read_names, output, YS, threads,
 #' ## Copy the example reads to the temp directory
 #' refPath <- file.path(filter_ref_temp, "subread_target.bam")
 #' file.copy(from = readPath, to = refPath)
-#' data("align_details")
+#' utils::data("align_details")
 #' align_details[["type"]] <- "rna"
 #' align_details[["phredOffset"]] <- 10
 #' # Just to get it to align - toy example!
@@ -247,6 +245,9 @@ filter_host <- function(reads_bam, lib_dir = NULL, libs, make_bam = FALSE,
                                        "filtered", sep = "."),
                         subread_options = align_details, YS = 100000,
                         threads = 1) {
+  data_env <- new.env(parent = emptyenv())
+  utils::data("align_details", envir = data_env, package = "MetaScope")
+  align_details <- data_env[["align_details"]]
   # Convert reads_bam into fastq
   read_loc <- file.path(dirname(output), "intermediate.fastq.gz")
   mk_interim_fastq(reads_bam, read_loc, YS)

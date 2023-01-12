@@ -46,7 +46,7 @@ reference:
     - get_children
     - merge_bam_files
     - count_matches
-    - extractReads
+    - extract_reads
     - locations
     - filter_unmapped_reads
     - check_samtools_exists

@@ -93,7 +93,7 @@ readPath <- system.file("extdata", "subread_target.bam",
 ## Copy the example reads to the temp directory
 refPath <- file.path(filter_ref_temp, "subread_target.bam")
 file.copy(from = readPath, to = refPath)
-data("align_details")
+utils::data("align_details")
 align_details[["type"]] <- "rna"
 align_details[["phredOffset"]] <- 10
 # Just to get it to align - toy example!

@@ -1,4 +1,3 @@
-globalVariables(c("align_details"))
 #' Filter unmapped reads
 #'
 #' This function will remove all unmapped reads or lines in a .bam file
@@ -265,6 +264,9 @@ align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
                          threads = 1,
                          align_file = tools::file_path_sans_ext(read1),
                          subread_options = align_details) {
+  data_env <- new.env(parent = emptyenv())
+  utils::data("align_details", envir = data_env, package = "MetaScope")
+  align_details <- data_env[["align_details"]]
   if (!is.null(lib_dir)) lib_dir <- tools::file_path_as_absolute(lib_dir)
   bam_files <- numeric(length(libs))
   for (i in seq_along(libs)) {

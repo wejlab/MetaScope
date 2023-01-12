@@ -33,8 +33,8 @@ output? If yes, two files will be saved: one is a biom file of the counts
 table, and the other is a specifically formatted mapping file of metadata
 information. Default is \code{FALSE}.}
 
-\item{path_to_write}{Where should output animalcules and/or QIIME files be
-written? Should be a character string of the folder path. Default is
+\item{path_to_write}{If \code{qiime_biom_out = TRUE}, where should output QIIME
+files be written? Should be a character string of the folder path. Default is
 '.', i.e. the current working directory.}
 
 \item{NCBI_key}{(character) NCBI Entrez API key. optional. See
@@ -51,7 +51,9 @@ Returns a multi-assay experiment file of combined sample counts data
 Upon completion of the MetaScope pipeline, users can analyze and visualize
 abundances in their samples using the animalcules package. This function
 allows interoperability of \code{metascope_id} output with both animalcules
-and QIIME.
+and QIIME. After running this function, the user should save the returned MAE
+to an RDS file using a function like \code{saveRDS} to upload the output into
+the \code{animalcules} package.
 }
 \examples{
 tempfolder <- tempfile()
