@@ -265,18 +265,18 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
   # Get input taxon rank
   success <- FALSE
   attempt <- 0
-  # Attempt to get taxid up to three times for each chunk
-  while (!success) {
+  while (!success ) {
     try({
       attempt <- attempt + 1
       tryCatch({
         classification_table <- taxize::classification(
           taxize::get_uid(taxon, messages = FALSE)[[1]], db = "ncbi")[[1]]},
-        warning = function(w) stop("Your input is not a valid taxon")
+        warning = function(w) stop("NCBI request not granted")
       )
       Sys.sleep(1)
       success <- TRUE
     })
+    if (attempt == 3) stop("Process halted. Your input is not a valid taxon")
   }
   rank_input <- classification_table$rank[nrow(classification_table)]
   parent_kingdom <- id_kingdom_rank(classification_table, taxon, rank_input, quiet)
