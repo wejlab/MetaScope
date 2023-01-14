@@ -4,7 +4,15 @@
 \alias{locations}
 \title{Helper Function for MetaScope ID}
 \usage{
-locations(which_taxid, which_genome, accessions, taxids, reads, input_file)
+locations(
+  which_taxid,
+  which_genome,
+  accessions,
+  taxids,
+  reads,
+  out_base,
+  out_dir
+)
 }
 \arguments{
 \item{which_taxid}{Which taxid to plot}

@@ -9,7 +9,7 @@ metascope_id(
   input_type = "csv.gz",
   aligner = "bowtie2",
   NCBI_key = NULL,
-  out_file = paste0(tools::file_path_sans_ext(input_file), ".metascope_id.csv"),
+  out_dir = dirname(input_file),
   convEM = 1/10000,
   maxitsEM = 25,
   num_species_plot = NULL,
@@ -30,9 +30,6 @@ taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 function will be less prone to errors if you obtain an NCBI key. You may
 enter the string as an input or set it as ENTREZ_KEY in .Renviron.}
 
-\item{out_file}{The name of the .csv output file. Defaults to the input_file
-basename plus ".metascope_id.csv".}
-
 \item{convEM}{The convergence parameter of the EM algorithm. Default set at
 \code{1/10000}.}
 
@@ -46,6 +43,9 @@ Default is \code{NULL}, which saves coverage plots for the ten most highly
 abundant species.}
 
 \item{quiet}{Turns off most messages. Default is \code{TRUE}.}
+
+\item{out_file}{The name of the .csv output file. Defaults to the input_file
+basename plus ".metascope_id.csv".}
 }
 \value{
 This function returns a .csv file with annotated read counts to

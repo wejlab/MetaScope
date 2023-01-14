@@ -15,7 +15,7 @@ output: html_document
 
 `inst/extdata/virus_example_index.fastq`
 
-These files are all from a toy example created by a member of the Johnson lab. The `virus_example.fastq` file contains 150 reads from six different samples, all labeled according to different viruses. The files `barcodes.txt` and `virus_example_index.fastq` are used in the demultiplexing process. Detailed information on how to reproduce this data is unfortunately unavailable, but it is a relatively small dataset and only intended for use as a toy example.
+These files consist of randomly selected sequencing reads from viral stock generated at the National Emerging Infectious Diseases Laboratories (NEIDL; Boston, MA). The data is unpublished. The `virus_example.fastq` file contains 150 reads from six different viral stocks. The files `barcodes.txt` and `virus_example_index.fastq` are used in the demultiplexing process. Detailed information on how to reproduce this data is unfortunately unavailable, but it is a relatively small dataset and only intended for use as a toy example.
 
 ### Vignette data
 

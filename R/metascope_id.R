@@ -224,10 +224,9 @@ count_matches <- function(x, char = "M") {
 #' @return A plot of the read coverage for a given genome
 
 locations <- function(which_taxid, which_genome,
-                      accessions, taxids, reads, input_file) {
-  plots_save <- paste(stringr::str_split(tools::file_path_sans_ext(input_file),
-                                         "\\.")[[1]][1],
-                      "coverage", sep = "_")
+                      accessions, taxids, reads, out_base, out_dir) {
+  plots_save <- file.path(out_dir, paste(out_base, "cov_plots",
+                                         sep = "_"))
   # map back to accessions
   choose_acc <- paste(accessions[which(as.numeric(taxids) %in% which_taxid)])
   # map back to BAM
@@ -325,12 +324,13 @@ locations <- function(which_taxid, which_genome,
 metascope_id <- function(input_file, input_type = "csv.gz",
                          aligner = "bowtie2",
                          NCBI_key = NULL,
-                         out_file = paste0(
-                           tools::file_path_sans_ext(input_file),
-                           ".metascope_id.csv"),
+                         out_dir = dirname(input_file),
                          convEM = 1 / 10000, maxitsEM = 25,
                          num_species_plot = NULL,
                          quiet = TRUE) {
+  out_base <- input_file %>% base::basename() %>% strsplit(split = "\\.") %>%
+    magrittr::extract2(1) %>% magrittr::extract(1)
+  out_file <- out_base %>% paste0(".metascope_id.csv")
   # Check to make sure valid aligner is specified
   if (aligner != "bowtie2" && aligner != "subread" && aligner != "other") {
     stop("Please make sure aligner is set to either 'bowtie2', 'subread',",
@@ -358,7 +358,8 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   genome_names <- vapply(tax_id_all, function(x) attr(x, "name"),
                          character(1))
   unique_genome_names <- genome_names[!duplicated(taxid_inds)]
-  if (!quiet) message("\tFound ", length(unique_taxids), " unique NCBI taxonomy IDs")
+  if (!quiet) message("\tFound ", length(unique_taxids),
+                      " unique NCBI taxonomy IDs")
   # Make an aligment matrix (rows: reads, cols: unique taxids)
   if (!quiet) message("Setting up the EM algorithm")
   qname_inds <- match(mapped_qname, read_names)
@@ -389,11 +390,11 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   num_plot <- num_species_plot
   if (is.null(num_plot)) num_plot <- min(nrow(results), 10)
   if (num_plot > 0) {
-    if (!quiet) message("Creating coverage plots")
+    if (!quiet) message("Creating coverage plots at new folder in out_dir")
     lapply(seq_along(results$TaxonomyID)[seq_len(num_plot)], function(x) {
       locations(as.numeric(results$TaxonomyID)[x],
                 which_genome = results$Genome[x],
-                accessions, taxids, reads, input_file)})
+                accessions, taxids, reads, out_base, out_dir)})
   } else if (!quiet) message("No coverage plots created")
   return(results)
 }

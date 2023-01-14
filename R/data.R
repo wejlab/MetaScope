@@ -29,8 +29,8 @@
 #' \code{filter_host_bowtie}. These settings can be substituted for default
 #' settings by passing \code{} to the \code{bowtie2_options} argument.
 #'
-#' The default parameters listed in this object are "-local -R 2 -N 0 -L 25 -i
-#' S,1,0.75 -k 10 --score-min L,100,1.28".
+#' The default parameters listed in this object are "--local -R 2 -N 0 -L 25 -i
+#' S,1,0.75 -k 10".
 #'
 #' Further delineation of Bowtie 2 parameters is provided in the
 #' \href{https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml}{Bowtie 2
