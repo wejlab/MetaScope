@@ -214,7 +214,7 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
 #' When selecting the \code{taxon} to be downloaded, if you receive an error
 #' saying \code{Your input is not a valid taxon}, please take a look at the
 #' \code{taxonomy_table} object, which can be accessed with the command
-#' \code{data("taxonomy_table")}. Only taxa with exact spelling as they appear
+#' \code{MetaScope:::taxonomy_table)}. Only taxa with exact spelling as they appear
 #' at any level of the table will be acknowledged.
 #'
 #' @param taxon Name of single taxon to download. The taxon name should be a

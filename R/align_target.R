@@ -313,6 +313,13 @@ align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
 #' library into one output file. If desired, output can be passed to
 #' `filter_host_bowtie()` to remove reads that also map to filter library
 #' genomes.
+#' 
+#' The default parameters are the same that PathoScope 2.0 uses.
+#' "--very-sensitive-local -k 100 --score-min L,20,1.0"
+#'
+#' If you experience any issues with reading the input files, make sure that
+#' the file(s) are not located in a read-only folder. This can be circumvented
+#' by copying files to a new location before running the function.
 #'
 #' @param read1 Path to the .fastq file to align.
 #' @param read2 Optional: Location of the mate pair .fastq file to align.
@@ -325,12 +332,11 @@ align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
 #'   .bam extension).
 #' @param  bowtie2_options Optional: Additional parameters that can be passed to
 #'   the align_target_bowtie() function. To see all the available parameters use
-#'   Rbowtie2::bowtie2_usage(). Default parameters are the parameters are the
-#'   default parameters that PathoScope 2.0 uses. NOTE: Users should pass all
-#'   their parameters as one string and if optional parameters are given then
-#'   the user is responsible for entering all the parameters to be used by
-#'   Bowtie2. The only parameter that should NOT be specified here is the
-#'   number of threads.
+#'   Rbowtie2::bowtie2_usage(). See Details for default parameters. NOTE: Users
+#'   should pass all their parameters as one string and if optional parameters
+#'   are given then the user is responsible for entering all the parameters to
+#'   be used by Bowtie2. The only parameter that should NOT be specified here is
+#'   the number of threads.
 #' @param threads The number of threads that can be utilized by the function.
 #'   Default is 1 thread.
 #' @param overwrite Whether existing files should be overwritten. Default is

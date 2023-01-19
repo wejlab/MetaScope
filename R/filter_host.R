@@ -301,6 +301,9 @@ filter_host <- function(reads_bam, lib_dir = NULL, libs, make_bam = FALSE,
 #' A compressed .csv can be created to produce a smaller output file that is
 #' created more efficiently and is still compatible with \code{metascope_id()}.
 #'
+#' The default parameters are the same that PathoScope 2.0 uses.
+#' "--very-sensitive-local -k 100 --score-min L,20,1.0"
+#'
 #' @param reads_bam The name of a merged, sorted .bam file that has previously
 #'   been aligned to a reference library. Likely, the output from running an
 #'   instance of \code{align_target_bowtie()}.
@@ -317,8 +320,8 @@ filter_host <- function(reads_bam, lib_dir = NULL, libs, make_bam = FALSE,
 #'   basename of \code{unfiltered_bam} + \code{.filtered} + extension.
 #' @param bowtie2_options Optional: Additional parameters that can be passed to
 #'   the filter_host_bowtie() function. To see all the available parameters use
-#'   Rbowtie2::bowtie2_usage(). Default parameters are --very-sensitive-local -k
-#'   100 --score-min L,20,1.0. NOTE: Users should pass all their parameters as
+#'   Rbowtie2::bowtie2_usage(). See Details for default parameters.
+#'   NOTE: Users should pass all their parameters as
 #'   one string and if optional parameters are given then the user is
 #'   responsible for entering all the parameters to be used by Bowtie2.
 #'   The only parameters that should NOT be specified here is the threads.

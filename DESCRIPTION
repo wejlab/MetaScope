@@ -2,7 +2,7 @@ Type: Package
 Package: MetaScope
 Title: Tools and functions for preprocessing 16S and metagenomic
     sequencing microbiome data
-Version: 0.99.8
+Version: 0.99.9
 Authors@R: c(
     person("Aubrey", "Odom-Mabey", , "aodom@bu.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-7113-7598")),
@@ -46,6 +46,7 @@ Suggests:
     biomformat,
     knitr,
     lintr,
+    plyr,
     rmarkdown,
     Rsubread,
     spelling,

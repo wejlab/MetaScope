@@ -25,7 +25,9 @@ locations(
 
 \item{reads}{List of reads from input file}
 
-\item{input_file}{The path to the input file}
+\item{out_base}{The basename of the input file}
+
+\item{out_dir}{The path to the input file}
 }
 \value{
 A plot of the read coverage for a given genome

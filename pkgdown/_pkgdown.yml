@@ -8,7 +8,6 @@ reference:
  - title: "Reference Genome Library"
    desc: "Start here to download reference genomes for processing."
    contents:
-   - taxonomy_table
    - download_refseq
  - title: "Demultiplex"
    desc: "Preprocessing for 16S data."

@@ -76,7 +76,7 @@ The MetaScope genome library workflow is designed to assist with collection of s
 
 Typically, the targets of the analysis are microbes (that is, viruses, bacteria, and fungi), and we wish to filter out or discard any reads from the host in addition to artificially added sequences, such as Phi X 174. Following identification of the targets and filters, we use a reference genome library to align the vast number of sample reads back to the respective regions of origin in various species.
 
-The `download_refseq()` function automatically extracts custom reference genome libraries in a FASTA file for microbial or host genomes. The user must first indicate a taxon for which to download the genomes, such as 'bacteria' or 'primates'. A table of possible entries can be viewed by accessing the `taxonomy_table` object. The user may then specify whether they wish to download only the RefSeq reference genomes, or both the reference and representative genomes. The compress option then allows users to specify whether to compress the output FASTA file; this is done by default.
+The `download_refseq()` function automatically extracts custom reference genome libraries in a FASTA file for microbial or host genomes. The user must first indicate a taxon for which to download the genomes, such as 'bacteria' or 'primates'. A table of possible entries can be viewed by accessing the `MetaScope:::taxonomy_table` object. The user may then specify whether they wish to download only the RefSeq reference genomes, or both the reference and representative genomes. The compress option then allows users to specify whether to compress the output FASTA file; this is done by default.
 
 ## Downloading target genomes
 
@@ -297,8 +297,9 @@ metascope_id(
 We will now look at the read reassignment results reported in the output CSV file.
 
 ```{R CSV summary}
-relevant_col <- read.csv(paste0(tools::file_path_sans_ext(final_map),
-                                ".metascope_id.csv"))[, 2:4]
+relevant_col <- dirname(final_map) %>%
+  file.path("bowtie_target.metascope_id.csv") %>%
+  read.csv() %>% dplyr::select(2:4)
 
 relevant_col |>
   dplyr::mutate(

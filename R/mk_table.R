@@ -12,6 +12,7 @@ mk_table <- function(intable, taxon_ranks) {
                         by = "rank") %>%
       dplyr::arrange(factor(.data$rank, levels = taxon_ranks)) %>%
       dplyr::select(.data$name)
-    return(final_tab[seq_along(taxon_ranks), ])
+    final_tab[seq_along(taxon_ranks), ] %>%
+      magrittr::set_names(taxon_ranks) %>% return()
   }
 }

@@ -219,7 +219,8 @@ count_matches <- function(x, char = "M") {
 #' @param accessions List of accessions from \code{metascope_id()}
 #' @param taxids List of accessions from \code{metascope_id()}
 #' @param reads List of reads from input file
-#' @param input_file The path to the input file
+#' @param out_base The basename of the input file
+#' @param out_dir The path to the input file
 #'
 #' @return A plot of the read coverage for a given genome
 
@@ -233,18 +234,19 @@ locations <- function(which_taxid, which_genome,
   map2bam_acc <- which(reads[[1]]$rname %in% choose_acc)
   # Split genome name to make digestible
   this_genome <- strsplit(which_genome, " ")[[1]][c(1, 2)]
-  use_name <- paste(this_genome, collapse = " ")
+  use_name <- paste(this_genome, collapse = " ") %>% stringr::str_replace(",", "")
   coverage <- round(mean(seq_len(338099) %in% unique(
     reads[[1]]$pos[map2bam_acc])), 3)
   # Plotting
   dfplot <- dplyr::tibble(x = reads[[1]]$pos[map2bam_acc])
   ggplot2::ggplot(dfplot, ggplot2::aes(.data$x)) +
-    ggplot2::geom_histogram(bins = 30) +
-    ggplot2::labs(main = paste("Positions of reads mapped to", use_name),
-                  xlab = "Leftmost position in genome",
+    ggplot2::geom_histogram(bins = 50) +
+    ggplot2::theme_classic() +
+    ggplot2::labs(title = paste("Positions of reads mapped to", use_name),
+                  xlab = "Aligned position across genome (leftmost read position)",
                   ylab = "Read Count",
-                  subtitle = paste("Coverage is", coverage),
-                  caption = paste0("Accession Number: ", choose_acc))
+                  caption = paste0("Accession Number: ", choose_acc)) +
+    ggplot2::scale_fill_gradient(low = 'red', high = 'yellow')
   ggplot2::ggsave(paste0(plots_save, "/",
                          stringr::str_replace(use_name, " ", "_"), ".png"),
                   device = "png")
@@ -267,8 +269,8 @@ locations <- function(which_taxid, which_genome,
 #'   taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 #'   function will be less prone to errors if you obtain an NCBI key. You may
 #'   enter the string as an input or set it as ENTREZ_KEY in .Renviron.
-#' @param out_file The name of the .csv output file. Defaults to the input_file
-#'   basename plus ".metascope_id.csv".
+#' @param out_dir The directory to which the .csv output file will be output.
+#'   Defaults to \code{dirname(input_file)}.
 #' @param convEM The convergence parameter of the EM algorithm. Default set at
 #'   \code{1/10000}.
 #' @param maxitsEM The maximum number of EM iterations, regardless of whether
@@ -330,7 +332,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                          quiet = TRUE) {
   out_base <- input_file %>% base::basename() %>% strsplit(split = "\\.") %>%
     magrittr::extract2(1) %>% magrittr::extract(1)
-  out_file <- out_base %>% paste0(".metascope_id.csv")
+  out_file <- file.path(out_dir, paste0(out_base, ".metascope_id.csv"))
   # Check to make sure valid aligner is specified
   if (aligner != "bowtie2" && aligner != "subread" && aligner != "other") {
     stop("Please make sure aligner is set to either 'bowtie2', 'subread',",
@@ -390,7 +392,8 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   num_plot <- num_species_plot
   if (is.null(num_plot)) num_plot <- min(nrow(results), 10)
   if (num_plot > 0) {
-    if (!quiet) message("Creating coverage plots at new folder in out_dir")
+    if (!quiet) message("Creating coverage plots at ",
+                        out_base, "_cov_plots")
     lapply(seq_along(results$TaxonomyID)[seq_len(num_plot)], function(x) {
       locations(as.numeric(results$TaxonomyID)[x],
                 which_genome = results$Genome[x],

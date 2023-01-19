@@ -9,7 +9,7 @@ convert_animalcules(
   meta_counts,
   annot_path,
   which_annot_col,
-  end_string = ".filtered.metascope_id.csv",
+  end_string = ".metascope_id.csv",
   qiime_biom_out = FALSE,
   path_to_write = ".",
   NCBI_key = NULL
@@ -26,7 +26,7 @@ containing the sample IDs. These should be the same as the
 \code{meta_counts} root filenames.}
 
 \item{end_string}{The end string used at the end of the metascope_id files.
-Default is ".filtered.metascope_id.csv".}
+Default is ".metascope_id.csv".}
 
 \item{qiime_biom_out}{Would you also like a qiime-compatible biom file
 output? If yes, two files will be saved: one is a biom file of the counts
@@ -97,7 +97,7 @@ dplyr::tibble(Sample = samp_names, RSV = c("pos", "neg", "pos"),
 outMAE <- convert_animalcules(meta_counts = out_files,
                               annot_path = annot_dat,
                               which_annot_col = "Sample",
-                              end_string = ".filtered.metascope_id.csv",
+                              end_string = ".metascope_id.csv",
                               qiime_biom_out = FALSE,
                               path_to_write = tempfolder,
                               NCBI_key = NULL)

@@ -35,12 +35,11 @@ be created.}
 
 \item{bowtie2_options}{Optional: Additional parameters that can be passed to
 the align_target_bowtie() function. To see all the available parameters use
-Rbowtie2::bowtie2_usage(). Default parameters are the parameters are the
-default parameters that PathoScope 2.0 uses. NOTE: Users should pass all
-their parameters as one string and if optional parameters are given then
-the user is responsible for entering all the parameters to be used by
-Bowtie2. The only parameter that should NOT be specified here is the
-number of threads.}
+Rbowtie2::bowtie2_usage(). See Details for default parameters. NOTE: Users
+should pass all their parameters as one string and if optional parameters
+are given then the user is responsible for entering all the parameters to
+be used by Bowtie2. The only parameter that should NOT be specified here is
+the number of threads.}
 
 \item{threads}{The number of threads that can be utilized by the function.
 Default is 1 thread.}
@@ -60,6 +59,14 @@ reads from each file, and then merges and sorts the .bam files from each
 library into one output file. If desired, output can be passed to
 `filter_host_bowtie()` to remove reads that also map to filter library
 genomes.
+}
+\details{
+The default parameters are the same that PathoScope 2.0 uses.
+"--very-sensitive-local -k 100 --score-min L,20,1.0"
+
+If you experience any issues with reading the input files, make sure that
+the file(s) are not located in a read-only folder. This can be circumvented
+by copying files to a new location before running the function.
 }
 \examples{
 #### Align example reads to an example reference library using Rbowtie2

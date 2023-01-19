@@ -3,47 +3,47 @@
 # Create biom file and mapping file
 create_qiime_biom <- function(se_colData, taxonomy_table, which_annot_col,
                               counts_table, path_to_write) {
-    # Consolidate counts based on genus
-    counts_table_g <- counts_table %>%
-      dplyr::mutate(genus = taxonomy_table$genus) %>%
-      dplyr::group_by(.data$genus) %>%
-      dplyr::summarise(dplyr::across(.fns = sum)) %>% as.data.frame()
-    rownames(counts_table_g) <- counts_table_g$genus
-    counts_table_g <- counts_table_g %>% dplyr::select(-.data$genus)
-    # Match Indices
-    ind <- base::match(se_colData[, which_annot_col], colnames(counts_table_g))
-    counts_table_match <- counts_table_g[, c(ind)]
-    # Formatting
-    to_rm <- "[^[:alnum:] _.\\-+%;/:,]"
-    func <- function(x) stringr::str_remove_all(x, to_rm)
-    alt_col <- se_colData %>% dplyr::as_tibble() %>%
-      dplyr::mutate("#SampleID" = se_colData[, which_annot_col],
-        # Sample Column: alphanumeric characters and periods ONLY
-        "#SampleID" = stringr::str_replace_all(.data$`#SampleID`, c(
-          "-" = "\\.", "_" = "\\.", " " = "\\.")),
-        "#SampleID" = stringr::str_remove_all(.data$`#SampleID`,
-                                              "[^[:alnum:].]")) %>%
-      # Metadata columns: Only alphanumeric and [_.-+% ;:,/] characters
-      apply(.data, 2, func) %>% ifelse(.data == " ", NA, .data) %>%
-      ifelse(.data == "<NA>", NA, .data)
-    # Remove unecessary columns
-    ind <- colnames(alt_col) == which_annot_col
-    alt_col2 <- alt_col[, -ind] %>% dplyr::as_tibble() %>%
-      dplyr::mutate(BarcodeSequence = "-", LinkerPrimerSequence = "-",
-        Description = "-") %>% dplyr::relocate(
-          .data$`#SampleID`, .data$BarcodeSequence, .data$LinkerPrimerSequence)
-    # Write files
-    out_map <- paste(path_to_write, "QIIME_metadata_map.tsv", sep = "/")
-    message("Writing TSV mapping file to ", out_map)
-    utils::write.table(alt_col2, out_map, sep = "\t",
-      row.names = FALSE, quote = FALSE)
-    # Write counts table to biom
-    colnames(counts_table_match) <- alt_col2$`#SampleID`
-    biom_obj <- biomformat::make_biom(counts_table_match)
-    out_biom <- paste(path_to_write, "QIIME_featuretable.biom", sep = "/")
-    message("Writing QIIME counts biom file to ", out_biom)
-    biomformat::write_biom(biom_obj, out_biom)
-  }
+  # Consolidate counts based on genus
+  counts_table_g <- counts_table %>%
+    dplyr::mutate(genus = taxonomy_table$genus) %>%
+    dplyr::group_by(.data$genus) %>%
+    dplyr::summarise(dplyr::across(.fns = sum)) %>% as.data.frame()
+  rownames(counts_table_g) <- counts_table_g$genus
+  counts_table_g <- counts_table_g %>% dplyr::select(-.data$genus)
+  # Match Indices
+  ind <- base::match(se_colData[, which_annot_col], colnames(counts_table_g))
+  counts_table_match <- counts_table_g[, c(ind)]
+  # Formatting
+  to_rm <- "[^[:alnum:] _.\\-+%;/:,]"
+  func <- function(x) stringr::str_remove_all(x, to_rm)
+  alt_col <- se_colData %>% dplyr::as_tibble() %>%
+    dplyr::mutate("#SampleID" = se_colData[, which_annot_col],
+                  # Sample Column: alphanumeric characters and periods ONLY
+                  "#SampleID" = stringr::str_replace_all(.data$`#SampleID`, c(
+                    "-" = "\\.", "_" = "\\.", " " = "\\.")),
+                  "#SampleID" = stringr::str_remove_all(.data$`#SampleID`,
+                                                        "[^[:alnum:].]")) %>%
+    # Metadata columns: Only alphanumeric and [_.-+% ;:,/] characters
+    apply(.data, 2, func) %>% ifelse(.data == " ", NA, .data) %>%
+    ifelse(.data == "<NA>", NA, .data)
+  # Remove unecessary columns
+  ind <- colnames(alt_col) == which_annot_col
+  alt_col2 <- alt_col[, -ind] %>% dplyr::as_tibble() %>%
+    dplyr::mutate(BarcodeSequence = "-", LinkerPrimerSequence = "-",
+                  Description = "-") %>% dplyr::relocate(
+                    .data$`#SampleID`, .data$BarcodeSequence, .data$LinkerPrimerSequence)
+  # Write files
+  out_map <- paste(path_to_write, "QIIME_metadata_map.tsv", sep = "/")
+  message("Writing TSV mapping file to ", out_map)
+  utils::write.table(alt_col2, out_map, sep = "\t",
+                     row.names = FALSE, quote = FALSE)
+  # Write counts table to biom
+  colnames(counts_table_match) <- alt_col2$`#SampleID`
+  biom_obj <- biomformat::make_biom(counts_table_match)
+  out_biom <- paste(path_to_write, "QIIME_featuretable.biom", sep = "/")
+  message("Writing QIIME counts biom file to ", out_biom)
+  biomformat::write_biom(biom_obj, out_biom)
+}
 
 # Create MAE Object
 create_MAE <- function(annot_path, which_annot_col, combined_list,
@@ -75,14 +75,41 @@ create_MAE <- function(annot_path, which_annot_col, combined_list,
 
 # Read in the MetaScope_id CSVs
 read_in_id <- function(path_id_counts, end_string, which_annot_col) {
-    name_file <- utils::tail(stringr::str_split(path_id_counts, "/")[[1]],
-                             n = 1)
-    readr::read_csv(path_id_counts, show_col_types = FALSE) %>%
-      dplyr::filter(!is.na(.data$TaxonomyID)) %>%
-      dplyr::select(.data$read_count, .data$TaxonomyID) %>%
-      dplyr::mutate(sample = stringr::str_remove(name_file, end_string)) %>%
-      return()
+  name_file <- utils::tail(stringr::str_split(path_id_counts, "/")[[1]],
+                           n = 1)
+  readr::read_csv(path_id_counts, show_col_types = FALSE) %>%
+    dplyr::filter(!is.na(.data$TaxonomyID)) %>%
+    dplyr::select(.data$read_count, .data$TaxonomyID) %>%
+    dplyr::mutate(sample = stringr::str_remove(name_file, end_string)) %>%
+    return()
+}
+
+# Get input taxon phylogeny
+class_taxon <- function(taxon, NCBI_key) {
+  success <- FALSE
+  attempt <- 0
+  while (!success ) {
+    try({
+      attempt <- attempt + 1
+      tryCatch({
+        classification_table <- taxize::classification(taxon, db = "ncbi",
+                                                       key = NCBI_key)[[1]]},
+        error = function(w) stop("NCBI request not granted. Re-attempting request.")
+      )
+      success <- TRUE
+    })
+    if (attempt == 3) {
+      message("UID ", taxon, " not found. Continuing search for next UID.")
+      taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
+                       "family", "genus", "species", "strain")
+      classification_table <- dplyr::tibble(name = "Unknown",
+                                            rank = taxon_ranks,
+                                            id = 0) %>% as.data.frame()
+      success <- TRUE
+    }
   }
+  return(classification_table)
+}
 
 #' Create a multi-assay experiment from MetaScope output for usage with
 #' animalcules
@@ -98,7 +125,7 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #'   \code{metascope_id()}.
 #' @param annot_path The filepath to the CSV annotation file for the samples.
 #' @param end_string The end string used at the end of the metascope_id files.
-#'   Default is ".filtered.metascope_id.csv".
+#'   Default is ".metascope_id.csv".
 #' @param which_annot_col The name of the column of the annotation file
 #'   containing the sample IDs. These should be the same as the
 #'   \code{meta_counts} root filenames.
@@ -160,7 +187,7 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #' outMAE <- convert_animalcules(meta_counts = out_files,
 #'                               annot_path = annot_dat,
 #'                               which_annot_col = "Sample",
-#'                               end_string = ".filtered.metascope_id.csv",
+#'                               end_string = ".metascope_id.csv",
 #'                               qiime_biom_out = FALSE,
 #'                               path_to_write = tempfolder,
 #'                               NCBI_key = NULL)
@@ -169,48 +196,49 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 #'
 
 convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
-                                end_string = ".filtered.metascope_id.csv",
+                                end_string = ".metascope_id.csv",
                                 qiime_biom_out = FALSE, path_to_write = ".",
                                 NCBI_key = NULL) {
   combined_list <- lapply(meta_counts, read_in_id, end_string = end_string,
                           which_annot_col = which_annot_col) %>%
-  data.table::rbindlist() %>% dplyr::ungroup() %>% as.data.frame() %>%
-  dplyr::mutate(sample = stringr::str_remove_all(sample, ".csv")) %>%
-  dplyr::select(.data$read_count, .data$TaxonomyID, .data$sample) %>%
-  tidyr::pivot_wider(
-    id_cols = .data$TaxonomyID, names_from = .data$sample,
-    values_from = .data$read_count, values_fill = 0, id_expand = TRUE)
-    # Create taxonomy, counts tables
-    taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
-                     "family", "genus", "species", "strain")
-    if (!is.null(NCBI_key)) options("ENTREZ_KEY" = NCBI_key)
-    all_ncbi <- taxize::classification(combined_list$TaxonomyID,
-        db = "ncbi", max_tries = 4, key = NCBI_key)
-    taxonomy_table <- lapply(all_ncbi, mk_table, taxon_ranks) %>%
-      dplyr::bind_rows() %>% t() %>% as.data.frame()
-    colnames(taxonomy_table) <- taxon_ranks
-    counts_table <- combined_list %>% dplyr::select(-.data$TaxonomyID) %>%
-      as.data.frame()
-    # Remove any brackets
-    taxonomy_table$species <- gsub("\\[|\\]", "", taxonomy_table$species)
-    # Remove duplicated species
-    if (sum(duplicated(taxonomy_table$species)) > 0) {
-      ind <- which(duplicated(taxonomy_table$species))
-      dup_sp <- taxonomy_table$species[ind]
-      for (this_sp in dup_sp) {
-        all_ind <- which(taxonomy_table$species == this_sp)
-        counts_table[all_ind[1], ] <- base::colSums(counts_table[all_ind, ])
-      }
-      counts_table <- counts_table %>%
-        dplyr::filter(!duplicated(taxonomy_table$species))
-      taxonomy_table <- taxonomy_table %>%
-        dplyr::filter(!duplicated(.data$species))
+    data.table::rbindlist() %>% dplyr::ungroup() %>% as.data.frame() %>%
+    dplyr::mutate(sample = stringr::str_remove_all(sample, ".csv")) %>%
+    dplyr::select(.data$read_count, .data$TaxonomyID, .data$sample) %>%
+    tidyr::pivot_wider(
+      id_cols = .data$TaxonomyID, names_from = .data$sample,
+      values_from = .data$read_count, values_fill = 0, id_expand = TRUE)
+  # Create taxonomy, counts tables
+  taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
+                   "family", "genus", "species", "strain")
+  if (!is.null(NCBI_key)) options("ENTREZ_KEY" = NCBI_key)
+  message("Looking up taxon UIDs in NCBI database")
+  all_ncbi <- plyr::llply(combined_list$TaxonomyID, .fun = class_taxon,
+                          NCBI_key = NCBI_key, .progress = "text")
+  taxonomy_table <- plyr::llply(all_ncbi, mk_table, taxon_ranks) %>%
+    dplyr::bind_rows() %>% as.data.frame()
+  colnames(taxonomy_table) <- taxon_ranks
+  counts_table <- combined_list %>% dplyr::select(-.data$TaxonomyID) %>%
+    as.data.frame()
+  # Remove any brackets
+  taxonomy_table$species <- gsub("\\[|\\]", "", taxonomy_table$species)
+  # Remove duplicated species
+  if (sum(duplicated(taxonomy_table$species)) > 0) {
+    ind <- which(duplicated(taxonomy_table$species))
+    dup_sp <- taxonomy_table$species[ind]
+    for (this_sp in dup_sp) {
+      all_ind <- which(taxonomy_table$species == this_sp)
+      counts_table[all_ind[1], ] <- base::colSums(counts_table[all_ind, ])
     }
-    rownames(taxonomy_table) <- stringr::str_replace(taxonomy_table$species,
-                                                     " ", "_")
-    rownames(counts_table) <- rownames(taxonomy_table)
-    MAE <- create_MAE(
-      annot_path, which_annot_col, combined_list, counts_table,
-      taxonomy_table, path_to_write, qiime_biom_out)
-    return(MAE)
+    counts_table <- counts_table %>%
+      dplyr::filter(!duplicated(taxonomy_table$species))
+    taxonomy_table <- taxonomy_table %>%
+      dplyr::filter(!duplicated(.data$species))
   }
+  rownames(taxonomy_table) <- stringr::str_replace(taxonomy_table$species,
+                                                   " ", "_")
+  rownames(counts_table) <- rownames(taxonomy_table)
+  MAE <- create_MAE(
+    annot_path, which_annot_col, combined_list, counts_table,
+    taxonomy_table, path_to_write, qiime_biom_out)
+  return(MAE)
+}
