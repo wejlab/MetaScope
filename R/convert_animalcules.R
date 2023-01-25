@@ -85,7 +85,7 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 }
 
 # Get input taxon phylogeny
-class_taxon <- function(taxon, NCBI_key) {
+class_taxon <- function(taxon, NCBI_key, num_tries) {
   success <- FALSE
   attempt <- 0
   while (!success ) {
@@ -94,11 +94,11 @@ class_taxon <- function(taxon, NCBI_key) {
       tryCatch({
         classification_table <- taxize::classification(taxon, db = "ncbi",
                                                        key = NCBI_key)[[1]]},
-        error = function(w) stop("NCBI request not granted. Re-attempting request.")
+        error = function(w) return(NULL)
       )
       success <- TRUE
     })
-    if (attempt == 3) {
+    if (attempt == num_tries) {
       message("UID ", taxon, " not found. Continuing search for next UID.")
       taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
                        "family", "genus", "species", "strain")
@@ -139,6 +139,7 @@ class_taxon <- function(taxon, NCBI_key) {
 #' @param NCBI_key (character) NCBI Entrez API key. optional. See
 #'   taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 #'   function will be less prone to errors if you obtain an NCBI key.
+#' @param num_tries (numeric) Number of attempts to get UID.
 #' @returns Returns a multi-assay experiment file of combined sample counts data
 #'   and/or biom file and mapping file for analysis with QIIME. The multi-assay
 #'   experiment will have assays for the counts ("MGX"), log counts, CPM, and
@@ -198,7 +199,7 @@ class_taxon <- function(taxon, NCBI_key) {
 convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
                                 end_string = ".metascope_id.csv",
                                 qiime_biom_out = FALSE, path_to_write = ".",
-                                NCBI_key = NULL) {
+                                NCBI_key = NULL, num_tries = 5) {
   combined_list <- lapply(meta_counts, read_in_id, end_string = end_string,
                           which_annot_col = which_annot_col) %>%
     data.table::rbindlist() %>% dplyr::ungroup() %>% as.data.frame() %>%
@@ -213,7 +214,8 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
   if (!is.null(NCBI_key)) options("ENTREZ_KEY" = NCBI_key)
   message("Looking up taxon UIDs in NCBI database")
   all_ncbi <- plyr::llply(combined_list$TaxonomyID, .fun = class_taxon,
-                          NCBI_key = NCBI_key, .progress = "text")
+                          NCBI_key = NCBI_key, .progress = "text",
+                          num_tries = num_tries)
   taxonomy_table <- plyr::llply(all_ncbi, mk_table, taxon_ranks) %>%
     dplyr::bind_rows() %>% as.data.frame()
   colnames(taxonomy_table) <- taxon_ranks

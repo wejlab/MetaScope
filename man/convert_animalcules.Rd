@@ -12,7 +12,8 @@ convert_animalcules(
   end_string = ".metascope_id.csv",
   qiime_biom_out = FALSE,
   path_to_write = ".",
-  NCBI_key = NULL
+  NCBI_key = NULL,
+  num_tries = 5
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ files be written? Should be a character string of the folder path. Default is
 \item{NCBI_key}{(character) NCBI Entrez API key. optional. See
 taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 function will be less prone to errors if you obtain an NCBI key.}
+
+\item{num_tries}{(numeric) Number of attempts to get UID.}
 }
 \value{
 Returns a multi-assay experiment file of combined sample counts data
