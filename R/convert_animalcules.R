@@ -88,13 +88,14 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 class_taxon <- function(taxon, NCBI_key, num_tries) {
   success <- FALSE
   attempt <- 0
+  e <- "NCBI request not granted. Re-attempting request."
   while (!success ) {
     try({
       attempt <- attempt + 1
       tryCatch({
         classification_table <- taxize::classification(taxon, db = "ncbi",
                                                        key = NCBI_key)[[1]]},
-        error = function(w) return(NULL)
+        error = function(w) stop(e)
       )
       success <- TRUE
     })
@@ -156,7 +157,7 @@ class_taxon <- function(taxon, NCBI_key, num_tries) {
 #'                        paste0(samp_names, ".csv"))
 #'
 #' create_IDcsv <- function (out_file) {
-#'   final_taxids <- c("273036", "418127", "11234")
+#'   final_taxids <- c("273036", "-5", "11234")
 #'   final_genomes <- c(
 #'     "Staphylococcus aureus RF122, complete sequence",
 #'     "Staphylococcus aureus subsp. aureus Mu3, complete sequence",

@@ -68,7 +68,7 @@ all_files <- file.path(tempfolder,
                        paste0(samp_names, ".csv"))
 
 create_IDcsv <- function (out_file) {
-  final_taxids <- c("273036", "418127", "11234")
+  final_taxids <- c("273036", "-5", "11234")
   final_genomes <- c(
     "Staphylococcus aureus RF122, complete sequence",
     "Staphylococcus aureus subsp. aureus Mu3, complete sequence",
