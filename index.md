@@ -10,12 +10,19 @@ A few improvements made in MetaScope over PathoScope include using the BAM file 
 
 MetaScope requires R Version 4.1.
 
-* This package is still under development; the most recent version can be accessed via github:
+Install the development version of the package from Github:
 
 ```
 if (!requireNamespace("devtools", quietly=TRUE))
   install.packages("devtools")
 devtools::install_github("compbiomed/MetaScope")
+```
+
+Install the release version of the package from Bioconductor:
+```
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("MetaScope")
 ```
 
 ## Tutorial 
