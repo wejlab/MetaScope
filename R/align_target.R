@@ -294,7 +294,7 @@ align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
   # If more than one library was aligned, then combine bam files
   if (length(bam_files) > 1) {
     if (quiet) message("Merging the bam files into ", align_file, ".bam")
-    merge_bam_files(bam_files, align_file, quiet)
+    merge_bam_files(bam_files, align_file, quiet=quiet)
   } else {
     file.rename(bam_files, paste(align_file, ".bam", sep = ""))
     # remove Rsubread .vcf and .bam.summary files for now
@@ -440,7 +440,7 @@ align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs,
     # If more than one library was aligned, then combine bam files
     if (length(bam_files) > 1) {
       if (!quiet) message("Merging the bam files into ", align_file, ".bam")
-      merge_bam_files(bam_files, tools::file_path_sans_ext(outputFile), quiet)
+      merge_bam_files(bam_files, tools::file_path_sans_ext(outputFile), quiet=quiet)
     } else file.rename(bam_files, outputFile)
     if (!quiet) message("DONE! Alignments written to ", outputFile)
     return(outputFile)
