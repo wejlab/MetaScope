@@ -13,6 +13,7 @@ FASTQ
 Faits
 GGAATTATCGGT
 Gapped
+Github
 Illumina
 Langmead
 Liao
@@ -36,6 +37,7 @@ Rsubread
 SAMtools
 SampleName
 Subread
+UID
 al
 amplicon
 bam
