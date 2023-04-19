@@ -208,6 +208,8 @@ final_map <-
   )
 ```
 
+**Note: the next two code blocks are included for the sake of examining the vignette example, but are not useful for "real life" data. To continue your analysis, head down to the Genome Identification header.**
+
 Prior to the last step in the analysis, we will look at the primary alignments of the mapped reads in the filtered BAM file that we just created using the `filter_host_bowtie()` function. According to the [Bowtie2 manual](http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml), a primary alignment is described as the alignment that received the highest alignment score among all alignments for that read. When looking at the primary alignments of the mapped reads, we can see that the majority of reads have mapped to the correct *Staphylococcus aureus* RF122 strain. However, some residual reads have primary alignments to the other *S. aureus* strains which are incorrect. If we were to stop the analysis at this point, we could potentially be lead to believe that our sample has increased microbial diversity, when it actually does not.
 
 ```{R bam primary alignment}
@@ -293,6 +295,8 @@ metascope_id(
   num_species_plot = 0
 )
 ```
+
+**Note: the next code block is included for the sake of examining the vignette example, but can be skipped. Your results are in the CSV file produced by the `metascope_id()` function.**
 
 We will now look at the read reassignment results reported in the output CSV file.
 
