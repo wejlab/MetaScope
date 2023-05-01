@@ -13,7 +13,7 @@ Authors@R: c(
   )
 Description: This package contains tools and methods for preprocessing
     microbiome data. Functionality includes library generation,
-    demultiplexing, alignment, and microbe identification.  It is partly
+    demultiplexing, alignment, and microbe identification.  It is in part
     an R translation of the PathoScope 2.0 pipeline.
 License: GPL (>= 3)
 URL: https://github.com/compbiomed/metascope

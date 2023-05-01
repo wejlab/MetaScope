@@ -1,4 +1,4 @@
-# MetaScope 
+# MetaScope [![](https://img.shields.io/badge/bioconductor-3.18-blue)](http://www.bioconductor.org/packages/release/bioc/html/MetaScope.html)
 
 ## What is MetaScope?
 
