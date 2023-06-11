@@ -283,6 +283,7 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
   refseq_table <- download_parentkingdom(parent_kingdom, quiet)
   # Get NCBI scientific names of children species or strains
   taxonomy_table <- get0("taxonomy_table", envir = asNamespace("MetaScope"))
+  if (rank_input == "no rank") base::stop("No rank detected")
   children_list <- get_children(taxon, rank_input, tax_dat = taxonomy_table)
   species_table <- get_speciestab(children_list, refseq_table, taxon,
                                   representative, reference, quiet)

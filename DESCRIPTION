@@ -2,9 +2,9 @@ Type: Package
 Package: MetaScope
 Title: Tools and functions for preprocessing 16S and metagenomic
     sequencing microbiome data
-Version: 1.1.0
+Version: 1.1.1
 Authors@R: c(
-    person("Aubrey", "Odom-Mabey", , "aodom@bu.edu", role = c("aut", "cre"),
+    person("Aubrey", "Odom", , "aodom@bu.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-7113-7598")),
     person("Rahul", "Varki", , "rvarki@bu.edu", role = "aut"),
     person("W. Evan", "Johnson", , "wej@bu.edu", role = "aut",
@@ -31,7 +31,6 @@ Imports:
     Matrix,
     MultiAssayExperiment,
     qlcMatrix,
-    R.utils,
     Rbowtie2,
     readr,
     rlang,

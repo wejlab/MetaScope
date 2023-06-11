@@ -6,7 +6,7 @@
 \alias{MetaScope-package}
 \title{MetaScope: Tools and functions for preprocessing 16S and metagenomic sequencing microbiome data}
 \description{
-This package contains tools and methods for preprocessing microbiome data. Functionality includes library generation, demultiplexing, alignment, and microbe identification. It is partly an R translation of the PathoScope 2.0 pipeline.
+This package contains tools and methods for preprocessing microbiome data. Functionality includes library generation, demultiplexing, alignment, and microbe identification. It is in part an R translation of the PathoScope 2.0 pipeline.
 }
 \seealso{
 Useful links:
@@ -17,7 +17,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Aubrey Odom-Mabey \email{aodom@bu.edu} (\href{https://orcid.org/0000-0001-7113-7598}{ORCID})
+\strong{Maintainer}: Aubrey Odom \email{aodom@bu.edu} (\href{https://orcid.org/0000-0001-7113-7598}{ORCID})
 
 Authors:
 \itemize{

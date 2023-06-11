@@ -29,7 +29,7 @@
 #' dir.create(ref_temp)
 #'
 #' ## Download reference genome
-#' out_fasta <- download_refseq('Duck circovirus', reference = FALSE,
+#' out_fasta <- download_refseq('Aurivirus', reference = FALSE,
 #'                              representative = FALSE, out_dir = ref_temp,
 #'                              compress = TRUE, patho_out = FALSE,
 #'                              caching = TRUE)

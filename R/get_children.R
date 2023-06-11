@@ -29,8 +29,8 @@
 
 get_children <- function(input_taxon, input_rank, tax_dat = NULL) {
   if (is.null(tax_dat)) tax_dat <- taxonomy_table
-    # Get child strains
-    ind <- tolower(tax_dat[, input_rank]) %in% tolower(input_taxon)
+  # Get child strains
+  ind <- tolower(tax_dat[, input_rank]) %in% tolower(input_taxon)
   strain_list <- unique(tax_dat[, "strain"][ind])
   strain_list <- strain_list[!is.na(strain_list)]
   ## Delete rows with child strains
