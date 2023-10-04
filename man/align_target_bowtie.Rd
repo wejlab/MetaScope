@@ -76,8 +76,8 @@ target_ref_temp <- tempfile()
 dir.create(target_ref_temp)
 
 ## Dowload reference genome
-MetaScope::download_refseq("Measles morbillivirus",
-                           reference = TRUE,
+MetaScope::download_refseq("Morbillivirus hominis",
+                           reference = FALSE,
                            representative = FALSE,
                            compress = TRUE,
                            out_dir = target_ref_temp,

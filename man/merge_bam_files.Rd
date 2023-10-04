@@ -8,7 +8,7 @@ merge_bam_files(
   bam_files,
   destination,
   head_file = paste(destination, "_header.sam", sep = ""),
-  quiet
+  quiet = TRUE
 )
 }
 \arguments{

@@ -142,7 +142,7 @@ bam_reheader_R <- function(head, old_bam, new_bam = paste(
 
 merge_bam_files <- function(bam_files, destination,
                             head_file = paste(destination, "_header.sam",
-                                              sep = ""), quiet) {
+                                              sep = ""), quiet = TRUE) {
   if (!quiet) message("Merging .bam files")
   com_head <- combined_header(bam_files, header_file = head_file)
   # Paths for merged bam files
@@ -355,8 +355,8 @@ align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
 #' dir.create(target_ref_temp)
 #'
 #' ## Dowload reference genome
-#' MetaScope::download_refseq("Measles morbillivirus",
-#'                            reference = TRUE,
+#' MetaScope::download_refseq("Morbillivirus hominis",
+#'                            reference = FALSE,
 #'                            representative = FALSE,
 #'                            compress = TRUE,
 #'                            out_dir = target_ref_temp,
