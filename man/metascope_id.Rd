@@ -74,7 +74,7 @@ filt_file <- "subread_target.filtered.csv.gz"
 bamPath <- system.file("extdata", filt_file, package = "MetaScope")
 file.copy(bamPath, file_temp)
 
-## Run metascope id with the aligner option set to bowtie2
+## Run metascope id with the aligner option set to subread
 metascope_id(input_file = file.path(file_temp, filt_file),
              aligner = "subread", num_species_plot = 0,
              input_type = "csv.gz")

@@ -391,7 +391,8 @@ align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
 #'     libs = "target",
 #'     align_dir = output_temp,
 #'     align_file = "bowtie_target",
-#'     overwrite = TRUE
+#'     overwrite = TRUE,
+#'     bowtie2_options = "--very-sensitive-local"
 #'   )
 #'
 #' ## Remove extra folders

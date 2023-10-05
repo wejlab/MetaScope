@@ -112,7 +112,8 @@ target_map <-
     libs = "target",
     align_dir = output_temp,
     align_file = "bowtie_target",
-    overwrite = TRUE
+    overwrite = TRUE,
+    bowtie2_options = "--very-sensitive-local"
   )
 
 ## Remove extra folders

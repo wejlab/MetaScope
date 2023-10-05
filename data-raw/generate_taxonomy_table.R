@@ -53,9 +53,11 @@ generate_taxonomy_table <- function() {
   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
                    "family", "genus", "species", "strain")
   all_ncbi <- find_taxonomy(tax_id)
-  taxonomy_table <- all_ncbi %>% unlist(recursive = FALSE) %>%
-    lapply(mk_table, taxon_ranks = taxon_ranks) %>%
-    dplyr::bind_rows() %>% t() %>% as.data.frame() %>%
+  taxonomy_table_pre <- all_ncbi %>%
+    unlist(recursive = FALSE) %>%
+    lapply(mk_table, taxon_ranks = taxon_ranks)
+  taxonomy_table <- taxonomy_table_pre %>%
+    dplyr::bind_rows() %>% as.data.frame() %>%
     magrittr::set_colnames(taxon_ranks)
   usethis::use_data(taxonomy_table, internal = TRUE, overwrite = TRUE,
                     compress = "xz")

@@ -89,7 +89,7 @@ filter_ref_temp <- tempfile()
 dir.create(filter_ref_temp)
 
 ## Download reference genome
-MetaScope::download_refseq("Zaire ebolavirus",
+MetaScope::download_refseq("Orthoebolavirus zairense",
                            reference = FALSE,
                            representative = FALSE,
                            compress = TRUE,

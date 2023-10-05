@@ -28,7 +28,7 @@ reference:
      - filter_host_bowtie
      - bt2_16S_params 
      - bt2_loose_params
- - title: "Genome Identification"
+ - title: "Sequencing Read Identification"
    desc: "Identify which genomes are most likely to be represented in the sample."
    contents:
      - metascope_id
