@@ -1,3 +1,5 @@
+globalVariables("count")
+
 obtain_reads <- function(input_file, input_type, aligner, quiet) {
   to_pull <- c("qname", "rname", "cigar", "qwidth", "pos")
   if (identical(input_type, "bam")) {
@@ -23,17 +25,19 @@ obtain_reads <- function(input_file, input_type, aligner, quiet) {
   return(reads)
 }
 
-identify_rnames <- function(reads, unmapped) {
+identify_rnames <- function(reads, unmapped = NULL) {
+  reads_in <- reads[[1]]$rname
+  if(!is.null(unmapped)) reads_in <- reads[[1]]$rname[!unmapped] 
   # Account for potential index issues
-  mapped_2015 <- reads[[1]]$rname[!unmapped] %>%
+  mapped_2015 <- reads_in %>%
     stringr::str_split(pattern = "ref\\|", n = 2) %>%
     vapply(function(x) x[2], FUN.VALUE = character(1)) %>%
     stringr::str_split(pattern = "\\|", n = 2) %>%
     vapply(function(x) x[1], FUN.VALUE = character(1))
-  mapped_2018 <- reads[[1]]$rname[!unmapped] %>%
+  mapped_2018 <- reads_in %>%
     stringr::str_split(pattern = "ion\\|", n = 2) %>%
     vapply(function(x) x[2], FUN.VALUE = character(1))
-  mapped_2021 <- reads[[1]]$rname[!unmapped]
+  mapped_2021 <- reads_in
   # Identify least number of NA's
   ind <- which.min(c(sum(is.na(mapped_2015)), sum(is.na(mapped_2018)),
                      sum(is.na(mapped_2021))))
@@ -239,14 +243,15 @@ locations <- function(which_taxid, which_genome,
     reads[[1]]$pos[map2bam_acc])), 3)
   # Plotting
   dfplot <- dplyr::tibble(x = reads[[1]]$pos[map2bam_acc])
-  ggplot2::ggplot(dfplot, ggplot2::aes(.data$x)) +
+  ggplot2::ggplot(dfplot, ggplot2::aes(.data$x, fill = ggplot2::after_stat(count))) +
     ggplot2::geom_histogram(bins = 50) +
+    ggplot2::scale_fill_gradient(low = 'red', high = 'yellow') +
     ggplot2::theme_classic() +
-    ggplot2::labs(title = paste("Positions of reads mapped to", use_name),
+    ggplot2::labs(title = bquote("Positions of reads mapped to"~italic(.(use_name))),
                   xlab = "Aligned position across genome (leftmost read position)",
                   ylab = "Read Count",
-                  caption = paste0("Accession Number: ", choose_acc)) +
-    ggplot2::scale_fill_gradient(low = 'red', high = 'yellow')
+                  caption = paste0("Accession Number: ", choose_acc))
+  
   ggplot2::ggsave(paste0(plots_save, "/",
                          stringr::str_replace(use_name, " ", "_"), ".png"),
                   device = "png")
@@ -340,7 +345,8 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   }
   reads <- obtain_reads(input_file, input_type, aligner, quiet)
   unmapped <- is.na(reads[[1]]$rname)
-  mapped_rname <- identify_rnames(reads, unmapped)
+  reads[[1]]$rname <- identify_rnames(reads)
+  mapped_rname <- reads[[1]]$rname[!unmapped]
   mapped_qname <- reads[[1]]$qname[!unmapped]
   mapped_cigar <- reads[[1]]$cigar[!unmapped]
   mapped_qwidth <- reads[[1]]$qwidth[!unmapped]

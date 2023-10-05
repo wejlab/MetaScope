@@ -1,5 +1,6 @@
 # Helper function to create a taxonomy table
-mk_table <- function(intable, taxon_ranks) {
+mk_table <- function(intable, taxon_ranks = c("superkingdom", "kingdom", "phylum", "class", "order",
+                                              "family", "genus", "species", "strain")) {
   this_t <- as.data.frame(intable)
   if (!identical(this_t$rank, character(0))) {
     t_n <- nrow(this_t)

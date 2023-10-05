@@ -18,7 +18,6 @@ Illumina
 Langmead
 Liao
 MGX
-Mabey
 MetaScope's
 Metagenomes
 Metagenomic
@@ -55,6 +54,7 @@ csv
 demultiplex
 demultiplexed
 demultiplexing
+dev
 entrez
 epidermidis
 et
@@ -63,9 +63,7 @@ fasta
 fastq
 filepath
 gbar
-github
 gz
-https
 maxMismatches
 metagenomes
 metagenomic
@@ -83,6 +81,7 @@ parallelize
 pathoscope
 phredOffset
 qiime
+refseq
 reheader
 reheaders
 rnames

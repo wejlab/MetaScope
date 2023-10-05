@@ -19,15 +19,15 @@ download_refseq(
 \item{taxon}{Name of single taxon to download. The taxon name should be a
 recognized NCBI scientific or common name, with no grammatical or
 capitalization inconsistencies. All available taxonomies are visible by
-accessing the \code{taxonomy_table} object included in the package.}
+accessing the \code{MetaScope:::taxonomy_table} object included in the package.}
 
 \item{reference}{Download only RefSeq reference genomes? Defaults to
 \code{TRUE}. Automatically set to \code{TRUE} if \code{representative =
 TRUE}.}
 
-\item{representative}{Download only RefSeq representative genomes? Defaults
-to \code{FALSE}. If \code{TRUE}, reference is automatically set at
-\code{TRUE}.}
+\item{representative}{Download RefSeq representative and reference genomes?
+Defaults to \code{FALSE}. If \code{TRUE}, reference is automatically set at
+  \code{TRUE}.}
 
 \item{compress}{Compress the output .fasta file? Defaults to \code{TRUE}.}
 

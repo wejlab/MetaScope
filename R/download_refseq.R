@@ -107,7 +107,7 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
   if (total_genomes == 0) {
     stop("No available genome for ", taxon,
          " - try setting both `representative` and `reference`",
-         " to either TRUE or FALSE")
+         " to FALSE to obtain genome from the nucleotide database.")
   } else {
     if (!quiet) message("Downloading ", total_genomes, " ", taxon,
                         " genome(s) from NCBI")
@@ -202,6 +202,17 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
   return(combined_fasta)
 }
 
+find_strains <- function(intable) {
+  all_rank <- which(intable$rank == "no rank")
+  if (all(is.na(all_rank))) return(intable)
+  for (t_n in all_rank[all_rank > 1]) {
+    if (intable$rank[t_n] == "no rank" && intable$rank[t_n - 1] == "species") {
+      intable$rank[t_n] <- "strain"
+    }
+  }
+  return(intable)
+}
+
 #' Download RefSeq genome libraries
 #'
 #' This function will automatically download RefSeq genome libraries in a fasta
@@ -220,12 +231,12 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
 #' @param taxon Name of single taxon to download. The taxon name should be a
 #'   recognized NCBI scientific or common name, with no grammatical or
 #'   capitalization inconsistencies. All available taxonomies are visible by
-#'   accessing the \code{taxonomy_table} object included in the package.
+#'   accessing the \code{MetaScope:::taxonomy_table} object included in the package.
 #' @param reference Download only RefSeq reference genomes? Defaults to
 #'   \code{TRUE}. Automatically set to \code{TRUE} if \code{representative =
 #'   TRUE}.
-#' @param representative Download only RefSeq representative genomes? Defaults
-#'   to \code{FALSE}. If \code{TRUE}, reference is automatically set at
+#' @param representative Download RefSeq representative and reference genomes?
+#' Defaults to \code{FALSE}. If \code{TRUE}, reference is automatically set at
 #'   \code{TRUE}.
 #' @param compress Compress the output .fasta file? Defaults to \code{TRUE}.
 #' @param patho_out Create duplicate outpute files compatible with PathoScope?
@@ -270,10 +281,12 @@ download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
       attempt <- attempt + 1
       tryCatch({
         classification_table <- taxize::classification(
-          taxize::get_uid(taxon, messages = FALSE)[[1]], db = "ncbi")[[1]]},
+          taxize::get_uid(taxon, messages = FALSE)[[1]], db = "ncbi")[[1]] %>% 
+          find_strains()},
         warning = function(w) stop("NCBI request not granted")
       )
       Sys.sleep(1)
+      
       success <- TRUE
     })
     if (attempt == 3) stop("Process halted. Your input is not a valid taxon")
