@@ -8,6 +8,8 @@ metascope_id(
   input_file,
   input_type = "csv.gz",
   aligner = "bowtie2",
+  db = "ncbi",
+  db_feature_table = NULL,
   NCBI_key = NULL,
   out_dir = dirname(input_file),
   convEM = 1/10000,
@@ -17,13 +19,23 @@ metascope_id(
 )
 }
 \arguments{
-\item{input_file}{The .bam or .csv.gz file that needs to be identified.}
+\item{input_file}{The .bam or .csv.gz file of sample reads to be identified.}
 
 \item{input_type}{Extension of file input. Should be either "bam" or
 "csv.gz". Default is "csv.gz".}
 
 \item{aligner}{The aligner which was used to create the bam file. Default is
 "bowtie2" but can also be set to "subread" or "other".}
+
+\item{db}{Currently accepts one of \code{c("ncbi", "silva", "other")}
+Default is \code{"ncbi"}, appropriate for samples aligned against indices
+compiled from NCBI whole genome databases. Alternatively, usage of an
+alternate database (like Greengenes2) should be specified with
+\code{"other"}.}
+
+\item{db_feature_table}{If \code{db = "other"}, a data.frame must be supplied
+with two columns, "Feature ID" matching the names of the alignment indices,
+and a second \code{character} column supplying the taxon identifying information.}
 
 \item{NCBI_key}{(character) NCBI Entrez API key. optional. See
 taxize::use_entrez(). Due to the high number of requests made to NCBI, this

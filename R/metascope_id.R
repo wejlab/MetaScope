@@ -265,11 +265,19 @@ locations <- function(which_taxid, which_genome,
 #' library/.bam files use NCBI accession names for reference names (rnames in
 #' .bam file).
 #'
-#' @param input_file The .bam or .csv.gz file that needs to be identified.
+#' @param input_file The .bam or .csv.gz file of sample reads to be identified.
 #' @param input_type Extension of file input. Should be either "bam" or
 #'   "csv.gz". Default is "csv.gz".
 #' @param aligner The aligner which was used to create the bam file. Default is
 #'   "bowtie2" but can also be set to "subread" or "other".
+#' @param db Currently accepts one of \code{c("ncbi", "silva", "other")}
+#' Default is \code{"ncbi"}, appropriate for samples aligned against indices
+#' compiled from NCBI whole genome databases. Alternatively, usage of an
+#' alternate database (like Greengenes2) should be specified with
+#' \code{"other"}.
+#' @param db_feature_table If \code{db = "other"}, a data.frame must be supplied
+#' with two columns, "Feature ID" matching the names of the alignment indices,
+#' and a second \code{character} column supplying the taxon identifying information.
 #' @param NCBI_key (character) NCBI Entrez API key. optional. See
 #'   taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 #'   function will be less prone to errors if you obtain an NCBI key. You may
@@ -330,44 +338,70 @@ locations <- function(which_taxid, which_genome,
 
 metascope_id <- function(input_file, input_type = "csv.gz",
                          aligner = "bowtie2",
+                         db = "ncbi",
+                         db_feature_table = NULL,
                          NCBI_key = NULL,
                          out_dir = dirname(input_file),
                          convEM = 1 / 10000, maxitsEM = 25,
                          num_species_plot = NULL,
-                         quiet = TRUE) {
+                         quiet = TRUE)  {
   out_base <- input_file %>% base::basename() %>% strsplit(split = "\\.") %>%
     magrittr::extract2(1) %>% magrittr::extract(1)
   out_file <- file.path(out_dir, paste0(out_base, ".metascope_id.csv"))
   # Check to make sure valid aligner is specified
-  if (aligner != "bowtie2" && aligner != "subread" && aligner != "other") {
+  if (!(aligner %in% c("bowtie2", "subread", "other"))) {
     stop("Please make sure aligner is set to either 'bowtie2', 'subread',",
          " or 'other'")
   }
+  if (db == "other" && is.null(db_feature_table)) {
+    stop("Please supply a data.frame for db_feature_table if 'db = other'")
+  }
   reads <- obtain_reads(input_file, input_type, aligner, quiet)
   unmapped <- is.na(reads[[1]]$rname)
-  reads[[1]]$rname <- identify_rnames(reads)
-  mapped_rname <- reads[[1]]$rname[!unmapped]
+  if (db == "ncbi") reads[[1]]$rname <- identify_rnames(reads)
+  mapped_rname <- as.character(reads[[1]]$rname[!unmapped])
   mapped_qname <- reads[[1]]$qname[!unmapped]
   mapped_cigar <- reads[[1]]$cigar[!unmapped]
   mapped_qwidth <- reads[[1]]$qwidth[!unmapped]
   if (aligner == "bowtie2") {
     # mapped alignments used
     map_edit_or_align <- reads[[1]][["tag"]][["AS"]][!unmapped]
-  } else if (aligner == "subread") map_edit_or_align <-
-    reads[[1]][["tag"]][["NM"]][!unmapped] # mapped edits used
+  } else if (aligner == "subread") {
+    map_edit_or_align <-
+      reads[[1]][["tag"]][["NM"]][!unmapped] # mapped edits used
+  }
   read_names <- unique(mapped_qname)
   accessions <- as.character(unique(mapped_rname))
-  if (!quiet) message("\tFound ", length(read_names), " reads aligned to ",
-          length(accessions), " NCBI accessions")
-  tax_id_all <- find_accessions(accessions, NCBI_key, quiet = quiet)
-  taxids <- vapply(tax_id_all, function(x) x[1], character(1))
+  if (db == "ncbi") {
+    tax_id_all <- find_accessions(accessions, NCBI_key, quiet = quiet)
+    taxids <- vapply(tax_id_all, function(x) x[1], character(1))
+    genome_names <- vapply(tax_id_all, function(x) attr(x, "name"),
+                           character(1))
+    # Accession ids for any unknown genomes (likely removed from db)
+    unk_inds <- which(is.na(taxids))
+    genome_names[unk_inds] <- paste("unknown genome; accession ID is",
+                                    accessions[unk_inds])
+    taxids[unk_inds] <- accessions[unk_inds]
+  } else if (db == "silva") {
+    tax_id_all <- stringr::str_split(accessions, ";", n =2)
+    taxids <- sapply(tax_id_all, `[[`, 1)
+    genome_names <- sapply(tax_id_all, `[[`, 2)
+    # Fix names
+    mapped_rname <- stringr::str_split(mapped_rname, ";", n = 2) %>%
+      sapply(`[[`, 1)
+    accessions <- as.character(unique(mapped_rname))
+  } else if (db == "other") {
+    tax_id_all <- dplyr::tibble(`Feature ID` = accessions) %>%
+      dplyr::left_join(db_feature_table, by = "Feature ID") 
+    taxids <- tax_id_all %>% dplyr::select(1) %>% unlist() %>% unname()
+    genome_names <- tax_id_all %>% dplyr::select(2) %>% unlist() %>%
+      unname()
+  }
   unique_taxids <- unique(taxids)
   taxid_inds <- match(taxids, unique_taxids)
-  genome_names <- vapply(tax_id_all, function(x) attr(x, "name"),
-                         character(1))
   unique_genome_names <- genome_names[!duplicated(taxid_inds)]
   if (!quiet) message("\tFound ", length(unique_taxids),
-                      " unique NCBI taxonomy IDs")
+                      " unique taxa")
   # Make an aligment matrix (rows: reads, cols: unique taxids)
   if (!quiet) message("Setting up the EM algorithm")
   qname_inds <- match(mapped_qname, read_names)
