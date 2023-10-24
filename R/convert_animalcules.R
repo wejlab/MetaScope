@@ -86,28 +86,30 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 
 # Get input taxon phylogeny
 class_taxon <- function(taxon, NCBI_key, num_tries) {
+  taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
+                   "family", "genus", "species", "strain")
+  na_table <- data.frame(name = "Unknown", rank = taxon_ranks, id = 0)
+  if (is.na(taxon)) return(na_table)
   success <- FALSE
   attempt <- 0
   e <- "NCBI request not granted. Re-attempting request."
   while (!success ) {
     try({
       attempt <- attempt + 1
-      tryCatch({
-        classification_table <- taxize::classification(taxon, db = "ncbi",
-                                                       key = NCBI_key)[[1]]},
-        error = function(w) stop(e)
-      )
+      if (attempt <= num_tries) {
+        tryCatch({
+          classification_table <- taxize::classification(taxon, db = "ncbi",
+                                                         key = NCBI_key,
+                                                         max_tries = 5)[[1]]},
+          error = function(w) stop(e)
+        )
+      }
+      if (attempt > num_tries) {
+        message("UID ", taxon, " not found. Continuing search for next UID.")
+        return(na_table)
+      }
       success <- TRUE
     })
-    if (attempt == num_tries) {
-      message("UID ", taxon, " not found. Continuing search for next UID.")
-      taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
-                       "family", "genus", "species", "strain")
-      classification_table <- dplyr::tibble(name = "Unknown",
-                                            rank = taxon_ranks,
-                                            id = 0) %>% as.data.frame()
-      success <- TRUE
-    }
   }
   return(classification_table)
 }
@@ -200,7 +202,7 @@ class_taxon <- function(taxon, NCBI_key, num_tries) {
 convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
                                 end_string = ".metascope_id.csv",
                                 qiime_biom_out = FALSE, path_to_write = ".",
-                                NCBI_key = NULL, num_tries = 5) {
+                                NCBI_key = NULL, num_tries = 3) {
   combined_list <- lapply(meta_counts, read_in_id, end_string = end_string,
                           which_annot_col = which_annot_col) %>%
     data.table::rbindlist() %>% dplyr::ungroup() %>% as.data.frame() %>%
@@ -208,7 +210,8 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
     dplyr::select(.data$read_count, .data$TaxonomyID, .data$sample) %>%
     tidyr::pivot_wider(
       id_cols = .data$TaxonomyID, names_from = .data$sample,
-      values_from = .data$read_count, values_fill = 0, id_expand = TRUE)
+      values_from = .data$read_count, values_fill = 0, id_expand = TRUE) %>%
+    dplyr::mutate(TaxonomyID = as.numeric(TaxonomyID))
   # Create taxonomy, counts tables
   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
                    "family", "genus", "species", "strain")
@@ -217,6 +220,11 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
   all_ncbi <- plyr::llply(combined_list$TaxonomyID, .fun = class_taxon,
                           NCBI_key = NCBI_key, .progress = "text",
                           num_tries = num_tries)
+  # fix unknowns
+  na_ind <- which(is.na(all_ncbi))
+  unk_tab <- data.frame(name = "unknown", rank = taxon_ranks, id = 0)
+  for (i in na_ind) all_ncbi[[i]] <- unk_tab
+  # Create table
   taxonomy_table <- plyr::llply(all_ncbi, mk_table, taxon_ranks) %>%
     dplyr::bind_rows() %>% as.data.frame()
   colnames(taxonomy_table) <- taxon_ranks

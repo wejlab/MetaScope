@@ -13,7 +13,7 @@ convert_animalcules(
   qiime_biom_out = FALSE,
   path_to_write = ".",
   NCBI_key = NULL,
-  num_tries = 5
+  num_tries = 3
 )
 }
 \arguments{
