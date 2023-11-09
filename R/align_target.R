@@ -408,7 +408,7 @@ align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs,
     lib_dir <- tools::file_path_as_absolute(lib_dir)
     align_dir <- tools::file_path_as_absolute(align_dir)
     # If user does not specify parameters, specify for them
-    if (missing(bowtie2_options)) {
+    if (is.null(bowtie2_options)) {
       bowtie2_options <- paste("--very-sensitive-local -k 100",
                                "--score-min L,20,1.0 --threads",
                                threads)

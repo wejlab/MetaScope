@@ -211,7 +211,7 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
     tidyr::pivot_wider(
       id_cols = .data$TaxonomyID, names_from = .data$sample,
       values_from = .data$read_count, values_fill = 0, id_expand = TRUE) %>%
-    dplyr::mutate(TaxonomyID = as.numeric(TaxonomyID))
+    dplyr::mutate("TaxonomyID" = as.numeric(.data$TaxonomyID))
   # Create taxonomy, counts tables
   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
                    "family", "genus", "species", "strain")
@@ -223,7 +223,7 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
   # fix unknowns
   na_ind <- which(is.na(all_ncbi))
   unk_tab <- data.frame(name = "unknown", rank = taxon_ranks, id = 0)
-  for (i in na_ind) all_ncbi[[i]] <- unk_tab
+  if (length(na_ind) > 0) for (i in na_ind) all_ncbi[[i]] <- unk_tab
   # Create table
   taxonomy_table <- plyr::llply(all_ncbi, mk_table, taxon_ranks) %>%
     dplyr::bind_rows() %>% as.data.frame()
@@ -245,8 +245,9 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
     taxonomy_table <- taxonomy_table %>%
       dplyr::filter(!duplicated(.data$species))
   }
-  rownames(taxonomy_table) <- stringr::str_replace(taxonomy_table$species,
-                                                   " ", "_")
+  na_ind <- which(is.na(taxonomy_table$species))
+  taxonomy_table$species[na_ind] <- paste0("g_", taxonomy_table$genus[na_ind])
+  rownames(taxonomy_table) <- stringr::str_replace_all(taxonomy_table$species, " ", "_")
   rownames(counts_table) <- rownames(taxonomy_table)
   MAE <- create_MAE(
     annot_path, which_annot_col, combined_list, counts_table,
