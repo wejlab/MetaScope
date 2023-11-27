@@ -400,8 +400,8 @@ filter_host_bowtie <- function(reads_bam, lib_dir, libs, make_bam = FALSE,
                                bowtie2_options = NULL, YS = 100000,
                                threads = 1, overwrite = FALSE, quiet = TRUE) {
   # If user does not specify parameters, specify for them
-  if (missing(bowtie2_options)) {
-    bowtie2_options <- paste("--local -k 100 --score-min L,20,1.0",
+  if (is.null(bowtie2_options)) {
+    bowtie2_options <- paste("---local -R 2 -N 0 -L 25 -i S,1,0.75 -k 5 --score-min L,0,1.7",
                              "--threads", threads)
   } else bowtie2_options <- paste(bowtie2_options, "--threads", threads)
   # Convert reads_bam into fastq

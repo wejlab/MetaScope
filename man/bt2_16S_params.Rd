@@ -20,18 +20,15 @@ settings by passing \code{} to the \code{bowtie2_options} argument.
 }
 \details{
 The default parameters listed in this object are
-"--local -R 2 -N 0 -L 25 -i S,1,0.75 -k 5 --score-min L,100,1.28".
+"--local -R 2 -N 0 -L 25 -i S,1,0.75 -k 5 --score-min L,0,1.88"
 
-** Note that k is actually 10 and is doubled internally from 5
+Note that k is actually 10 and is doubled internally from 5.
+The \code{score-min} function was chosen such that the minimum alignment score
+allowed requires 98% identity.
 
 Further delineation of Bowtie 2 parameters is provided in the
 \href{https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml}{Bowtie 2
 manual}.
-
-These parameters were chosen from the article
-\href{https://doi.org/10.1101/2022.07.27.501757}{Metagenomic profiling
-pipelines improve taxonomic classification for 16S amplicon sequencing data},
-Faits et al. [Preprint].
 }
 \examples{
 data("bt2_16S_params")

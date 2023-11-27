@@ -1,7 +1,10 @@
 # MetaScope (dev version)
 
 ## Bug Fixes
-* Identified k as being doubled when specified for bowtie filter or align steps. Fixed the 16S params object accordingly.
+* Identified the Rbowtie2 parameter k as being doubled when specified for bowtie filter or align steps.
+
+## Major changes
+* Altered `bt2_params` objects to reflect 98% identity (16S), 95% identity (metagenomics) and added a parameter for when the origin genome is thought to not be present in the reference database.
 
 # MetaScope (Bioc 3.18)
 
