@@ -15,7 +15,7 @@ Install the development version of the package from Github:
 ```
 if (!requireNamespace("devtools", quietly=TRUE))
   install.packages("devtools")
-devtools::install_github("compbiomed/MetaScope")
+devtools::install_github("wejlab/MetaScope")
 ```
 
 Install the release version of the package from Bioconductor:
@@ -27,4 +27,4 @@ BiocManager::install("MetaScope")
 
 ## Tutorial 
 
-Check out a thorough tutorial on proper usage of our package  [here](https://compbiomed.github.io/metascope-docs/articles/MetaScope_vignette.html).
+Check out a thorough tutorial on proper usage of our package  [here](https://wejlab.github.io/metascope-docs/articles/MetaScope_vignette.html).

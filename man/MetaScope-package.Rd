@@ -11,8 +11,8 @@ This package contains tools and methods for preprocessing microbiome data. Funct
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/compbiomed/metascope https://compbiomed.github.io/metascope-docs/}
-  \item Report bugs at \url{https://github.com/compbiomed/MetaScope/issues}
+  \item \url{https://github.com/wejlab/metascope https://wejlab.github.io/metascope-docs/}
+  \item Report bugs at \url{https://github.com/wejlab/MetaScope/issues}
 }
 
 }

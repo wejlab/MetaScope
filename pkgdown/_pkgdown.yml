@@ -1,4 +1,4 @@
-url: https://compbiomed.github.io/metascope-docs/
+url: https://wejlab.github.io/metascope-docs/
 
 template:
   bootstrap: 5
@@ -57,15 +57,19 @@ navbar:
   left: 
     - text: "Home"
       href: index.html
-    - text: "Tutorial"
-      href: articles/MetaScope_vignette.html
+    - text: "Tutorials"
+      menu:
+      - text: "Introduction to MetaScope"
+        href: articles/MetaScope_vignette.html
+      - text: "Usage with SILVA 16S Database"
+        href: articles/SILVA.html
     - text: "Function Reference"
       href: reference/index.html
     - text: "Package News"
       href: news/index.html
   right:
     - icon: fa-github
-      href: https://github.com/compbiomed/MetaScope
+      href: https://github.com/wejlab/MetaScope
       
 authors:
   footer:

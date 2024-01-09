@@ -54,7 +54,7 @@ In order to install MetaScope from GitHub, run the following code:
 ```{R, eval = FALSE}
 if (!requireNamespace("devtools", quietly = TRUE))
   install.packages("devtools")
-devtools::install_github("compbiomed/MetaScope")
+devtools::install_github("wejlab/MetaScope")
 ```
 
 ```{R}

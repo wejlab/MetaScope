@@ -20,12 +20,14 @@ Langmead
 Liao
 MGX
 MetaScope's
+MultiAssayExperiment
 NCBI's
 NCBI’s
 NGS
 ORCID
 PathoScope
 Pre
+Premade
 QIIME
 Rbowtie
 RefSeq
@@ -35,6 +37,7 @@ SAMtools
 SampleName
 Subread
 UID
+Upsample
 al
 amplicon
 bam
@@ -78,6 +81,7 @@ parallelize
 pathoscope
 phredOffset
 qiime
+rRNA
 refseq
 reheader
 reheaders
