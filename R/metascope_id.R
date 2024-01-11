@@ -28,20 +28,9 @@ obtain_reads <- function(input_file, input_type, aligner, quiet) {
 identify_rnames <- function(reads, unmapped = NULL) {
   reads_in <- reads[[1]]$rname
   if(!is.null(unmapped)) reads_in <- reads[[1]]$rname[!unmapped] 
-  # Account for potential index issues
-  mapped_2015 <- reads_in %>%
-    stringr::str_split(pattern = "ref\\|", n = 2) %>%
-    vapply(function(x) x[2], FUN.VALUE = character(1)) %>%
-    stringr::str_split(pattern = "\\|", n = 2) %>%
-    vapply(function(x) x[1], FUN.VALUE = character(1))
-  mapped_2018 <- reads_in %>%
-    stringr::str_split(pattern = "ion\\|", n = 2) %>%
-    vapply(function(x) x[2], FUN.VALUE = character(1))
-  mapped_2021 <- reads_in
-  # Identify least number of NA's
-  ind <- which.min(c(sum(is.na(mapped_2015)), sum(is.na(mapped_2018)),
-                     sum(is.na(mapped_2021))))
-  mapped_rname <- list(mapped_2015, mapped_2018, mapped_2021)[[ind]]
+  this_read <- stringr::str_split_i(reads_in, "NC_", -1) |>
+    substr(1, 8)
+  mapped_rname <- paste0("NC_", this_read)
   return(mapped_rname)
 }
 
