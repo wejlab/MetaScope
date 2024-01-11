@@ -98,9 +98,9 @@ class_taxon <- function(taxon, NCBI_key, num_tries) {
       attempt <- attempt + 1
       if (attempt <= num_tries) {
         tryCatch({
-          classification_table <- taxize::classification(taxon, db = "ncbi",
-                                                         key = NCBI_key,
-                                                         max_tries = 5)[[1]]},
+          classification_table <- taxize::genbank2uid(taxon) %>%
+            taxize::classification(db = "ncbi", key = NCBI_key,
+                                   max_tries = 5)[[1]]},
           error = function(w) stop(e)
         )
       }
@@ -193,7 +193,6 @@ class_taxon <- function(taxon, NCBI_key, num_tries) {
 #'                               which_annot_col = "Sample",
 #'                               end_string = ".metascope_id.csv",
 #'                               qiime_biom_out = FALSE,
-#'                               path_to_write = tempfolder,
 #'                               NCBI_key = NULL)
 #'
 #' unlink(tempfolder, recursive = TRUE)

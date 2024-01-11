@@ -102,7 +102,6 @@ outMAE <- convert_animalcules(meta_counts = out_files,
                               which_annot_col = "Sample",
                               end_string = ".metascope_id.csv",
                               qiime_biom_out = FALSE,
-                              path_to_write = tempfolder,
                               NCBI_key = NULL)
 
 unlink(tempfolder, recursive = TRUE)

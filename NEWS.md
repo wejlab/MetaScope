@@ -1,7 +1,8 @@
-# MetaScope (dev version)
+# MetaScope (Bioc 3.19)
 
 ## Bug Fixes
 * Identified the Rbowtie2 parameter k as being doubled when specified for bowtie filter or align steps.
+* Fixed error with taxize not picking up correct genomes in the `convert_animalcules()` function.
 
 ## Major changes
 * Altered `bt2_params` objects to reflect 98% identity (16S), 95% identity (metagenomics) and added a parameter for when the origin genome is thought to not be present in the reference database.
