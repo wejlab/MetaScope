@@ -28,9 +28,14 @@ obtain_reads <- function(input_file, input_type, aligner, quiet) {
 identify_rnames <- function(reads, unmapped = NULL) {
   reads_in <- reads[[1]]$rname
   if(!is.null(unmapped)) reads_in <- reads[[1]]$rname[!unmapped] 
-  this_read <- stringr::str_split_i(reads_in, "NC_", -1) |>
-    substr(1, 8)
-  mapped_rname <- paste0("NC_", this_read)
+  # https://www.ncbi.nlm.nih.gov/books/NBK21091/table/ch18.T.refseq_accession_numbers_and_mole
+  prefixes <- c("AC", "NC", "NG", "NT", "NW", "NZ") %>%
+    paste0("_") %>%
+    paste(collapse = "|")
+  this_read <- stringr::str_split_i(reads_in, prefixes, -1) |>
+    stringr::str_split_i("[| ]", 1)
+  read_prefix <- stringr::str_extract(reads_in, prefixes)
+  mapped_rname <- paste0(read_prefix, this_read)
   return(mapped_rname)
 }
 
