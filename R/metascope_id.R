@@ -70,6 +70,17 @@ find_accessions <- function(accessions, NCBI_key, quiet) {
   return(tax_id_all)
 }
 
+missing_acc_finder <- function(accessions, NCBI_key = NULL) {
+  na_ind <- which(is.na(accessions))
+  if(length(na_ind) != 0) {
+    result <- accessions[na_ind] %>%
+      find_accessions(quiet = TRUE, NCBI_key = NCBI_key) %>%
+      plyr::aaply(1, function(x) x[1]) %>% unname()
+    accessions[na_ind] <- result
+  }
+  return(accessions)
+}
+
 get_alignscore <- function(aligner, cigar_strings, count_matches, scores,
                            qwidths) {
   #Subread alignment scores: CIGAR string matches - edit score
@@ -368,7 +379,8 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   accessions <- as.character(unique(mapped_rname))
   if (db == "ncbi") {
     tax_id_all <- find_accessions(accessions, NCBI_key, quiet = quiet)
-    taxids <- vapply(tax_id_all, function(x) x[1], character(1))
+    taxids <- vapply(tax_id_all, function(x) x[1], character(1)) %>%
+      missing_acc_finder(NCBI_key)
     genome_names <- vapply(tax_id_all, function(x) attr(x, "name"),
                            character(1))
     # Accession ids for any unknown genomes (likely removed from db)

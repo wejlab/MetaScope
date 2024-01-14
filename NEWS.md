@@ -2,7 +2,7 @@
 
 ## Bug Fixes
 * Identified the Rbowtie2 parameter k as being doubled when specified for bowtie filter or align steps.
-* Fixed error with taxize not picking up correct genomes in the `convert_animalcules()` function.
+* Added another call to taxize in `convert_animalcules()` to catch any accessions that were not mapped to a UID in `metascope_id()`, in addition to another call in `metascope_id()` itself
 
 ## Major changes
 * Altered `bt2_params` objects to reflect 98% identity (16S), 95% identity (metagenomics) and added a parameter for when the origin genome is thought to not be present in the reference database.

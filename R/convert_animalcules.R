@@ -98,9 +98,8 @@ class_taxon <- function(taxon, NCBI_key, num_tries) {
       attempt <- attempt + 1
       if (attempt <= num_tries) {
         tryCatch({
-          classification_table <- taxize::genbank2uid(taxon) %>%
-            taxize::classification(db = "ncbi", key = NCBI_key,
-                                   max_tries = 5)[[1]]},
+          classification_table <- taxize::classification(
+            taxon, db = "ncbi", key = NCBI_key, max_tries = 5)[[1]]},
           error = function(w) stop(e)
         )
       }
@@ -112,6 +111,21 @@ class_taxon <- function(taxon, NCBI_key, num_tries) {
     })
   }
   return(classification_table)
+}
+
+# Function written to account for accessions that weren't identified
+# in metascope_id step
+fill_in_missing <- function(combined_pre, NCBI_key = NULL) {
+  na_ind <- combined_pre$TaxonomyID %>%
+    as.double() %>% is.na() %>% which() %>% suppressWarnings()
+  if(length(na_ind) > 0) {
+    acc_list <- combined_pre$TaxonomyID[na_ind]
+    result <- acc_list %>%
+      find_accessions(quiet = TRUE, NCBI_key = NCBI_key) %>%
+      plyr::aaply(1, function(x) x[1]) %>% unname()
+    combined_pre$TaxonomyID[na_ind] <- result
+  }
+  return(combined_pre)
 }
 
 #' Create a multi-assay experiment from MetaScope output for usage with
@@ -202,14 +216,16 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
                                 end_string = ".metascope_id.csv",
                                 qiime_biom_out = FALSE, path_to_write = ".",
                                 NCBI_key = NULL, num_tries = 3) {
-  combined_list <- lapply(meta_counts, read_in_id, end_string = end_string,
+  combined_pre <- lapply(meta_counts, read_in_id, end_string = end_string,
                           which_annot_col = which_annot_col) %>%
     data.table::rbindlist() %>% dplyr::ungroup() %>% as.data.frame() %>%
     dplyr::mutate(sample = stringr::str_remove_all(sample, ".csv")) %>%
-    dplyr::select(.data$read_count, .data$TaxonomyID, .data$sample) %>%
+    dplyr::select("read_count", "TaxonomyID", "sample") %>%
     tidyr::pivot_wider(
       id_cols = .data$TaxonomyID, names_from = .data$sample,
-      values_from = .data$read_count, values_fill = 0, id_expand = TRUE) %>%
+      values_from = .data$read_count, values_fill = 0, id_expand = TRUE)
+  # Which entries are not numeric, and try running them through genbank2uid
+  combined_list <- fill_in_missing(combined_pre, NCBI_key) %>%
     dplyr::mutate("TaxonomyID" = as.numeric(.data$TaxonomyID))
   # Create taxonomy, counts tables
   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
