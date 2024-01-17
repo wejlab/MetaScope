@@ -1,10 +1,9 @@
 ---
 title: "Explanation of extdata files"
-author: "Aubrey Odom-Mabey"
+author: "Aubrey Odom"
 date: '2022-10-27'
 output: html_document
 ---
-
 ## Toy data
 
 ### Demultiplexing

@@ -45,10 +45,9 @@ function will be less prone to errors if you obtain an NCBI key.}
 \item{num_tries}{(numeric) Number of attempts to get UID.}
 }
 \value{
-Returns a multi-assay experiment file of combined sample counts data
-  and/or biom file and mapping file for analysis with QIIME. The multi-assay
-  experiment will have assays for the counts ("MGX"), log counts, CPM, and
-  log CPM.
+Returns a MultiAssay Experiment file of combined sample counts data
+  and/or biom file and mapping file for analysis with QIIME. The MultiAssay
+  Experiment will have a counts assay ("MGX").
 }
 \description{
 Upon completion of the MetaScope pipeline, users can analyze and visualize

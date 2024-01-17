@@ -46,14 +46,14 @@ create_qiime_biom <- function(se_colData, taxonomy_table, which_annot_col,
 }
 
 # Create MAE Object
-create_MAE <- function(annot_path, which_annot_col, combined_list,
+create_MAE <- function(annot_path, which_annot_col,
                        counts_table, taxonomy_table, path_to_write,
                        qiime_biom_out) {
   annot_dat <- readr::read_csv(annot_path, show_col_types = FALSE)
   se_colData <- annot_dat %>% # Only keep present samples in annotation data
     dplyr::mutate("sampcol" = unlist(annot_dat[, which_annot_col])) %>%
-    dplyr::filter(.data$sampcol %in% colnames(combined_list)) %>%
-    dplyr::select(-.data$sampcol) %>% S4Vectors::DataFrame()
+    dplyr::filter(.data$sampcol %in% colnames(counts_table)) %>%
+    dplyr::select(-"sampcol") %>% S4Vectors::DataFrame()
   rownames(se_colData) <- se_colData[, which_annot_col]
   se_mgx <- counts_table %>% base::data.matrix() %>%
     S4Vectors::SimpleList() %>% magrittr::set_names("MGX")
@@ -157,10 +157,9 @@ fill_in_missing <- function(combined_pre, NCBI_key = NULL) {
 #'   taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 #'   function will be less prone to errors if you obtain an NCBI key.
 #' @param num_tries (numeric) Number of attempts to get UID.
-#' @returns Returns a multi-assay experiment file of combined sample counts data
-#'   and/or biom file and mapping file for analysis with QIIME. The multi-assay
-#'   experiment will have assays for the counts ("MGX"), log counts, CPM, and
-#'   log CPM.
+#' @returns Returns a MultiAssay Experiment file of combined sample counts data
+#'   and/or biom file and mapping file for analysis with QIIME. The MultiAssay
+#'   Experiment will have a counts assay ("MGX").
 #' @export
 #' @importFrom rlang .data
 #' @examples
@@ -265,7 +264,7 @@ convert_animalcules <- function(meta_counts, annot_path, which_annot_col,
   rownames(taxonomy_table) <- stringr::str_replace_all(taxonomy_table$species, " ", "_")
   rownames(counts_table) <- rownames(taxonomy_table)
   MAE <- create_MAE(
-    annot_path, which_annot_col, combined_list, counts_table,
+    annot_path, which_annot_col, counts_table,
     taxonomy_table, path_to_write, qiime_biom_out)
   return(MAE)
 }

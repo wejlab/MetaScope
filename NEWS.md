@@ -6,6 +6,8 @@
 
 ## Major changes
 * Altered `bt2_params` objects to reflect 98% identity (16S), 95% identity (metagenomics) and added a parameter for when the origin genome is thought to not be present in the reference database.
+* Added SILVA `species_headers` object called internally in `convert_animalcules_silva`
+* Added `convert_animalcules_silva` function
 
 # MetaScope (Bioc 3.18)
 

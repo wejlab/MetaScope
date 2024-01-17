@@ -102,3 +102,18 @@
 #' data("bt2_missing_params")
 #'
 "bt2_missing_params"
+
+#' An object containing species identifications for SILVA
+#'
+#' This \code{data.frame} contains taxonomy IDs along with genus and
+#' species-level assignments for the SILVA 13_8 database.
+#'
+#' @name species_headers
+#' @docType data
+#' @format tibble
+#' @usage data(species_headers)
+#' @keywords datasets
+#' @examples
+#' data("species_headers")
+#'
+"species_headers"

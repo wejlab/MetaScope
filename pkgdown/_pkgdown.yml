@@ -37,6 +37,8 @@ reference:
    desc: "Convert MetaScope output to be compatible with the animalcules R package."
    contents:
      - convert_animalcules
+     - convert_animalcules_silva
+     - species_headers
  - title: "Helper Functions"
    desc: "These functions were developed to aid in carrying out other primary functions."
    contents:
