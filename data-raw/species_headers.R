@@ -5,6 +5,6 @@ species_headers <- readr::read_delim(file_loc,
                                      delim = " ", col_names = FALSE, show_col_types = FALSE) %>%
   dplyr::mutate(TaxonomyID = stringr::str_remove(X1, "^>")) %>%
   dplyr::relocate(TaxonomyID) %>%
-  dplyr::mutate(Species = paste(X2, X3, sep = "_"), Genus = X2) %>%
-  dplyr::select(TaxonomyID, Genus, Species) 
+  dplyr::mutate(species = paste(X2, X3, sep = "_"), genus = X2) %>%
+  dplyr::select(TaxonomyID, genus, species) 
 usethis::use_data(species_headers, overwrite = TRUE, internal = FALSE)
