@@ -21,13 +21,13 @@ read_in_id_silva <- function(path_id_counts, end_string) {
   split_taxa <- stringr::str_split(output$Genome, pattern = ";")
   domain_names <- c("domain", "phylum", "class", "order", "family", "genus")
   # Grab first 6 elements of list
-  up_to_genus <- lapply(split_taxa, function(x) x[1:length(domain_names)])
-  counts_table <- output %>% dplyr::select(-Genome)
+  up_to_genus <- lapply(split_taxa, function(x) x[seq_along(domain_names)])
+  counts_table <- output %>% dplyr::select(-.data$Genome)
   tax_table <- up_to_genus %>%
     unlist() %>% matrix(ncol = length(domain_names), byrow = TRUE) %>%
     data.frame() %>%
     magrittr::set_colnames(domain_names) %>%
-    dplyr::mutate(TaxonomyID = counts_table$TaxonomyID) %>%
+    dplyr::mutate("TaxonomyID" = counts_table$TaxonomyID) %>%
     tibble::as_tibble()
   final_output <- list(counts_table, tax_table)
     return(final_output)
@@ -40,11 +40,11 @@ organize_tax_counts <- function(combined_list, tax_table) {
   tax_table_new <- tax_table[order_ind, ]
   
   tax_table_3 <- tax_table_new %>%
-    dplyr::select(-TaxonomyID) %>%
-    dplyr::mutate(species = stringr::str_remove(species, pattern = "^s__"),
-                  species = stringr::str_replace(species, pattern = "_", "_"),
-                  species = stringr::str_replace(species, pattern = "_", "_"),
-                  species = stringr::str_replace(species, pattern = " ", "_"))
+    dplyr::select(-.data$TaxonomyID) %>%
+    dplyr::mutate("species" = stringr::str_remove(.data$species, pattern = "^s__"),
+                  "species" = stringr::str_replace(.data$species, pattern = "_", "_"),
+                  "species" = stringr::str_replace(.data$species, pattern = "_", "_"),
+                  "species" = stringr::str_replace(.data$species, pattern = " ", "_"))
   
   tax_table_4 <- apply(tax_table_3, 2,
                        function(x) stringr::str_split_i(x, "__", i = -1)) %>%
@@ -55,18 +55,20 @@ organize_tax_counts <- function(combined_list, tax_table) {
     magrittr::set_colnames(tax_cols) %>%
     as.data.frame()
   counts_final <- combined_list %>%
-    dplyr::mutate(species = tax_table_5$species) %>%
-    dplyr::select(-TaxonomyID) %>%
-    dplyr::group_by(species) %>%
-    dplyr::summarise(across(where(is.numeric), sum)) %>%
+    dplyr::mutate("species" = tax_table_5$species) %>%
+    dplyr::select(-.data$TaxonomyID) %>%
+    dplyr::group_by(.data$species) %>%
+    dplyr::summarise(dplyr::across(dplyr::where(is.numeric), sum)) %>%
     as.data.frame() %>%
-    dplyr::arrange(as.character(species)) #%>%
+    dplyr::arrange(as.character(.data$species)) #%>%
     #dplyr::rename_with(transform_cols)
   rownames(counts_final) <- counts_final$species
-  counts_final <- dplyr::select(counts_final, -species)
+  counts_final <- dplyr::select(counts_final, -.data$species)
   tax_final <- tax_table_5 %>%
-    dplyr::distinct(species, .keep_all = TRUE) %>%
-    dplyr::arrange(species)
+    dplyr::distinct(.data$species, .keep_all = TRUE) %>%
+    dplyr::arrange(.data$species) %>%
+    dplyr::mutate(dplyr::across(dplyr::everything(),
+                                function(x) stringr::str_remove_all(x, "\\[|\\]")))
   rownames(tax_final) <- tax_final$species
   return(list(counts = counts_final, tax = tax_final))
 }
@@ -107,19 +109,19 @@ convert_animalcules_silva <- function(meta_counts, annot_path, which_annot_col,
     tidyr::pivot_wider(
       id_cols = .data$TaxonomyID, names_from = .data$sample,
       values_from = .data$read_count, values_fill = 0, id_expand = TRUE) %>%
-    dplyr::group_by(TaxonomyID) %>%
+    dplyr::group_by(.data$TaxonomyID) %>%
     dplyr::summarise(dplyr::across(dplyr::where(is.numeric), sum))
   data_env <- new.env(parent = emptyenv())
   utils::data("species_headers", envir = data_env, package = "MetaScope")
   species_headers_all <- data_env[["species_headers"]] %>%
-    dplyr::filter(TaxonomyID %in% combined_list$TaxonomyID)
+    dplyr::filter(.data$TaxonomyID %in% combined_list$TaxonomyID)
   tax_table_pre <- lapply(combined_pre, function(x) x[[2]]) %>%
     data.table::rbindlist() %>%
-    dplyr::distinct(TaxonomyID, .keep_all = TRUE) %>%
+    dplyr::distinct(.data$TaxonomyID, .keep_all = TRUE) %>%
     dplyr::left_join(species_headers_all, by = "TaxonomyID") %>%
-    dplyr::mutate(genus = ifelse(!is.na(genus.y), genus.y, genus.x)) %>%
+    dplyr::mutate("genus" = ifelse(!is.na(.data$genus.y), .data$genus.y, .data$genus.x)) %>%
     dplyr::select(-c("genus.x", "genus.y")) %>%
-    dplyr::relocate(species, .after = genus)
+    dplyr::relocate(.data$species, .after = .data$genus)
   
   final_res <- organize_tax_counts(combined_list, tax_table_pre)
   counts_table <- final_res$counts

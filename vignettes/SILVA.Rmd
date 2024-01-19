@@ -13,183 +13,20 @@ Premade Bowtie2 indices of SILVA 138.1 are available [here](https://drive.google
 
 You can follow the `align_target_bowtie` usage outlined in the MetaScope tutorial, replacing the `libs` parameter with the SILVA indices.
 
-When you reach the `metascope_id()` step, you will need to include the parameter `db = "silva"` in the function call to identify down to the genus level using the SILVA taxonomy identifiers. All CSV outputs from `metascope_id()` can be compiled into a single MultiAssayExperiment object with the `convert_animalcules()` function. 
+When you reach the `metascope_id()` step, you will need to include the parameter `db = "silva"` in the function call to identify down to the genus level using the SILVA taxonomy identifiers. 
 
-In the likely case that you'd like to further identify taxa down to the species level, you'll need to download the file `species_header.txt` from [here](https://drive.google.com/drive/folders/1dS60VcYHDbAObKSi_oGoQuf7XFOejaKj?usp=drive_link). You'll then need to adapt the below code after the `metascope_id`step to produce a MultiAssayExperiment output. This code should be used in place of the `convert_animalcules()` function.
 
-# Species-level identification with SILVA
-
-## Setup
-```{R, eval = FALSE}
-suppressPackageStartupMessages({
-  library(tidyverse)
-  library(magrittr)
-  library(MetaScope)
-  library(SummarizedExperiment)
-  library(animalcules)
-})
-Sys.setenv(ENTREZ_KEY = "YOUR NCBI ENTREZ KEY HERE")
-```
-
-## Function
-```{R, eval = FALSE}
-transform_cols <- function(x) {
-  stringr::str_split_i(x, "__", i = -1) %>% stringr::str_replace_all("-", "_")
-}
-```
-
-## Read in all CSVs
-```{R, eval = FALSE}
-# Read in csv
-stem <- "~/pathoscope/work/tyler/MethodsAnalyses/MetaScope/Silva/output"
-all_out <- list.files(stem, pattern = ".csv$")
-filenames <- file.path(stem, all_out)
-sampnames <- stringr::str_remove(all_out, ".metascope_id.csv")
-
-read_in_csv <- function(which_num) {
-  this_file <- filenames[which_num]
-  this_sample <- sampnames[which_num]
-  temp <- read_csv(this_file, show_col_types = FALSE) %>%
-  select(1:3)
-
-  split_taxa <- stringr::str_split(temp$Genome, pattern = ";")
-  domain_names <- c("Domain", "Phylum", "Class", "Order", "Family", "Genus")
-  
-  #max(unlist(lapply(split_taxa, length)))
-  # Grab first 6 elements of list
-  up_to_genus <- lapply(split_taxa, function(x) x[1:length(domain_names)])
-
-  tax_table <- up_to_genus %>%
-    unlist() %>% matrix(ncol = length(domain_names), byrow = TRUE) %>%
-    data.frame() %>%
-    magrittr::set_colnames(domain_names) %>%
-    #tidyr::unite("Species", "Species", "Species2") %>%
-    mutate(Genus = replace(Genus, 
-                           Genus == "Escherichia-Shigella",
-                           "Escherichia"))
-  
-  counts_table <- temp %>% dplyr::select(-Genome) %>%
-    dplyr::bind_cols(tax_table) %>%
-    dplyr::mutate(sample = this_sample)
-  
-  return(counts_table)
-}
-
-file_output <- lapply(seq_along(filenames), read_in_csv)
-```
-
-## Combine list of results into a single table
-```{R, eval = FALSE}
-combined_list <- file_output %>%
-    data.table::rbindlist() %>% as.data.frame()
-
-counts_table <- combined_list %>%
-  dplyr::select(TaxonomyID, read_count, sample)
-
-tax_table <- combined_list %>%
-  select(TaxonomyID, Domain:Genus) %>%
-  distinct(TaxonomyID, .keep_all = TRUE)
-
-counts_wide <- counts_table %>%
-    tidyr::pivot_wider(
-      id_cols = c(TaxonomyID), names_from = sample,
-      values_from = read_count, values_fill = 0, id_expand = TRUE) %>%
-  group_by(TaxonomyID) %>%
-  summarise(across(where(is.numeric), sum))
-```
-
-## Read in all headers from the gz file
-```{R, eval = FALSE}
-species_headers <- read_delim("/restricted/projectnb/pathoscope/work/tyler/MethodsAnalyses/DADA2/species_headers.txt",
-     delim = " ", col_names = FALSE, show_col_types = FALSE) %>%
-  mutate(TaxonomyID = stringr::str_remove(X1, "^>")) %>%
-  relocate(TaxonomyID) %>%
-  mutate(Species = paste(X2, X3, sep = "_"), Genus = X2) %>%
-  select(TaxonomyID, Genus, Species) %>%
-  filter(TaxonomyID %in% counts_wide$TaxonomyID)
-```
-
-## Introduce species and genera IDs
-```{R, eval = FALSE}
-tax_table <- tax_table %>%
-  left_join(species_headers, by = "TaxonomyID") %>%
-  mutate(Genus = ifelse(!is.na(Genus.y), Genus.y, Genus.x)) %>%
-  select(-c(Genus.y, Genus.x)) %>%
-  relocate(Species, .after = Genus)
-```
-
-## Align tax_table with counts_table
-```{R, eval = FALSE}
-order_ind <- match(counts_wide$TaxonomyID, tax_table$TaxonomyID)
-tax_table_new <- tax_table[order_ind, ]
-```
-
+All CSV outputs from `metascope_id()` can be compiled into a single MultiAssayExperiment object with the `convert_animalcules_silva()` function as shown here with false filenames:
 
 ```{R, eval = FALSE}
-tax_table_3 <- tax_table_new %>%
-  select(-TaxonomyID) %>%
-  mutate(Species = stringr::str_remove(Species, pattern = "^s__"),
-         Species = stringr::str_replace(Species, pattern = "_", "_"),
-         Species = stringr::str_replace(Species, pattern = "_", "_"),
-         Species = stringr::str_replace(Species, pattern = " ", "_"))
+out_res <- convert_animalcules_silva(
+  meta_counts = all_files,
+  annot_path = "animalcules_metadata.csv",
+  which_annot_col = "Filename",
+  end_string = ".metascope_id.csv",
+  qiime_biom_out = FALSE,
+  path_to_write = "."
+)
 
-tax_table_4 <- apply(tax_table_3, 2, function(x) stringr::str_split_i(x, "__", i = -1)) %>%
-  as.data.frame()
-```
-
-```{R, eval = FALSE}
-tax_cols <- colnames(tax_table_4)
-
-comp_line <- function(this_line) {
-  empty_ind <- which(is.na(this_line))
-  if (length(empty_ind) == length(tax_cols)) return(rep("unknown", length(tax_cols)))
-  if (length(empty_ind) < 1) return(this_line)
-  filltax <- min(empty_ind) - 1
-  this_line[empty_ind] <- paste(tolower(substr(tax_cols[filltax], 1, 1)),
-                                this_line[filltax], sep = "_")
-  return(this_line)
-}
-
-tax_table_5 <- apply(tax_table_4, 1, comp_line) %>% t() %>%
-  magrittr::set_rownames(tax_table_new$TaxonomyID) %>%
-  magrittr::set_colnames(tax_cols) %>%
-  as.data.frame()
-```
-
-## Produce outputs
-
-```{R, eval = FALSE}
-counts_final <- counts_wide %>%
-  mutate(Species = tax_table_5$Species) %>%
-  select(-TaxonomyID) %>%
-  group_by(Species) %>%
-  summarise(across(where(is.numeric), sum)) %>%
-  as.data.frame() %>%
-  arrange(as.character(Species)) %>%
-  rename_with(transform_cols)
-
-rownames(counts_final) <- counts_final$Species
-counts_final <- select(counts_final, -Species)
-
-tax_final <- tax_table_5 %>%
-  distinct(Species, .keep_all = TRUE) %>%
-  arrange(Species)
-
-rownames(tax_final) <- tax_final$Species
-```
-
-# Important outputs
-
-```{R, eval = FALSE}
-head(counts_final)
-
-head(tax_final)
-```
-
-## Upsample to genus level (optional)
-```{R, eval = FALSE}
-#saveRDS(counts_final, "~/pathoscope/work/tyler/MethodsAnalyses/FinalRDSFiles/MS_Silva_S.RDS")
-
-genus_tab_silva <- animalcules::upsample_counts(counts_final, tax_final, "Genus")
-#saveRDS(genus_tab_silva, "~/pathoscope/work/tyler/MethodsAnalyses/FinalRDSFiles/MS_Silva_G.RDS")
+saveRDS(out_res, "silva_consolidated_results.RDS")
 ```

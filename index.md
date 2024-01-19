@@ -8,7 +8,7 @@ A few improvements made in MetaScope over PathoScope include using the BAM file 
 
 ## Installation
 
-MetaScope requires R Version 4.2.
+MetaScope requires R Version 4.3.
 
 Install the development version of the package from Github:
 
