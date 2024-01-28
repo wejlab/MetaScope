@@ -9,7 +9,8 @@ output: html_document
 
 MetaScope is compatible with the SILVA 16S rRNA Database. At the time of writing, the [most recent update](https://www.arb-silva.de/) to SILVA is version 138.1 (released on August 27, 2020). 
 
-Premade Bowtie2 indices of SILVA 138.1 are available [here](https://drive.google.com/drive/folders/1dS60VcYHDbAObKSi_oGoQuf7XFOejaKj?usp=drive_link).
+**Important**
+If you want to use the `convert_animalcules_silva()` step, you'll need to use the premade Bowtie2 indices of SILVA 138.1 available [here](https://drive.google.com/drive/folders/1dS60VcYHDbAObKSi_oGoQuf7XFOejaKj?usp=drive_link).
 
 You can follow the `align_target_bowtie` usage outlined in the MetaScope tutorial, replacing the `libs` parameter with the SILVA indices.
 

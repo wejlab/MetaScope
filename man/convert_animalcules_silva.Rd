@@ -3,7 +3,7 @@
 \name{convert_animalcules_silva}
 \alias{convert_animalcules_silva}
 \title{Create a multi-assay experiment from MetaScope output for usage with
-animalcules with the SILVA database}
+animalcules with the SILVA 13_8 database}
 \usage{
 convert_animalcules_silva(
   meta_counts,
@@ -11,7 +11,8 @@ convert_animalcules_silva(
   which_annot_col,
   end_string = ".metascope_id.csv",
   qiime_biom_out = FALSE,
-  path_to_write = "."
+  path_to_write = ".",
+  caching = TRUE
 )
 }
 \arguments{
@@ -35,11 +36,14 @@ information. Default is \code{FALSE}.}
 \item{path_to_write}{If \code{qiime_biom_out = TRUE}, where should output QIIME
 files be written? Should be a character string of the folder path. Default is
 '.', i.e. the current working directory.}
+
+\item{caching}{Whether to use BiocFileCache when downloading genomes.
+Default is \code{FALSE}.}
 }
 \value{
 Returns a MultiAssay Experiment file of combined sample counts data
-  and/or biom file and mapping file for analysis with QIIME. The MultiAssay
-  Experiment will have a counts assay ("MGX").
+  and/or saved biom file and mapping file for analysis with QIIME. The 
+  MultiAssayExperiment will have a counts assay ("MGX").
 }
 \description{
 Upon completion of the MetaScope pipeline, users can analyze and visualize
@@ -48,5 +52,51 @@ allows interoperability of \code{metascope_id} output with both animalcules
 and QIIME. After running this function, the user should save the returned MAE
 to an RDS file using a function like \code{saveRDS} to upload the output into
 the \code{animalcules} package. NOTE: This function is for outputs that were
-generated with the SILVA database.
+generated with the SILVA 13_8 database.
+}
+\examples{
+tempfolder <- tempfile()
+dir.create(tempfolder)
+
+# Create three different samples
+samp_names <- c("X123", "X456", "X789")
+all_files <- file.path(tempfolder,
+                       paste0(samp_names, ".csv"))
+
+create_IDcsv <- function (out_file) {
+  final_taxids <- c("AY846380.1.2583", "AY909584.1.2313", "HG531388.1.1375")
+  final_genomes <- rep("Genome name", 3)
+  best_hit <- sample(seq(100, 1050), 3)
+  proportion <- best_hit/sum(best_hit) |> round(2)
+  EMreads <- best_hit + round(runif(3), 1)
+  EMprop <- proportion + 0.003
+  dplyr::tibble("TaxonomyID" = final_taxids,
+                "Genome" = final_genomes,
+                "read_count" = best_hit, "Proportion" = proportion,
+                "EMreads" = EMreads, "EMProportion" = EMprop) |>
+    dplyr::arrange(dplyr::desc(.data$read_count)) |>
+    utils::write.csv(file = out_file, row.names = FALSE)
+  message("Done!")
+  return(out_file)
+}
+out_files <- vapply(all_files, create_IDcsv, FUN.VALUE = character(1))
+
+# Create annotation data for samples
+annot_dat <- file.path(tempfolder, "annot.csv")
+dplyr::tibble(Sample = samp_names, RSV = c("pos", "neg", "pos"),
+              month = c("March", "July", "Aug"),
+              yrsold = c(0.5, 0.6, 0.2)) |>
+  utils::write.csv(file = annot_dat,
+                   row.names = FALSE)
+
+# Convert samples to MAE
+outMAE <- convert_animalcules_silva(meta_counts = out_files,
+                              annot_path = annot_dat,
+                              which_annot_col = "Sample",
+                              end_string = ".metascope_id.csv",
+                              qiime_biom_out = FALSE,
+                              caching = TRUE)
+
+unlink(tempfolder, recursive = TRUE)
+
 }

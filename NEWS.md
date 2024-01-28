@@ -1,4 +1,4 @@
-# MetaScope (Bioc 3.19)
+# MetaScope 1.3.7 (Bioc 3.19)
 
 ## Bug Fixes
 * Identified the Rbowtie2 parameter k as being doubled when specified for bowtie filter or align steps.
@@ -9,7 +9,7 @@
 * Added SILVA `species_headers` object called internally in `convert_animalcules_silva`
 * Added `convert_animalcules_silva` function
 
-# MetaScope (Bioc 3.18)
+# MetaScope 1.2.0 (Bioc 3.18)
 
 ## Bug Fixes
 * Fixed taxonomy table function to output correctly formatted table
