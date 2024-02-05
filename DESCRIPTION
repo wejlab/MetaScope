@@ -30,7 +30,6 @@ Imports:
     magrittr,
     Matrix,
     MultiAssayExperiment,
-    qlcMatrix,
     Rbowtie2,
     readr,
     rlang,
@@ -43,19 +42,20 @@ Imports:
     tidyr,
     tools
 Suggests:
+    animalcules,
     BiocStyle,
     biomformat,
     knitr,
     lintr,
     plyr,
+    qlcMatrix,
     R.utils,
     rmarkdown,
     Rsubread,
     spelling,
     sys,
     testthat,
-    usethis,
-    animalcules
+    usethis
 Enhances:
     BiocParallel
 VignetteBuilder: 
