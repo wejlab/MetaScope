@@ -23,7 +23,7 @@
 convert_animalcules_patho <- function(patho_counts, annot_path,
                                       which_annot_col,
                                       end_string = "-sam-report.tsv") {
-  count_table <- animlacules::read_pathoscope_data(
+  count_table <- animalcules::read_pathoscope_data(
     input_dir = patho_counts,
     pathoreport_file_suffix = end_string)$countdat
   # Choose only the samples in metadata that have counts data as well
@@ -47,7 +47,7 @@ convert_animalcules_patho <- function(patho_counts, annot_path,
     count_table <- count_table[-row.remove.index,]
   }
   ids <- rownames(count_table)
-  tids <- unlist(lapply(ids, FUN = grep_tid))
+  tids <- unlist(lapply(ids, FUN = animalcules::grep_tid))
   if (sum(is.na(tids)) > 0){
     tid_remove <- which(is.na(tids))
     ids <- ids[-tid_remove]
@@ -77,7 +77,8 @@ convert_animalcules_patho <- function(patho_counts, annot_path,
     tax_table |>
     base::data.frame() |>
     dplyr::mutate_all(as.character) |>
-    dplyr::select(superkingdom, phylum, class, order, family, genus, species) |>
+    dplyr::select("superkingdom", "phylum", "class", "order",
+                  "family", "genus", "species") |>
     S4Vectors::DataFrame()
   
   microbe_se <-

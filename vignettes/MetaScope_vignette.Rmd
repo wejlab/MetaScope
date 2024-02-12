@@ -62,7 +62,14 @@ suppressPackageStartupMessages({
   library(MetaScope)
   library(magrittr)
 })
-NCBI_key <- "01d22876be34df5c28f4aedc479a2674c809"
+```
+
+## Entrez key
+
+We highly recommend grabbing an Entrez key using the function `taxize::use_entrez()`. Then set your key as a global environment variable like so:
+
+```{R eval = FALSE}
+NCBI_key <- "<Your key here>"
 options("ENTREZ_KEY" = NCBI_key)
 ```
 

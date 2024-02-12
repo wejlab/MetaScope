@@ -45,11 +45,14 @@ Suggests:
     animalcules,
     BiocStyle,
     biomformat,
+    GenomicRanges,
+    IRanges,
     knitr,
     lintr,
     plyr,
     qlcMatrix,
     R.utils,
+    rBLAST,
     rmarkdown,
     Rsubread,
     spelling,
@@ -60,6 +63,8 @@ Enhances:
     BiocParallel
 VignetteBuilder: 
     knitr
+Remotes: 
+    mhahsler/rBLAST
 BiocType: Software
 biocViews: MicrobiomeData, ReproducibleResearch, SequencingData
 Encoding: UTF-8
