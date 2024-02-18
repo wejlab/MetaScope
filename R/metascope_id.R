@@ -310,6 +310,9 @@ locations <- function(which_taxid, which_genome,
 #'   the convEM is below the threshhold. Default set at \code{50}. If set at
 #'   \code{0}, the algorithm skips the EM step and summarizes the .bam file 'as
 #'   is'
+#' @param blast_seqs Logical whether or not to output fasta files for MetaBlast
+#' @param num_genomes Number of genomes to output fasta files for MetaBlast
+#' @param num_reads Number of reads per genome per fasta file for MetaBlast
 #' @param num_species_plot The number of genome coverage plots to be saved.
 #'   Default is \code{NULL}, which saves coverage plots for the ten most highly
 #'   abundant species.
@@ -364,7 +367,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                          out_dir = dirname(input_file),
                          convEM = 1 / 10000, maxitsEM = 25,
                          blast_seqs = FALSE, num_genomes = 100,
-                         num_reads = 50, num_hits = 50,
+                         num_reads = 50,
                          num_species_plot = NULL,
                          quiet = TRUE)  {
   out_base <- input_file %>% base::basename() %>% strsplit(split = "\\.") %>%

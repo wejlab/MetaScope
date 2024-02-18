@@ -6,34 +6,6 @@ library(R.utils)
 library(rBLAST)
 library(stringr)
 
-#' Gets sequences from bam file
-#'
-#' Returns fasta sequences from a bam file with a given taxonomy ID
-#'
-#' @param id Taxonomy ID of genome to get sequences from
-#' @param bam_file A sorted bam file and index file, loaded with Rsamtools::bamFile
-#' @param n Number of sequences to retrieve
-#'
-#' @return Biostrings format sequences
-
-get_seqs <- function(id, bam_file, n = 10) {
-  # Get sequence info (Genome Name) from bam file
-  seq_info_df <- data.frame(Rsamtools::seqinfo(bam_file))
-  seq_info_df$seqnames <- row.names(seq_info_df)
-  allGenomes <- grep(paste0("ti|", id), seq_info_df$seqnames, value = TRUE, fixed = TRUE)
-  # Sample one of the Genomes that match
-  Genome = sample(allGenomes, 1)
-  # Scan Bam file for all sequences that match genome
-  param <- Rsamtools::ScanBamParam(what = c("rname", "seq"),
-                                   which = GRanges(Genome, IRanges(1, 1e+07)))
-  allseqs <- Rsamtools::scanBam(bam_file, param = param)[[1]]
-  n = min(n, length(allseqs$seq))
-  seqs <- sample(allseqs$seq, n)
-
-  return(seqs)
-}
-
-
 #' Converts NCBI taxonomy ID to scientific name
 #'
 #' @param taxids List of NCBI taxids to convert to scientific name
