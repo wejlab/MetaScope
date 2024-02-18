@@ -1,7 +1,11 @@
 globalVariables("count")
 
-obtain_reads <- function(input_file, input_type, aligner, quiet) {
-  to_pull <- c("qname", "rname", "cigar", "qwidth", "pos")
+obtain_reads <- function(input_file, input_type, aligner, blast_seqs = FALSE, quiet) {
+  if (blast_seqs) {
+    to_pull <- c("qname", "rname", "cigar", "qwidth", "pos", "seq")
+  } else {
+    to_pull <- c("qname", "rname", "cigar", "qwidth", "pos")
+  }
   if (identical(input_type, "bam")) {
     if (!quiet) message("Reading .bam file: ", input_file)
     if (identical(aligner, "bowtie2")) {
@@ -27,7 +31,7 @@ obtain_reads <- function(input_file, input_type, aligner, quiet) {
 
 identify_rnames <- function(reads, unmapped = NULL) {
   reads_in <- reads[[1]]$rname
-  if(!is.null(unmapped)) reads_in <- reads[[1]]$rname[!unmapped] 
+  if(!is.null(unmapped)) reads_in <- reads[[1]]$rname[!unmapped]
   # https://www.ncbi.nlm.nih.gov/books/NBK21091/table/ch18.T.refseq_accession_numbers_and_mole
   prefixes <- c("AC", "NC", "NG", "NT", "NW", "NZ") %>%
     paste0("_") %>%
@@ -105,7 +109,8 @@ get_alignscore <- function(aligner, cigar_strings, count_matches, scores,
 }
 
 get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
-                            unique_genome_names, quiet) {
+                            unique_genome_names, blast_seqs = FALSE, quiet) {
+  combined$index <- seq.int(1, nrow(combined))
   input_distinct <- dplyr::distinct(combined, .data$qname, .data$rname,
                                     .keep_all = TRUE)
   qname_inds_2 <- input_distinct$qname
@@ -143,6 +148,14 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
   }
   if (!quiet) message("\tDONE! Converged in ", it, " iterations.")
   hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which
+  hit <- c()
+  for (i in seq.int(nrow(combined))) {
+    hit[i] <- hit_which[combined$qname[i], combined$rname[i]]
+  }
+  combined$hit <- hit
+  combined_distinct <- dplyr::distinct(combined, .data$qname, .data$rname,
+                                        .keep_all = TRUE)
+  combined_distinct <- combined_distinct[combined_distinct$hit == TRUE,]
   best_hit <- Matrix::colSums(hit_which)
   names(best_hit) <- seq_along(best_hit)
   best_hit <- best_hit[best_hit != 0]
@@ -153,12 +166,14 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
   gammasums <- Matrix::colSums(gammas_new)
   readsEM <- round(gammasums[hits_ind], 1)
   propEM <- gammasums[hits_ind] / sum(gammas_new)
-  results <- dplyr::tibble(TaxonomyID = final_taxids, Genome = final_genomes,
+  results_tibble <- dplyr::tibble(TaxonomyID = final_taxids, Genome = final_genomes,
                            read_count = best_hit, Proportion = proportion,
-                           readsEM = readsEM, EMProportion = propEM) %>%
+                           readsEM = readsEM, EMProportion = propEM,
+                           hits_ind = hits_ind) %>%
     dplyr::arrange(dplyr::desc(.data$read_count))
   if (!quiet) message("Found reads for ", nrow(results), " genomes")
-  return(results)
+
+  return(list(results_tibble, combined_distinct))
 }
 
 #' Count the number of base lengths in a CIGAR string for a given operation
@@ -256,7 +271,7 @@ locations <- function(which_taxid, which_genome,
                   xlab = "Aligned position across genome (leftmost read position)",
                   ylab = "Read Count",
                   caption = paste0("Accession Number: ", choose_acc))
-  
+
   ggplot2::ggsave(paste0(plots_save, "/",
                          stringr::str_replace(use_name, " ", "_"), ".png"),
                   device = "png")
@@ -348,6 +363,8 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                          NCBI_key = NULL,
                          out_dir = dirname(input_file),
                          convEM = 1 / 10000, maxitsEM = 25,
+                         blast_seqs = FALSE, num_genomes = 100,
+                         num_reads = 50, num_hits = 50,
                          num_species_plot = NULL,
                          quiet = TRUE)  {
   out_base <- input_file %>% base::basename() %>% strsplit(split = "\\.") %>%
@@ -361,13 +378,14 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   if (db == "other" && is.null(db_feature_table)) {
     stop("Please supply a data.frame for db_feature_table if 'db = other'")
   }
-  reads <- obtain_reads(input_file, input_type, aligner, quiet)
+  reads <- obtain_reads(input_file, input_type, aligner, blast_seqs, quiet)
   unmapped <- is.na(reads[[1]]$rname)
   if (db == "ncbi") reads[[1]]$rname <- identify_rnames(reads)
   mapped_rname <- as.character(reads[[1]]$rname[!unmapped])
   mapped_qname <- reads[[1]]$qname[!unmapped]
   mapped_cigar <- reads[[1]]$cigar[!unmapped]
   mapped_qwidth <- reads[[1]]$qwidth[!unmapped]
+  if (blast_seqs) mapped_seqs <- reads[[1]]$seq[!unmapped]
   if (aligner == "bowtie2") {
     # mapped alignments used
     map_edit_or_align <- reads[[1]][["tag"]][["AS"]][!unmapped]
@@ -398,7 +416,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
     accessions <- as.character(unique(mapped_rname))
   } else if (db == "other") {
     tax_id_all <- dplyr::tibble(`Feature ID` = accessions) %>%
-      dplyr::left_join(db_feature_table, by = "Feature ID") 
+      dplyr::left_join(db_feature_table, by = "Feature ID")
     taxids <- tax_id_all %>% dplyr::select(1) %>% unlist() %>% unname()
     genome_names <- tax_id_all %>% dplyr::select(2) %>% unlist() %>%
       unname()
@@ -432,9 +450,28 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                                "scores" = exp_alignment_scores)
   results <- get_assignments(combined, convEM, maxitsEM, unique_taxids,
                              unique_genome_names, quiet = quiet)
-  utils::write.csv(results, file = out_file, row.names = FALSE)
+  metascope_id_file <- results[[1]] %>% select("TaxonomyID", "Genome",
+                                               "read_count", "Proportion",
+                                               "readsEM", "EMProportion")
+  utils::write.csv(metascope_id_file, file = out_file, row.names = FALSE)
   if (!quiet) message("Results written to ", out_file)
-  # PLotting genome locations
+
+  if (blast_seqs == TRUE){
+    num_genomes <- min(num_genomes, nrow(results[[1]]))
+    dir.create(file.path(out_dir, "blast"))
+    for (i in seq.int(1, num_genomes)) {
+      current_genome <- results[[1]]$Genome[i] %>% stringr::word(1:2) %>% paste0(collapse = "_")
+      current_rname_ind <- results[[1]]$hits_ind[i]
+      read_indices <- combined_distinct %>% filter(rname == current_rname_ind) %>%
+        pull(index)
+      current_num_reads <- min(num_reads, length(read_indices))
+      read_indices <- read_indices %>% sample(current_num_reads)
+      seqs <- reads[[1]]$seq[read_indices]
+      Biostrings::writeXStringSet(seqs, file.path(out_dir, "fastas",
+                                                  paste0(i, "_", current_genome, ".fa")))
+    }
+  }
+  # Plotting genome locations
   num_plot <- num_species_plot
   if (is.null(num_plot)) num_plot <- min(nrow(results), 10)
   if (num_plot > 0) {
@@ -447,3 +484,4 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   } else if (!quiet) message("No coverage plots created")
   return(results)
 }
+

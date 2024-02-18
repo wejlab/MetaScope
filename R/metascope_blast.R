@@ -71,7 +71,7 @@ taxid_to_name <- function(taxids, batch_size = 10) {
 #'
 #' @return Returns a dataframe of blast results for a metascope result
 
-rBLAST_single_result <- function(results_table, bam_file, which_result = 1, num_reads = 100,
+rBLAST_single_result <- function(results_table, fasta_file, which_result = 1, num_reads = 100,
                                  hit_list = 10, num_threads = 1, db_path, quiet = FALSE) {
   res <- tryCatch( #If any errors, should just skip the organism
     {
@@ -79,7 +79,7 @@ rBLAST_single_result <- function(results_table, bam_file, which_result = 1, num_
       if (!quiet) message("Current id: ", genome_name)
       tax_id <- results_table[which_result,1]
       if (!quiet) message("Current ti: ", tax_id)
-      fasta_seqs <- get_seqs(id = tax_id, bam_file = bam_file, n = num_reads)
+      fasta_seqs <- Biostrings::readDNAStringSet(fasta_file)
       blast_db <- rBLAST::blast(db = db_path, type = "blastn")
       blast_res <- rBLAST::predict(blast_db, fasta_seqs,
                                    custom_format ="qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore staxids",
@@ -121,10 +121,10 @@ rBLAST_single_result <- function(results_table, bam_file, which_result = 1, num_
 #'
 #' @return Creates and exports num_results number of csv files with blast results from local blast
 
-rBlast_results <- function(results_table, bam_file, num_results = 10, num_reads_per_result = 100, hit_list = 10,
+rBlast_results <- function(results_table, fasta_files, num_results = 10, num_reads_per_result = 100, hit_list = 10,
                            num_threads = 1, db_path, out_path, sample_name = NULL) {
   for (i in seq.int(num_results)) {
-    df <- rBLAST_single_result(results_table, bam_file, which_result = i,
+    df <- rBLAST_single_result(results_table, fasta_files[i], which_result = i,
                                num_reads = num_reads_per_result, hit_list = hit_list,
                                num_threads = num_threads, db_path = db_path)
     tax_id <- results_table[i,1]
@@ -166,6 +166,10 @@ blast_result_metrics <- function(blast_results_table_path){
                           genus_contaminant_score = 0))
       }
 
+      # Getting best hit per read
+      blast_results_table <- blast_results_table %>%
+        group_by(.data$qseqid) %>% slice_max(.data$evalue, with_ties = TRUE)
+
       # Adding Species and Genus columns
       blast_results_table <- blast_results_table %>%
         dplyr::mutate(.data$MetaScope_genus = word(.data$MetaScope_Genome, 1, 1, sep = " ")) %>%
@@ -173,7 +177,7 @@ blast_result_metrics <- function(blast_results_table_path){
         dplyr::mutate(.data$query_genus = word(.data$name, 1, 1, sep = " ")) %>%
         dplyr::mutate(.data$query_species = word(.data$name, 1, 2, sep = " "))
 
-      # Removing duplicate query num and query species
+      # Removing duplicate query num and query species since we don't care where the reads hit
       blast_results_table <- blast_results_table %>%
         dplyr::distinct(.data$qseqid, .data$query_species, .keep_all = TRUE)
 
@@ -276,27 +280,20 @@ blast_result_metrics <- function(blast_results_table_path){
 #' unlink(file_temp, recursive = TRUE)
 #'
 
-metascope_blast <- function(metascope_id_path, ref_dir, out_dir, sample_name,
+metascope_blast <- function(metascope_id_path, out_dir, sample_name,
                             num_results = 10, num_reads = 100, hit_list = 10,
                             num_threads = 1, db_path) {
-
-  # Sort and index bam file
-  bam_file_path <- list.files(path = tmp_dir, pattern = "\\.bam$", full.names = TRUE)
-  sorted_bam_file_path <- file.path(tmp_dir, paste0(sample_name, "_sorted"))
-  Rsamtools::sortBam(bam_file_path, destination = sorted_bam_file_path)
-  sorted_bam_file <- paste0(sorted_bam_file_path, ".bam")
-  Rsamtools::indexBam(sorted_bam_file)
-  bam_file <- Rsamtools::BamFile(sorted_bam_file, index = sorted_bam_file)
 
   # Load in metascope id file and clean unknown genomes
   metascope_id <- read.csv(metascope_id_path, header = TRUE)
 
-  # Create blast directory in tmp directory to save blast results in
-  blast_tmp_dir <- file.path(tmp_dir,"blast")
-  dir.create(blast_tmp_dir)
+  # List files
+  fasta_files <- list.files(file.path(out_dir, "fastas"), full.names = TRUE)
+  blast_tmp_dir <- file.path(out_dir, "blast")
+  dir.create(blast_tmp_dir, showWarnings = FALSE)
 
   # Run rBlast on all metascope microbes
-  rBlast_results(results_table = metascope_id, bam_file = bam_file, num_results = num_results,
+  rBlast_results(results_table = metascope_id, fasta_files = fasta_files, num_results = num_results,
                  num_reads_per_result = num_reads, hit_list = hit_list, num_threads = num_threads,
                  db_path = db_path, out_path = blast_tmp_dir, sample_name = sample_name)
 
