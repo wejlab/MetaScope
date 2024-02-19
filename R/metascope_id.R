@@ -171,7 +171,7 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
                            readsEM = readsEM, EMProportion = propEM,
                            hits_ind = hits_ind) %>%
     dplyr::arrange(dplyr::desc(.data$read_count))
-  if (!quiet) message("Found reads for ", nrow(results), " genomes")
+  if (!quiet) message("Found reads for ", nrow(results_tibble), " genomes")
 
   return(list(results_tibble, combined_distinct))
 }
