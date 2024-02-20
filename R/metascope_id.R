@@ -147,12 +147,11 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
     if (!quiet) message(c(it, conv))
   }
   if (!quiet) message("\tDONE! Converged in ", it, " iterations.")
+
   hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which
-  hit <- c()
-  for (i in seq.int(nrow(combined))) {
-    hit[i] <- hit_which[combined$qname[i], combined$rname[i]]
-  }
+  hit <- mapply(function(q, r) hit_which[q,r], combined$qname, combined$rname)
   combined$hit <- hit
+
   combined_distinct <- dplyr::distinct(combined, .data$qname, .data$rname,
                                         .keep_all = TRUE)
   combined_distinct <- combined_distinct[combined_distinct$hit == TRUE,]
@@ -459,7 +458,8 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   utils::write.csv(metascope_id_file, file = out_file, row.names = FALSE)
   if (!quiet) message("Results written to ", out_file)
 
-  if (blast_seqs == TRUE){
+  if (blast_seqs){
+    combined_distinct <- results[[2]]
     num_genomes <- min(num_genomes, nrow(results[[1]]))
     dir.create(file.path(out_dir, "blast"))
     for (i in seq.int(1, num_genomes)) {
