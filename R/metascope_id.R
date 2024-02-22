@@ -1,6 +1,6 @@
 globalVariables("count")
 
-obtain_reads <- function(input_file, input_type, aligner, blast_seqs = FALSE, quiet) {
+obtain_reads <- function(input_file, input_type, aligner, blast_fastas = FALSE, quiet) {
   if (blast_seqs) {
     to_pull <- c("qname", "rname", "cigar", "qwidth", "pos", "seq")
   } else {

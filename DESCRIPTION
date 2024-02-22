@@ -30,7 +30,6 @@ Imports:
     magrittr,
     Matrix,
     MultiAssayExperiment,
-    qlcMatrix,
     Rbowtie2,
     readr,
     rlang,
@@ -43,23 +42,29 @@ Imports:
     tidyr,
     tools
 Suggests:
+    animalcules,
     BiocStyle,
     biomformat,
+    GenomicRanges,
+    IRanges,
     knitr,
     lintr,
     plyr,
+    qlcMatrix,
     R.utils,
+    rBLAST,
     rmarkdown,
     Rsubread,
     spelling,
     sys,
     testthat,
-    usethis,
-    animalcules
+    usethis
 Enhances:
     BiocParallel
 VignetteBuilder: 
     knitr
+Remotes: 
+    mhahsler/rBLAST
 BiocType: Software
 biocViews: MicrobiomeData, ReproducibleResearch, SequencingData
 Encoding: UTF-8
