@@ -357,14 +357,15 @@ blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
 metascope_blast <- function(metascope_id_path,
                             tmp_dir, out_dir, sample_name,
                             num_results = 10, num_reads = 100, hit_list = 10,
-                            num_threads = 1, db_path, quiet = FALSE,
+                            num_threads = 1, db_path, blast_fastas = TRUE,
+                            quiet = FALSE,
                             NCBI_key = NULL) {
 
   # Load in metascope id file and clean unknown genomes
   metascope_id_in <- utils::read.csv(metascope_id_path, header = TRUE)
 
   # List fasta files
-  fasta_files <- list.files(file.path(tmp_dir, "fastas"), full.names = TRUE)
+  if (blast_fastas) fasta_files <- list.files(file.path(out_dir, "fastas"), full.names = TRUE)
   # Create blast directory in tmp directory to save blast results in
   blast_tmp_dir <- file.path(tmp_dir, "blast")
   if(!dir.exists(blast_tmp_dir)) dir.create(blast_tmp_dir, recursive = TRUE)

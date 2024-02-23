@@ -1,7 +1,7 @@
 globalVariables("count")
 
 obtain_reads <- function(input_file, input_type, aligner, blast_fastas = FALSE, quiet) {
-  if (blast_seqs) {
+  if (blast_fastas) {
     to_pull <- c("qname", "rname", "cigar", "qwidth", "pos", "seq")
   } else {
     to_pull <- c("qname", "rname", "cigar", "qwidth", "pos")
@@ -315,7 +315,7 @@ locations <- function(which_taxid, which_genome,
 #'   the convEM is below the threshhold. Default set at \code{50}. If set at
 #'   \code{0}, the algorithm skips the EM step and summarizes the .bam file 'as
 #'   is'
-#' @param blast_seqs Logical whether or not to output fasta files for MetaBlast
+#' @param blast_fastas Logical whether or not to output fasta files for MetaBlast
 #' @param num_genomes Number of genomes to output fasta files for MetaBlast
 #' @param num_reads Number of reads per genome per fasta file for MetaBlast
 #' @param num_species_plot The number of genome coverage plots to be saved.
@@ -371,7 +371,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                          NCBI_key = NULL,
                          out_dir = dirname(input_file),
                          convEM = 1 / 10000, maxitsEM = 25,
-                         blast_seqs = FALSE, num_genomes = 100,
+                         blast_fastas = TRUE, num_genomes = 100,
                          num_reads = 50, update_bam = TRUE,
                          num_species_plot = NULL,
                          quiet = TRUE)  {
@@ -386,14 +386,14 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   if (db == "other" && is.null(db_feature_table)) {
     stop("Please supply a data.frame for db_feature_table if 'db = other'")
   }
-  reads <- obtain_reads(input_file, input_type, aligner, blast_seqs, quiet)
+  reads <- obtain_reads(input_file, input_type, aligner, blast_fastas, quiet)
   unmapped <- is.na(reads[[1]]$rname)
   if (db == "ncbi") reads[[1]]$rname <- identify_rnames(reads)
   mapped_rname <- as.character(reads[[1]]$rname[!unmapped])
   mapped_qname <- reads[[1]]$qname[!unmapped]
   mapped_cigar <- reads[[1]]$cigar[!unmapped]
   mapped_qwidth <- reads[[1]]$qwidth[!unmapped]
-  if (blast_seqs) mapped_seqs <- reads[[1]]$seq[!unmapped]
+  if (blast_fastas) mapped_seqs <- reads[[1]]$seq[!unmapped]
   if (aligner == "bowtie2") {
     # mapped alignments used
     map_edit_or_align <- reads[[1]][["tag"]][["AS"]][!unmapped]
@@ -464,7 +464,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   utils::write.csv(metascope_id_file, file = out_file, row.names = FALSE)
   if (!quiet) message("Results written to ", out_file)
 
-  if (blast_seqs){
+  if (blast_fastas){
     combined_distinct <- results[[2]]
     num_genomes <- min(num_genomes, nrow(results[[1]]))
     dir.create(file.path(out_dir, "blast"))
