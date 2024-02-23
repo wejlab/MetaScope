@@ -132,25 +132,26 @@ rBLAST_single_result <- function(results_table, fasta_file, which_result = 1, nu
 #'   results from local blast
 
 
-rBlast_results <- function(results_table, bam_file, num_results = 10,
+rBlast_results <- function(results_table, fasta_files, num_results = 10,
                            num_reads_per_result = 100, hit_list = 10,
                            num_threads = 1, db_path, out_path,
                            sample_name = NULL, quiet = quiet,
                            NCBI_key = NULL) {
   # Grab all identifiers
-  seq_info_df <- as.data.frame(Rsamtools::seqinfo(bam_file)) |>
-    tibble::rownames_to_column("seqnames")
-  bam_seqs <- find_accessions(seq_info_df$seqnames,
-                              NCBI_key = NCBI_key, quiet = quiet) |>
-    plyr::aaply(1, function(x) x[1])
+  #seq_info_df <- as.data.frame(Rsamtools::seqinfo(bam_file)) |>
+  #  tibble::rownames_to_column("seqnames")
+  #bam_seqs <- find_accessions(seq_info_df$seqnames,
+  #                            NCBI_key = NCBI_key, quiet = quiet) |>
+  #  plyr::aaply(1, function(x) x[1])
   # Grab results
   num_results2 <- min(num_results, nrow(results_table))
   run_res <- function(i) {
-    df <- rBLAST_single_result(results_table, bam_file, which_result = i,
+    fasta_file <- fasta_files[i]
+    df <- rBLAST_single_result(results_table, fasta_file = fasta_file, which_result = i,
                                num_reads = num_reads_per_result,
                                hit_list = hit_list, num_threads = num_threads,
                                db_path = db_path, quiet = quiet,
-                               NCBI_key = NCBI_key, bam_seqs = bam_seqs)
+                               NCBI_key = NCBI_key)
     tax_id <- results_table[i, 1]
     utils::write.csv(df, file.path(out_path,
                                    paste0(sprintf("%05d", i), "_", sample_name,
