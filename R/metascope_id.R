@@ -109,7 +109,7 @@ get_alignscore <- function(aligner, cigar_strings, count_matches, scores,
 }
 
 get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
-                            unique_genome_names, blast_seqs = FALSE, quiet) {
+                            unique_genome_names, update_bam = TRUE, input_file, quiet) {
   combined$index <- seq.int(1, nrow(combined))
   input_distinct <- dplyr::distinct(combined, .data$qname, .data$rname,
                                     .keep_all = TRUE)
@@ -152,6 +152,12 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
   hit <- mapply(function(q, r) hit_which[q,r], combined$qname, combined$rname)
   combined$hit <- hit
 
+
+  combined_single <- combined %>% group_by(qname, rname) %>%
+    mutate(best_hit = (hit & max(scores) == scores)) %>%
+    ungroup() %>% group_by(qname) %>%
+    mutate(single_hit = row_number() == min(row_number()[best_hit]))
+
   combined_distinct <- dplyr::distinct(combined, .data$qname, .data$rname,
                                         .keep_all = TRUE)
   combined_distinct <- combined_distinct[combined_distinct$hit == TRUE,]
@@ -172,7 +178,7 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
     dplyr::arrange(dplyr::desc(.data$read_count))
   if (!quiet) message("Found reads for ", nrow(results_tibble), " genomes")
 
-  return(list(results_tibble, combined_distinct))
+  return(list(results_tibble, combined_distinct, combined_single))
 }
 
 #' Count the number of base lengths in a CIGAR string for a given operation
@@ -366,7 +372,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                          out_dir = dirname(input_file),
                          convEM = 1 / 10000, maxitsEM = 25,
                          blast_seqs = FALSE, num_genomes = 100,
-                         num_reads = 50,
+                         num_reads = 50, update_bam = TRUE,
                          num_species_plot = NULL,
                          quiet = TRUE)  {
   out_base <- input_file %>% base::basename() %>% strsplit(split = "\\.") %>%
@@ -473,6 +479,13 @@ metascope_id <- function(input_file, input_type = "csv.gz",
       Biostrings::writeXStringSet(seqs, file.path(out_dir, "fastas",
                                                   paste0(i, "_", current_genome, ".fa")))
     }
+  }
+
+  if (update_bam){
+    combined_single <- results[3]
+    filter_which <- combined_single$single_hit
+    bam_out <- out_file <- file.path(out_dir, paste0(out_base, ".updated.bam"))
+    Rsamtools::filterBam(file = input_file, destination = bam_out, filter = filter_which)
   }
   # Plotting genome locations
   num_plot <- num_species_plot

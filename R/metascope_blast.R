@@ -79,7 +79,7 @@ taxid_to_name <- function(taxids, NCBI_key = NULL) {
 
 
 rBLAST_single_result <- function(results_table, fasta_file, which_result = 1, num_reads = 100,
-                                 hit_list = 10, num_threads = 1, db_path, quiet = FALSE) {
+                                 hit_list = 10, num_threads = 1, db_path, quiet = FALSE, NCBI_key = NCBI_key) {
   res <- tryCatch( #If any errors, should just skip the organism
     {
       genome_name <- results_table[which_result,2]
@@ -88,10 +88,10 @@ rBLAST_single_result <- function(results_table, fasta_file, which_result = 1, nu
       if (!quiet) message("Current ti: ", tax_id)
       fasta_seqs <- Biostrings::readDNAStringSet(fasta_file)
       blast_db <- rBLAST::blast(db = db_path, type = "blastn")
-      blast_res <- rBLAST::predict(blast_db, fasta_seqs,
+      blast_res <- predict(blast_db, fasta_seqs,
                                    custom_format ="qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore staxids",
                                    BLAST_args = paste0("-max_target_seqs ", hit_list, " -num_threads ", num_threads))
-      taxize_genome_df <- taxid_to_name(unique(blast_res$staxids))
+      taxize_genome_df <- taxid_to_name(unique(blast_res$staxids), NCBI_key = NCBI_key)
       blast_res$MetaScope_Taxid <- tax_id
       blast_res$MetaScope_Genome <- genome_name
       blast_res <- dplyr::left_join(blast_res, taxize_genome_df, by = "staxids")
@@ -133,15 +133,15 @@ rBLAST_single_result <- function(results_table, fasta_file, which_result = 1, nu
 
 
 rBlast_results <- function(results_table, fasta_files, num_results = 10, num_reads_per_result = 100, hit_list = 10,
-                           num_threads = 1, db_path, out_path, sample_name = NULL) {
+                           num_threads = 1, db_path, out_path, sample_name = NULL, quiet = quiet, NCBI_key = NCBI_key) {
   for (i in seq.int(num_results)) {
     df <- rBLAST_single_result(results_table, fasta_files[i], which_result = i,
                                num_reads = num_reads_per_result, hit_list = hit_list,
-                               num_threads = num_threads, db_path = db_path)
+                               num_threads = num_threads, db_path = db_path, quiet = quiet, NCBI_key = NCBI_key)
     tax_id <- results_table[i,1]
     write.csv(df, file.path(out_path, paste0(sprintf("%05d", i), "_", sample_name, "_", "tax_id_", tax_id, ".csv")))
   }
-  plyr::a_ply(seq_len(num_results2), 1, run_res)
+  plyr::a_ply(seq_len(num_results), 1, run_res)
 }
 
 #' Calculates result metrics from a blast results table
@@ -338,7 +338,7 @@ blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
 #'}
 #'
 
-metascope_blast <- function(metascope_id_path, bam_file_path,
+metascope_blast <- function(metascope_id_path,
                             tmp_dir, out_dir, sample_name,
                             num_results = 10, num_reads = 100, hit_list = 10,
                             num_threads = 1, db_path, quiet = FALSE,
