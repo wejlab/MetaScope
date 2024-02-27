@@ -372,7 +372,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                          out_dir = dirname(input_file),
                          convEM = 1 / 10000, maxitsEM = 25,
                          blast_fastas = TRUE, num_genomes = 100,
-                         num_reads = 50, update_bam = TRUE,
+                         num_reads = 50, update_bam = FALSE,
                          num_species_plot = NULL,
                          quiet = TRUE)  {
   out_base <- input_file %>% base::basename() %>% strsplit(split = "\\.") %>%
@@ -385,6 +385,11 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   }
   if (db == "other" && is.null(db_feature_table)) {
     stop("Please supply a data.frame for db_feature_table if 'db = other'")
+  }
+  if (input_type == "csv.gz") {
+    if (!quiet) message("Cannot generate blast fastas or updated_bam from csv.gz file")
+    blast_fastas = FALSE
+    update_bam = FALSE
   }
   reads <- obtain_reads(input_file, input_type, aligner, blast_fastas, quiet)
   unmapped <- is.na(reads[[1]]$rname)
@@ -489,15 +494,15 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   }
   # Plotting genome locations
   num_plot <- num_species_plot
-  if (is.null(num_plot)) num_plot <- min(nrow(results), 10)
+  if (is.null(num_plot)) num_plot <- min(nrow(metascope_id_file), 10)
   if (num_plot > 0) {
     if (!quiet) message("Creating coverage plots at ",
                         out_base, "_cov_plots")
-    lapply(seq_along(results$TaxonomyID)[seq_len(num_plot)], function(x) {
-      locations(as.numeric(results$TaxonomyID)[x],
-                which_genome = results$Genome[x],
+    lapply(seq_along(metascope_id_file$TaxonomyID)[seq_len(num_plot)], function(x) {
+      locations(as.numeric(metascope_id_file$TaxonomyID)[x],
+                which_genome = metascope_id_file$Genome[x],
                 accessions, taxids, reads, out_base, out_dir)})
   } else if (!quiet) message("No coverage plots created")
-  return(results)
+  return(metascope_id_file)
 }
 
