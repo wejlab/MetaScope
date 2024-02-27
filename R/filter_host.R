@@ -131,7 +131,7 @@ remove_matches <- function(reads_bam, read_names, output, YS, threads,
       bf, destination = name_out, index = bam_index,
       indexDestination = FALSE, filter = filter_which,
       param = Rsamtools::ScanBamParam(what = "qname"))
-    file.remove(bam_index)
+    # file.remove(bam_index) keep bam index
   } else if (!make_bam) {
     name_out <- paste0(output, ".csv.gz")
     numread <- Rsamtools::BamFile(reads_bam, yieldSize = 100000000) %>%
