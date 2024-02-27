@@ -19,7 +19,7 @@ obtain_reads <- function(input_file, input_type, aligner, blast_fastas = FALSE, 
   } else if (identical(input_type, "csv.gz")) {
     if (!quiet) message("Reading .csv.gz file: ", input_file)
     reads <- data.table::fread(input_file, sep = ",", header = FALSE) %>%
-      magrittr::set_colnames(c(to_pull, "tag")) %>% as.list() %>% list()
+      magrittr::set_colnames(c("qname", "rname", "cigar", "qwidth", "pos", "tag")) %>% as.list() %>% list()
     if (identical(aligner, "bowtie2")) {
       reads[[1]]$tag <- list("AS" = reads[[1]]$tag)
     } else if (identical(aligner, "subread")) {
