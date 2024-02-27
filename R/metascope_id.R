@@ -490,6 +490,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
     combined_single <- results[3]
     filter_which <- combined_single$single_hit
     bam_out <- file.path(out_dir, paste0(out_base, ".updated.bam"))
+    Rsamtools::indexBam(files = input_file)
     Rsamtools::filterBam(file = input_file, destination = bam_out, filter = filter_which)
   }
   # Plotting genome locations
