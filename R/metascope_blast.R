@@ -1,3 +1,12 @@
+
+library(Rsamtools)
+library(taxize)
+library(Biostrings)
+library(dplyr)
+library(R.utils)
+library(rBLAST)
+library(stringr)
+
 #' Gets sequences from bam file
 #'
 #' Returns fasta sequences from a bam file with a given taxonomy ID
@@ -68,46 +77,38 @@ taxid_to_name <- function(taxids, NCBI_key = NULL) {
 #'
 #' @return Returns a dataframe of blast results for a metascope result
 
-rBLAST_single_result <- function(results_table, bam_file, which_result,
-                                 num_reads = 100, hit_list = 10, 
-                                 num_threads = 1, db_path, quiet = quiet,
-                                 NCBI_key = NULL, bam_seqs) {
-  res <- tryCatch({ #If any errors, should just skip the organism
-    rlang::is_installed("rBLAST")
-    genome_name <- results_table[which_result, 2]
-    if (!quiet) message("Current id: ", genome_name)
-    tax_id <- results_table[which_result, 1]
-    if (!quiet) message("Current ti: ", tax_id)
-    fasta_seqs <- get_seqs(id = tax_id, bam_file = bam_file, n = num_reads,
-                           quiet = quiet, NCBI_key = NCBI_key,
-                           bam_seqs = bam_seqs)
-    blast_db <- rBLAST::blast(db = db_path, type = "blastn")
-    this_format <- paste("qseqid sseqid pident length mismatch gapopen",
-                         "qstart qend sstart send evalue bitscore staxids")
-    predict.BLAST <- utils::getFromNamespace("predict.BLAST", "rBLAST")
-    blast_res <- predict.BLAST(blast_db, fasta_seqs,
-                               custom_format = this_format,
-                               BLAST_args = paste("-max_target_seqs",
-                                                  hit_list, "-num_threads",
-                                                  num_threads))
-    taxize_genome_df <- taxid_to_name(unique(blast_res$staxids), NCBI_key = NCBI_key)
-    blast_res$MetaScope_Taxid <- tax_id
-    blast_res$MetaScope_Genome <- genome_name
-    blast_res <- dplyr::left_join(blast_res, taxize_genome_df, by = "staxids")
-    blast_res
-  },
-  error = function(e) {
-    cat("Error", conditionMessage(e), "\n")
-    all_colnames <- stringr::str_split(this_format, " ")[[1]]
-    blast_res <- matrix(NA, ncol = length(all_colnames),
-                        dimnames = list(c(), all_colnames)) |> as.data.frame()
-    tax_id <- results_table[which_result, 1]
-    genome_name <- results_table[which_result, 2]
-    blast_res$MetaScope_Taxid <- tax_id
-    blast_res$MetaScope_Genome <- genome_name
-    blast_res$name <- NA
-    blast_res
-  }
+
+rBLAST_single_result <- function(results_table, fasta_file, which_result = 1, num_reads = 100,
+                                 hit_list = 10, num_threads = 1, db_path, quiet = FALSE, NCBI_key = NCBI_key) {
+  res <- tryCatch( #If any errors, should just skip the organism
+    {
+      genome_name <- results_table[which_result,2]
+      if (!quiet) message("Current id: ", genome_name)
+      tax_id <- results_table[which_result,1]
+      if (!quiet) message("Current ti: ", tax_id)
+      fasta_seqs <- Biostrings::readDNAStringSet(fasta_file)
+      blast_db <- rBLAST::blast(db = db_path, type = "blastn")
+      blast_res <- predict(blast_db, fasta_seqs,
+                                   custom_format ="qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore staxids",
+                                   BLAST_args = paste0("-max_target_seqs ", hit_list, " -num_threads ", num_threads))
+      taxize_genome_df <- taxid_to_name(unique(blast_res$staxids), NCBI_key = NCBI_key)
+      blast_res$MetaScope_Taxid <- tax_id
+      blast_res$MetaScope_Genome <- genome_name
+      blast_res <- dplyr::left_join(blast_res, taxize_genome_df, by = "staxids")
+      blast_res
+    },
+    error = function(e) {
+      cat("Error", conditionMessage(e), "\n")
+      blast_res <- data.frame(qseqid=NA, sseqid=NA, pident=NA, length=NA,
+                              mismatch=NA, gapopen=NA, qstart=NA, qend=NA,
+                              sstart=NA, send=NA, evalue=NA, bitscore=NA, staxids=NA)
+      tax_id <- results_table[which_result,1]
+      genome_name <- results_table[which_result,2]
+      blast_res$MetaScope_Taxid <- tax_id
+      blast_res$MetaScope_Genome <- genome_name
+      blast_res$name <- NA
+      blast_res
+    }
   )
   return(res)
 }
@@ -130,25 +131,27 @@ rBLAST_single_result <- function(results_table, bam_file, which_result,
 #' @return Creates and exports num_results number of csv files with blast
 #'   results from local blast
 
-rBlast_results <- function(results_table, bam_file, num_results = 10,
+
+rBlast_results <- function(results_table, fasta_files, num_results = 10,
                            num_reads_per_result = 100, hit_list = 10,
                            num_threads = 1, db_path, out_path,
                            sample_name = NULL, quiet = quiet,
                            NCBI_key = NULL) {
   # Grab all identifiers
-  seq_info_df <- as.data.frame(Rsamtools::seqinfo(bam_file)) |>
-    tibble::rownames_to_column("seqnames")
-  bam_seqs <- find_accessions(seq_info_df$seqnames,
-                              NCBI_key = NCBI_key, quiet = quiet) |>
-    plyr::aaply(1, function(x) x[1])
+  #seq_info_df <- as.data.frame(Rsamtools::seqinfo(bam_file)) |>
+  #  tibble::rownames_to_column("seqnames")
+  #bam_seqs <- find_accessions(seq_info_df$seqnames,
+  #                            NCBI_key = NCBI_key, quiet = quiet) |>
+  #  plyr::aaply(1, function(x) x[1])
   # Grab results
   num_results2 <- min(num_results, nrow(results_table))
   run_res <- function(i) {
-    df <- rBLAST_single_result(results_table, bam_file, which_result = i,
+    fasta_file <- fasta_files[i]
+    df <- rBLAST_single_result(results_table, fasta_file = fasta_file, which_result = i,
                                num_reads = num_reads_per_result,
                                hit_list = hit_list, num_threads = num_threads,
                                db_path = db_path, quiet = quiet,
-                               NCBI_key = NCBI_key, bam_seqs = bam_seqs)
+                               NCBI_key = NCBI_key)
     tax_id <- results_table[i, 1]
     utils::write.csv(df, file.path(out_path,
                                    paste0(sprintf("%05d", i), "_", sample_name,
@@ -174,13 +177,14 @@ rBlast_results <- function(results_table, bam_file, num_results = 10,
 #' @return a dataframe with best_hit, uniqueness_score, species_percentage_hit
 #'   genus_percentage_hit, species_contaminant_score, and
 #'   genus_contaminant_score
-#' 
+#'
+
 
 blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
   tryCatch({
     # Load in blast results table
     blast_results_table <- utils::read.csv(blast_results_table_path, header = TRUE)
-    
+
     # Remove any empty tables
     if (nrow(blast_results_table) < 2) {
       return(data.frame(best_hit = 0,
@@ -190,50 +194,54 @@ blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
                         species_contaminant_score = 0,
                         genus_contaminant_score = 0))
     }
-    
+
     # Adding Species and Genus columns
     meta_tax <- taxid_to_name(unique(blast_results_table$MetaScope_Taxid),
                               NCBI_key = NCBI_key) |> dplyr::select(-"staxids")
-    
+
     blast_results_table <- blast_results_table %>%
       dplyr::mutate("MetaScope_genus" = meta_tax$genus[1],
         "MetaScope_species" = meta_tax$species[1]) |>
       dplyr::rename("query_genus" = "genus",
         "query_species" = "species")
-    
+
+    # Getting best hit per read
+    blast_results_table <- blast_results_table %>%
+      group_by(.data$qseqid) %>% slice_max(.data$evalue, with_ties = TRUE)
+
     # Removing duplicate query num and query species
     blast_results_table <- blast_results_table %>%
       dplyr::distinct(.data$qseqid, .data$query_species, .keep_all = TRUE)
-    
+
     # Calculating Metrics
     best_hit <- blast_results_table %>%
       dplyr::group_by(.data$query_species) %>%
       dplyr::summarise("num_reads" = dplyr::n()) %>%
       dplyr::slice_max(.data$num_reads, with_ties = FALSE)
-    
+
     uniqueness_score <- blast_results_table %>%
       dplyr::group_by(.data$query_species) %>%
       dplyr::summarise("num_reads" = dplyr::n()) %>%
       nrow()
-    
+
     species_percentage_hit <- blast_results_table %>%
       dplyr::filter(.data$MetaScope_species == .data$query_species) %>%
       nrow() / length(unique(blast_results_table$qseqid))
-    
+
     genus_percentage_hit <- blast_results_table %>%
       dplyr::filter(.data$MetaScope_genus == .data$query_genus) %>%
       nrow() / length(unique(blast_results_table$qseqid))
-    
+
     species_contaminant_score <- blast_results_table %>%
       dplyr::filter(.data$MetaScope_species != .data$query_species) %>%
       dplyr::distinct(.data$qseqid, .keep_all = TRUE) %>%
       nrow() / length(unique(blast_results_table$qseqid))
-    
+
     genus_contaminant_score <- blast_results_table %>%
       dplyr::filter(.data$MetaScope_genus != .data$query_genus) %>%
       dplyr::distinct(.data$qseqid, .keep_all = TRUE) %>%
       nrow() / length(unique(blast_results_table$qseqid))
-    
+
     data.frame(best_hit = best_hit$query_species,
                uniqueness_score = uniqueness_score,
                species_percentage_hit = species_percentage_hit,
@@ -263,7 +271,7 @@ blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
 #' BLAST database. It REQUIRES that command-line BLAST and a separate nucleotide
 #' database have already been installed on the host machine. It returns a csv
 #' file updated with BLAST result metrics.
-#' 
+#'
 #' This function assumes that you used the NCBI nucleotide database to process
 #' samples, with a download date of 2021 or later. This is necessary for
 #' compatibility with the bam file headers.
@@ -347,37 +355,34 @@ blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
 #'}
 #'
 
-metascope_blast <- function(metascope_id_path, bam_file_path,
+metascope_blast <- function(metascope_id_path,
                             tmp_dir, out_dir, sample_name,
                             num_results = 10, num_reads = 100, hit_list = 10,
-                            num_threads = 1, db_path, quiet = FALSE,
+                            num_threads = 1, db_path, blast_fastas = TRUE,
+                            quiet = FALSE,
                             NCBI_key = NULL) {
-  # Sort and index bam file
-  sorted_bam_file_path <- file.path(tmp_dir, paste0(sample_name, "_sorted"))
-  Rsamtools::sortBam(bam_file_path, destination = sorted_bam_file_path)
-  sorted_bam_file <- paste0(sorted_bam_file_path, ".bam")
-  Rsamtools::indexBam(sorted_bam_file)
-  bam_file <- Rsamtools::BamFile(sorted_bam_file, index = sorted_bam_file)
-  
+
   # Load in metascope id file and clean unknown genomes
   metascope_id_in <- utils::read.csv(metascope_id_path, header = TRUE)
-  
+
+  # List fasta files
+  if (blast_fastas) fasta_files <- list.files(file.path(out_dir, "fastas"), full.names = TRUE)
   # Create blast directory in tmp directory to save blast results in
   blast_tmp_dir <- file.path(tmp_dir, "blast")
   if(!dir.exists(blast_tmp_dir)) dir.create(blast_tmp_dir, recursive = TRUE)
-  
+
   # Run rBlast on all metascope microbes
-  rBlast_results(results_table = metascope_id_in, bam_file = bam_file,
+  rBlast_results(results_table = metascope_id_in, fasta_files = fasta_files,
                  num_results = num_results, num_reads_per_result = num_reads,
                  hit_list = hit_list, num_threads = num_threads,
                  db_path = db_path, out_path = blast_tmp_dir,
                  sample_name = sample_name, quiet = quiet, NCBI_key = NCBI_key)
-  
+
   # Run Blast metrics
   blast_result_metrics_df <- plyr::adply(
     list.files(blast_tmp_dir, full.names = TRUE), 1, blast_result_metrics,
     NCBI_key = NCBI_key)
-  
+
   # Append Blast Metrics to MetaScope results
   if (nrow(metascope_id_in) > nrow(blast_result_metrics_df)) {
     ind <- seq(nrow(blast_result_metrics_df) + 1, nrow(metascope_id_in))
