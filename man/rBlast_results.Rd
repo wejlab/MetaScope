@@ -6,7 +6,7 @@
 \usage{
 rBlast_results(
   results_table,
-  bam_file,
+  fasta_files,
   num_results = 10,
   num_reads_per_result = 100,
   hit_list = 10,
@@ -20,9 +20,6 @@ rBlast_results(
 }
 \arguments{
 \item{results_table}{A data.frame of the Metascope results}
-
-\item{bam_file}{A sorted bam file and index file, loaded with
-Rsamtools::bamFile}
 
 \item{num_results}{A number indicating number of Metascope results to blast}
 
@@ -46,6 +43,9 @@ is FALSE.}
 \item{NCBI_key}{(character) NCBI Entrez API key. optional. See
 taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 function will be less prone to errors if you obtain an NCBI key.}
+
+\item{bam_file}{A sorted bam file and index file, loaded with
+Rsamtools::bamFile}
 }
 \value{
 Creates and exports num_results number of csv files with blast

@@ -1,12 +1,3 @@
-
-library(Rsamtools)
-library(taxize)
-library(Biostrings)
-library(dplyr)
-library(R.utils)
-library(rBLAST)
-library(stringr)
-
 #' Gets sequences from bam file
 #'
 #' Returns fasta sequences from a bam file with a given taxonomy ID
@@ -199,56 +190,38 @@ blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
     meta_tax <- taxid_to_name(unique(blast_results_table$MetaScope_Taxid),
                               NCBI_key = NCBI_key) |> dplyr::select(-"staxids")
 
-    blast_results_table <- blast_results_table %>%
+    blast_results_table_2 <- blast_results_table |>
       dplyr::mutate("MetaScope_genus" = meta_tax$genus[1],
         "MetaScope_species" = meta_tax$species[1]) |>
       dplyr::rename("query_genus" = "genus",
-        "query_species" = "species")
-
+        "query_species" = "species") |>
     # Getting best hit per read
-    blast_results_table <- blast_results_table %>%
-      group_by(.data$qseqid) %>% slice_max(.data$evalue, with_ties = TRUE)
-
+      dplyr::group_by(.data$qseqid) |>
+      dplyr::slice_max(.data$evalue, with_ties = TRUE) |>
     # Removing duplicate query num and query species
-    blast_results_table <- blast_results_table %>%
       dplyr::distinct(.data$qseqid, .data$query_species, .keep_all = TRUE)
 
     # Calculating Metrics
-    best_hit <- blast_results_table %>%
-      dplyr::group_by(.data$query_species) %>%
-      dplyr::summarise("num_reads" = dplyr::n()) %>%
+    best_hit <- blast_results_table_2 |>
+      dplyr::group_by(.data$query_species) |>
+      dplyr::summarise("num_reads" = dplyr::n()) |>
       dplyr::slice_max(.data$num_reads, with_ties = FALSE)
 
-    uniqueness_score <- blast_results_table %>%
-      dplyr::group_by(.data$query_species) %>%
-      dplyr::summarise("num_reads" = dplyr::n()) %>%
-      nrow()
+    all_results <- blast_results_table_2 |>
+      dplyr::ungroup() |>
+      tidyr::replace_na(replace = list("query_genus" = "Unknown",
+                                       "query_species" = "Unknown",
+                                       "MetaScope_genus" = "Unknown",
+                                       "MetaScope_species" = "Unknown")) |>
+      dplyr::mutate(is_equiv_sp = .data$MetaScope_species == .data$query_species,
+                    is_equiv_gn = .data$MetaScope_genus == .data$query_genus) |>
+      dplyr::summarise(uniqueness_score = length(unique(query_species)),
+                       species_percentage_hit = mean(is_equiv_sp),
+                       genus_percentage_hit = mean(is_equiv_gn)) |>
+      dplyr::mutate(species_contaminant_score = 1 - .data$species_percentage_hit,
+                    genus_contaminant_score = 1 - .data$genus_percentage_hit)
 
-    species_percentage_hit <- blast_results_table %>%
-      dplyr::filter(.data$MetaScope_species == .data$query_species) %>%
-      nrow() / length(unique(blast_results_table$qseqid))
-
-    genus_percentage_hit <- blast_results_table %>%
-      dplyr::filter(.data$MetaScope_genus == .data$query_genus) %>%
-      nrow() / length(unique(blast_results_table$qseqid))
-
-    species_contaminant_score <- blast_results_table %>%
-      dplyr::filter(.data$MetaScope_species != .data$query_species) %>%
-      dplyr::distinct(.data$qseqid, .keep_all = TRUE) %>%
-      nrow() / length(unique(blast_results_table$qseqid))
-
-    genus_contaminant_score <- blast_results_table %>%
-      dplyr::filter(.data$MetaScope_genus != .data$query_genus) %>%
-      dplyr::distinct(.data$qseqid, .keep_all = TRUE) %>%
-      nrow() / length(unique(blast_results_table$qseqid))
-
-    data.frame(best_hit = best_hit$query_species,
-               uniqueness_score = uniqueness_score,
-               species_percentage_hit = species_percentage_hit,
-               genus_percentage_hit = genus_percentage_hit,
-               species_contaminant_score = species_contaminant_score,
-               genus_contaminant_score = genus_contaminant_score) %>%
-    return()
+    return(all_results)
   },
   error = function(e)
   {
@@ -328,8 +301,8 @@ blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
 #'
 #' ## Run metascope blast
 #' ### Get export name and metascope id results
-#' out_base <- bamPath %>% base::basename() %>% strsplit(split = "\\.") %>%
-#'   magrittr::extract2(1) %>% magrittr::extract(1)
+#' out_base <- bamPath |> base::basename() |> strsplit(split = "\\.") |>
+#'   magrittr::extract2(1) |> magrittr::extract(1)
 #' metascope_id_path <- file.path(file_temp, paste0(out_base, ".metascope_id.csv"))
 #'
 #' # NOTE: change db_path to the location where your BLAST database is stored!

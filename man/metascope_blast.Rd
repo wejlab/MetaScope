@@ -6,7 +6,6 @@
 \usage{
 metascope_blast(
   metascope_id_path,
-  bam_file_path,
   tmp_dir,
   out_dir,
   sample_name,
@@ -15,6 +14,7 @@ metascope_blast(
   hit_list = 10,
   num_threads = 1,
   db_path,
+  blast_fastas = TRUE,
   quiet = FALSE,
   NCBI_key = NULL
 )
@@ -22,11 +22,6 @@ metascope_blast(
 \arguments{
 \item{metascope_id_path}{Character string; path to a csv file output by
 `metascope_id()`.}
-
-\item{bam_file_path}{Character string; full path to bam file for the same
-sample processed by `metascope_id`. Note that the `filter_bam` function
-must have output a bam file, and not a .csv.gz file. See
-`?filter_bam_bowtie` for more details.}
 
 \item{tmp_dir}{Character string, a temporary directory in which to host
 files.}
@@ -61,6 +56,11 @@ is FALSE.}
 \item{NCBI_key}{(character) NCBI Entrez API key. optional. See
 taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 function will be less prone to errors if you obtain an NCBI key.}
+
+\item{bam_file_path}{Character string; full path to bam file for the same
+sample processed by `metascope_id`. Note that the `filter_bam` function
+must have output a bam file, and not a .csv.gz file. See
+`?filter_bam_bowtie` for more details.}
 }
 \value{
 This function writes an updated csv file with metrics evaluating...
@@ -95,8 +95,8 @@ metascope_id(file.path(file_temp, "bowtie_target.bam"), aligner = "bowtie2",
 
 ## Run metascope blast
 ### Get export name and metascope id results
-out_base <- bamPath \%>\% base::basename() \%>\% strsplit(split = "\\\\.") \%>\%
-  magrittr::extract2(1) \%>\% magrittr::extract(1)
+out_base <- bamPath |> base::basename() |> strsplit(split = "\\\\.") |>
+  magrittr::extract2(1) |> magrittr::extract(1)
 metascope_id_path <- file.path(file_temp, paste0(out_base, ".metascope_id.csv"))
 
 # NOTE: change db_path to the location where your BLAST database is stored!

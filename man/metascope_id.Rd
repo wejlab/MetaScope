@@ -14,6 +14,10 @@ metascope_id(
   out_dir = dirname(input_file),
   convEM = 1/10000,
   maxitsEM = 25,
+  blast_fastas = TRUE,
+  num_genomes = 100,
+  num_reads = 50,
+  update_bam = FALSE,
   num_species_plot = NULL,
   quiet = TRUE
 )
@@ -52,6 +56,12 @@ Defaults to \code{dirname(input_file)}.}
 the convEM is below the threshhold. Default set at \code{50}. If set at
 \code{0}, the algorithm skips the EM step and summarizes the .bam file 'as
 is'}
+
+\item{blast_fastas}{Logical whether or not to output fasta files for MetaBlast}
+
+\item{num_genomes}{Number of genomes to output fasta files for MetaBlast}
+
+\item{num_reads}{Number of reads per genome per fasta file for MetaBlast}
 
 \item{num_species_plot}{The number of genome coverage plots to be saved.
 Default is \code{NULL}, which saves coverage plots for the ten most highly

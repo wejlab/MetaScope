@@ -147,20 +147,16 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
     if (!quiet) message(c(it, conv))
   }
   if (!quiet) message("\tDONE! Converged in ", it, " iterations.")
-
   hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which
   hit <- mapply(function(q, r) hit_which[q,r], combined$qname, combined$rname)
   combined$hit <- hit
-
-
-  combined_single <- combined %>% group_by(qname, rname) %>%
-    dplyr::mutate(best_hit = (hit & max(scores) == scores)) %>%
-    ungroup() %>% group_by(qname) %>%
-    dplyr::mutate(single_hit = row_number() == min(row_number()[best_hit]))
-
+  combined_single <- combined %>% dplyr::group_by(qname, rname) %>%
+    dplyr::mutate("best_hit" = (hit & max(scores) == scores)) %>%
+    dplyr::ungroup() %>% dplyr::group_by(qname) %>%
+    dplyr::mutate("single_hit" = dplyr::row_number() == min(dplyr::row_number()[best_hit]))
   combined_distinct <- dplyr::distinct(combined, .data$qname, .data$rname,
-                                        .keep_all = TRUE)
-  combined_distinct <- combined_distinct[combined_distinct$hit == TRUE,]
+                                       .keep_all = TRUE)
+  combined_distinct <- combined_distinct[combined_distinct$hit == TRUE, ]
   best_hit <- Matrix::colSums(hit_which)
   names(best_hit) <- seq_along(best_hit)
   best_hit <- best_hit[best_hit != 0]
@@ -172,12 +168,12 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
   readsEM <- round(gammasums[hits_ind], 1)
   propEM <- gammasums[hits_ind] / sum(gammas_new)
   results_tibble <- dplyr::tibble(TaxonomyID = final_taxids, Genome = final_genomes,
-                           read_count = best_hit, Proportion = proportion,
-                           readsEM = readsEM, EMProportion = propEM,
-                           hits_ind = hits_ind) %>%
+                                  read_count = best_hit, Proportion = proportion,
+                                  readsEM = readsEM, EMProportion = propEM,
+                                  hits_ind = hits_ind) %>%
     dplyr::arrange(dplyr::desc(.data$read_count))
   if (!quiet) message("Found reads for ", nrow(results_tibble), " genomes")
-
+  
   return(list(results_tibble, combined_distinct, combined_single))
 }
 
@@ -276,7 +272,7 @@ locations <- function(which_taxid, which_genome,
                   xlab = "Aligned position across genome (leftmost read position)",
                   ylab = "Read Count",
                   caption = paste0("Accession Number: ", choose_acc))
-
+  
   ggplot2::ggsave(paste0(plots_save, "/",
                          stringr::str_replace(use_name, " ", "_"), ".png"),
                   device = "png")
@@ -388,8 +384,8 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   }
   if (input_type == "csv.gz") {
     if (!quiet) message("Cannot generate blast fastas or updated_bam from csv.gz file")
-    blast_fastas = FALSE
-    update_bam = FALSE
+    blast_fastas <- FALSE
+    update_bam <- FALSE
   }
   reads <- obtain_reads(input_file, input_type, aligner, blast_fastas, quiet)
   unmapped <- is.na(reads[[1]]$rname)
@@ -463,21 +459,24 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                                "scores" = exp_alignment_scores)
   results <- get_assignments(combined, convEM, maxitsEM, unique_taxids,
                              unique_genome_names, quiet = quiet)
-  metascope_id_file <- results[[1]] %>% select("TaxonomyID", "Genome",
-                                               "read_count", "Proportion",
-                                               "readsEM", "EMProportion")
+  metascope_id_file <- results[[1]] %>% dplyr::select("TaxonomyID", "Genome",
+                                                      "read_count", "Proportion",
+                                                      "readsEM", "EMProportion")
   utils::write.csv(metascope_id_file, file = out_file, row.names = FALSE)
   if (!quiet) message("Results written to ", out_file)
-
+  
   if (blast_fastas){
     combined_distinct <- results[[2]]
     num_genomes <- min(num_genomes, nrow(results[[1]]))
-    dir.create(file.path(out_dir, "fastas"))
+    new_file <- file.path(out_dir, "fastas")
+    if(!dir.exists(new_file)) dir.create(new_file)
     for (i in seq.int(1, num_genomes)) {
-      current_genome <- results[[1]]$Genome[i] %>% stringr::word(1:2) %>% paste0(collapse = "_")
+      current_genome <- results[[1]]$Genome[i] %>% stringr::word(1:2) %>%
+        paste0(collapse = "_")
       current_rname_ind <- results[[1]]$hits_ind[i]
-      read_indices <- combined_distinct %>% filter(rname == current_rname_ind) %>%
-        pull(index)
+      read_indices <- combined_distinct %>%
+        dplyr::filter(.data$rname == current_rname_ind) %>%
+        dplyr::pull(index)
       current_num_reads <- min(num_reads, length(read_indices))
       read_indices <- read_indices %>% sample(current_num_reads)
       seqs <- reads[[1]]$seq[read_indices]
@@ -485,8 +484,8 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                                                   paste0(i, "_", current_genome, ".fa")))
     }
   }
-
-  if (update_bam){
+  
+  if (update_bam) {
     combined_single <- results[3]
     filter_which <- combined_single$single_hit
     bam_out <- file.path(out_dir, paste0(out_base, ".updated.bam"))
@@ -499,11 +498,11 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   if (num_plot > 0) {
     if (!quiet) message("Creating coverage plots at ",
                         out_base, "_cov_plots")
-    lapply(seq_along(metascope_id_file$TaxonomyID)[seq_len(num_plot)], function(x) {
-      locations(as.numeric(metascope_id_file$TaxonomyID)[x],
-                which_genome = metascope_id_file$Genome[x],
-                accessions, taxids, reads, out_base, out_dir)})
+    lapply(seq_along(metascope_id_file$TaxonomyID)[seq_len(num_plot)],
+           function(x) {
+             locations(as.numeric(metascope_id_file$TaxonomyID)[x],
+                       which_genome = metascope_id_file$Genome[x],
+                       accessions, taxids, reads, out_base, out_dir)})
   } else if (!quiet) message("No coverage plots created")
   return(metascope_id_file)
 }
-
