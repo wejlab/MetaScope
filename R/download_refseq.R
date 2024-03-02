@@ -184,7 +184,7 @@ download_genomes <- function(species_table, taxon, patho_out, compress,
         accession <- ref[ind] %>% stringr::str_split(pattern = " ") %>%
           vapply(S4Vectors::head, n = 1, FUN.VALUE = character(1)) %>%
           stringr::str_remove_all(">")
-        ref[ind] <- paste("ti|", species_table[i, ]$taxid, "|org|",
+        ref[ind] <- paste(">ti|", species_table[i, ]$taxid, "|org|",
                           gsub(" ", "_", species_table[i, ]$organism_name),
                           "|accession|", accession, sep = "")
         ref %>% data.table::as.data.table() %>%

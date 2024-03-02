@@ -5,39 +5,44 @@ template:
   bootswatch: cosmo
     
 reference:
- - title: "Reference Genome Library"
-   desc: "Start here to download reference genomes for processing."
-   contents:
-   - download_refseq
- - title: "Demultiplex"
-   desc: "Preprocessing for 16S data."
+ - title: "MetaDemultiplex (optional)"
+   desc: "Obtain non-barcoded sequencing reads."
    contents:
    - demultiplex
- - title: "Index Creation"
-   desc: "Create compatible indexes from downloaded reference genomes."
+ - title: "MetaRef"
+   desc: "Obtain target and filter genome sequences from NCBI nucleotide database and index using the Bowtie 2 or Subread aligner"
    contents:
-     - mk_bowtie_index
-     - mk_subread_index
- - title: "Alignment with Reference Libraries"
-   desc: "Mapping sequencing reads to the target & filter libraries."
+   - download_refseq
+   - mk_bowtie_index
+   - mk_subread_index
+ - title: "MetaAlign"
+   desc: "Align sequencing reads to indexed target genome sequences"
    contents:
      - align_target
-     - filter_host
-     - align_details
      - align_target_bowtie
-     - filter_host_bowtie
+     - align_details
      - bt2_16S_params 
      - bt2_regular_params
      - bt2_missing_params
- - title: "Sequencing Read Identification"
-   desc: "Identify which genomes are most likely to be represented in the sample."
+ - title: "MetaFilter"
+   desc: "Remove reads mapped to indexed host genome sequences"
+   contents:
+     - filter_host
+     - filter_host_bowtie
+ - title: "MetaID"
+   desc: "Reassign ambiguously mapped reads to probable source genome"
    contents:
      - metascope_id
- - title: "Downstream Analysis with animalcules"
-   desc: "Convert MetaScope output to be compatible with the animalcules R package."
+ - title: "MetaBLAST"
+   desc: "BLAST assigned reads against the NCBI nucleotide database to check read identity."
+   contents:
+     - metascope_blast
+ - title: "MetaCombine"
+   desc: "Aggregate samples into a MultiAssayExperiment compatible with the animalcules package"
    contents:
      - convert_animalcules
      - convert_animalcules_silva
+     - convert_animalcules_patho
  - title: "Helper Functions"
    desc: "These functions were developed to aid in carrying out other primary functions."
    contents:
@@ -51,6 +56,11 @@ reference:
     - locations
     - filter_unmapped_reads
     - check_samtools_exists
+    - blast_result_metrics
+    - get_seqs
+    - rBLAST_single_result
+    - rBlast_results
+    - taxid_to_name
 
 navbar:
   bg: dark

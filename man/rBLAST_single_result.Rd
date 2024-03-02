@@ -6,18 +6,22 @@
 \usage{
 rBLAST_single_result(
   results_table,
-  fasta_file,
-  which_result = 1,
+  bam_file,
+  which_result,
   num_reads = 100,
   hit_list = 10,
   num_threads = 1,
   db_path,
-  quiet = FALSE,
-  NCBI_key = NCBI_key
+  quiet = quiet,
+  NCBI_key = NULL,
+  bam_seqs
 )
 }
 \arguments{
 \item{results_table}{A dataframe of the Metascope results}
+
+\item{bam_file}{A sorted bam file and index file, loaded with
+Rsamtools::bamFile}
 
 \item{which_result}{Index in results_table for which result to Blast search}
 
@@ -35,9 +39,6 @@ is FALSE.}
 \item{NCBI_key}{(character) NCBI Entrez API key. optional. See
 taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 function will be less prone to errors if you obtain an NCBI key.}
-
-\item{bam_file}{A sorted bam file and index file, loaded with
-Rsamtools::bamFile}
 
 \item{bam_seqs}{A list of the sequence IDs from the bam file}
 }

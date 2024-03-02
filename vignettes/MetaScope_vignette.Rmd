@@ -105,8 +105,9 @@ sapply(all_species, download_refseq,
 
 ## Downloading filter genomes
 
-We will also download the genome of the *Staphylococcus epidermidis* RP62A strain from the NCBI nucleotide database, in an uncompressed FASTA format. This genome will act as our filter library.
+We will also download the reference genome and related sequences* of the *Staphylococcus epidermidis* RP62A strain from the NCBI nucleotide database, in an uncompressed FASTA format. This genome will act as our filter library.
 
+* since we are downloading from the nucleotide database with representative and reference = FALSE, several sequences will be downloaded in addition to the main genome.
 ```{R filter lib, warning = FALSE, message = FALSE}
 filter_ref_temp <- tempfile()
 dir.create(filter_ref_temp)

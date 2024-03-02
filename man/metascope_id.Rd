@@ -14,7 +14,7 @@ metascope_id(
   out_dir = dirname(input_file),
   convEM = 1/10000,
   maxitsEM = 25,
-  blast_fastas = TRUE,
+  blast_fastas = FALSE,
   num_genomes = 100,
   num_reads = 50,
   update_bam = FALSE,
@@ -57,11 +57,18 @@ the convEM is below the threshhold. Default set at \code{50}. If set at
 \code{0}, the algorithm skips the EM step and summarizes the .bam file 'as
 is'}
 
-\item{blast_fastas}{Logical whether or not to output fasta files for MetaBlast}
+\item{blast_fastas}{Logical, whether or not to output fasta files for MetaBlast.
+Default is \code{FALSE}.}
 
-\item{num_genomes}{Number of genomes to output fasta files for MetaBlast}
+\item{num_genomes}{Number of genomes to output fasta files for MetaBlast.
+Default is \code{100}.}
 
-\item{num_reads}{Number of reads per genome per fasta file for MetaBlast}
+\item{num_reads}{Number of reads per genome per fasta file for MetaBlast.
+Default is \code{50}.}
+
+\item{update_bam}{Whether to update BAM file with new read assignments.
+Default is \code{FALSE}. If \code{TRUE}, requires \code{input_type = TRUE}
+such that a BAM file is the input to the function.}
 
 \item{num_species_plot}{The number of genome coverage plots to be saved.
 Default is \code{NULL}, which saves coverage plots for the ten most highly
@@ -72,7 +79,8 @@ abundant species.}
 \value{
 This function returns a .csv file with annotated read counts to
   genomes with mapped reads. The function itself returns the output .csv file
-  name.
+  name. Depending on the parameters specified, can also output an updated
+  BAM file, and fasta files for usage downstream with MetaBLAST.
 }
 \description{
 This function will read in a .bam or .csv.gz file, annotate the taxonomy and

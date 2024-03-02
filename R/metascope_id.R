@@ -150,9 +150,9 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
   hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which
   hit <- mapply(function(q, r) hit_which[q,r], combined$qname, combined$rname)
   combined$hit <- hit
-  combined_single <- combined %>% dplyr::group_by(qname, rname) %>%
-    dplyr::mutate("best_hit" = (hit & max(scores) == scores)) %>%
-    dplyr::ungroup() %>% dplyr::group_by(qname) %>%
+  combined_single <- combined %>% dplyr::group_by(.data$qname, .data$rname) %>%
+    dplyr::mutate("best_hit" = (hit & max(.data$scores) == .data$scores)) %>%
+    dplyr::ungroup() %>% dplyr::group_by(.data$qname) %>%
     dplyr::mutate("single_hit" = dplyr::row_number() == min(dplyr::row_number()[best_hit]))
   combined_distinct <- dplyr::distinct(combined, .data$qname, .data$rname,
                                        .keep_all = TRUE)
@@ -311,17 +311,24 @@ locations <- function(which_taxid, which_genome,
 #'   the convEM is below the threshhold. Default set at \code{50}. If set at
 #'   \code{0}, the algorithm skips the EM step and summarizes the .bam file 'as
 #'   is'
-#' @param blast_fastas Logical whether or not to output fasta files for MetaBlast
-#' @param num_genomes Number of genomes to output fasta files for MetaBlast
-#' @param num_reads Number of reads per genome per fasta file for MetaBlast
+#' @param blast_fastas Logical, whether or not to output fasta files for MetaBlast.
+#' Default is \code{FALSE}.
+#' @param num_genomes Number of genomes to output fasta files for MetaBlast.
+#' Default is \code{100}.
+#' @param num_reads Number of reads per genome per fasta file for MetaBlast.
+#' Default is \code{50}.
 #' @param num_species_plot The number of genome coverage plots to be saved.
 #'   Default is \code{NULL}, which saves coverage plots for the ten most highly
 #'   abundant species.
+#' @param update_bam Whether to update BAM file with new read assignments.
+#' Default is \code{FALSE}. If \code{TRUE}, requires \code{input_type = TRUE}
+#' such that a BAM file is the input to the function.
 #' @param quiet Turns off most messages. Default is \code{TRUE}.
 #'
 #' @return This function returns a .csv file with annotated read counts to
 #'   genomes with mapped reads. The function itself returns the output .csv file
-#'   name.
+#'   name. Depending on the parameters specified, can also output an updated
+#'   BAM file, and fasta files for usage downstream with MetaBLAST.
 #'
 #' @export
 #'
@@ -367,7 +374,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                          NCBI_key = NULL,
                          out_dir = dirname(input_file),
                          convEM = 1 / 10000, maxitsEM = 25,
-                         blast_fastas = TRUE, num_genomes = 100,
+                         blast_fastas = FALSE, num_genomes = 100,
                          num_reads = 50, update_bam = FALSE,
                          num_species_plot = NULL,
                          quiet = TRUE)  {
@@ -476,7 +483,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
       current_rname_ind <- results[[1]]$hits_ind[i]
       read_indices <- combined_distinct %>%
         dplyr::filter(.data$rname == current_rname_ind) %>%
-        dplyr::pull(index)
+        dplyr::pull("index")
       current_num_reads <- min(num_reads, length(read_indices))
       read_indices <- read_indices %>% sample(current_num_reads)
       seqs <- reads[[1]]$seq[read_indices]
