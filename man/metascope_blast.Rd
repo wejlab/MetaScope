@@ -6,7 +6,7 @@
 \usage{
 metascope_blast(
   metascope_id_path,
-  bam_file_path,
+  bam_file_path = list.files(tmp_dir, ".updated.bam$", full.names = TRUE)[1],
   tmp_dir,
   out_dir,
   sample_name,
@@ -26,7 +26,8 @@ metascope_blast(
 \item{bam_file_path}{Character string; full path to bam file for the same
 sample processed by `metascope_id`. Note that the `filter_bam` function
 must have output a bam file, and not a .csv.gz file. See
-`?filter_bam_bowtie` for more details.}
+`?filter_bam_bowtie` for more details. Defaults to
+\code{list.files(file_temp, ".updated.bam$")[1]}.}
 
 \item{tmp_dir}{Character string, a temporary directory in which to host
 files.}
@@ -80,6 +81,9 @@ compatibility with the bam file headers.
 
 This is highly computationally intensive and should be ran with multiple
 cores, submitted as a multi-threaded computing job if possible.
+
+Note, if best_hit_strain is FALSE, then no strain was observed more often
+among the BLAST results.
 }
 \examples{
 \dontrun{
@@ -87,11 +91,13 @@ cores, submitted as a multi-threaded computing job if possible.
 file_temp <- tempfile()
 dir.create(file_temp)
 
-bamPath <- system.file("extdata", "bowtie_target.bam", package = "MetaScope")
+bamPath <- system.file("extdata", "bowtie_target.bam",
+                       package = "MetaScope")
 file.copy(bamPath, file_temp)
 
 metascope_id(file.path(file_temp, "bowtie_target.bam"), aligner = "bowtie2",
-             input_type = "bam", out_dir = file_temp, num_species_plot = 0)
+             input_type = "bam", out_dir = file_temp, num_species_plot = 0,
+             update_bam = TRUE)
 
 ## Run metascope blast
 ### Get export name and metascope id results
@@ -102,20 +108,20 @@ metascope_id_path <- file.path(file_temp, paste0(out_base, ".metascope_id.csv"))
 # NOTE: change db_path to the location where your BLAST database is stored!
 db <- "/restricted/projectnb/pathoscope/data/blastdb/nt/nt"
 
-Sys.setenv(ENTREZ_KEY = "01d22876be34df5c28f4aedc479a2674c809")
+Sys.setenv(ENTREZ_KEY = "<your id here>")
 
 metascope_blast(metascope_id_path,
-                bam_file_path = file.path(file_temp, "bowtie_target.bam"),
+                bam_file_path = file.path(file_temp, "bowtie_target.updated.bam"),
                 tmp_dir = file_temp,
                 out_dir = file_temp,
                 sample_name = out_base,
                 db_path = db,
                 num_results = 10,
-                num_reads = 100,
+                num_reads = 5,
                 hit_list = 10,
-                num_threads = 1,
+                num_threads = 3,
                 quiet = FALSE,
-                NCBI_key = "01d22876be34df5c28f4aedc479a2674c809")
+                NCBI_key = NULL)
 
 ## Remove temporary directory
 unlink(file_temp, recursive = TRUE)

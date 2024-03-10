@@ -1,12 +1,3 @@
-
-library(Rsamtools)
-library(taxize)
-library(Biostrings)
-library(dplyr)
-library(R.utils)
-library(rBLAST)
-library(stringr)
-
 #' Gets sequences from bam file
 #'
 #' Returns fasta sequences from a bam file with a given taxonomy ID
@@ -33,7 +24,8 @@ get_seqs <- function(id, bam_file, n = 10, quiet, NCBI_key = NULL,
   # Scan Bam file for all sequences that match genome
   param <- Rsamtools::ScanBamParam(what = c("rname", "seq"),
                                    which = GenomicRanges::GRanges(
-                                     Genome, IRanges::IRanges(1, 1e+07)))
+                                     seq_info_df$seqnames[allGenomes],
+                                     IRanges::IRanges(1, 1e+07)))
   allseqs <- Rsamtools::scanBam(bam_file, param = param)[[1]]
   n <- min(n, length(allseqs$seq))
   seqs <- sample(allseqs$seq, n)
@@ -77,38 +69,53 @@ taxid_to_name <- function(taxids, NCBI_key = NULL) {
 #'
 #' @return Returns a dataframe of blast results for a metascope result
 
+rBLAST_single_result <- function(results_table, bam_file, which_result,
+                                 num_reads = 100, hit_list = 10,
+                                 num_threads = 1, db_path, quiet = quiet,
+                                 NCBI_key = NULL, bam_seqs,
+                                 fasta_dir = NULL) {
+  res <- tryCatch({ #If any errors, should just skip the organism
+    rlang::is_installed("rBLAST")
+    genome_name <- results_table[which_result, 2]
+    if (!quiet) message("Current id: ", genome_name)
+    tax_id <- results_table[which_result, 1]
+    if (!quiet) message("Current ti: ", tax_id)
 
-rBLAST_single_result <- function(results_table, fasta_file, which_result = 1, num_reads = 100,
-                                 hit_list = 10, num_threads = 1, db_path, quiet = FALSE, NCBI_key = NCBI_key) {
-  res <- tryCatch( #If any errors, should just skip the organism
-    {
-      genome_name <- results_table[which_result,2]
-      if (!quiet) message("Current id: ", genome_name)
-      tax_id <- results_table[which_result,1]
-      if (!quiet) message("Current ti: ", tax_id)
-      fasta_seqs <- Biostrings::readDNAStringSet(fasta_file)
-      blast_db <- rBLAST::blast(db = db_path, type = "blastn")
-      blast_res <- predict(blast_db, fasta_seqs,
-                                   custom_format ="qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore staxids",
-                                   BLAST_args = paste0("-max_target_seqs ", hit_list, " -num_threads ", num_threads))
-      taxize_genome_df <- taxid_to_name(unique(blast_res$staxids), NCBI_key = NCBI_key)
-      blast_res$MetaScope_Taxid <- tax_id
-      blast_res$MetaScope_Genome <- genome_name
-      blast_res <- dplyr::left_join(blast_res, taxize_genome_df, by = "staxids")
-      blast_res
-    },
-    error = function(e) {
-      cat("Error", conditionMessage(e), "\n")
-      blast_res <- data.frame(qseqid=NA, sseqid=NA, pident=NA, length=NA,
-                              mismatch=NA, gapopen=NA, qstart=NA, qend=NA,
-                              sstart=NA, send=NA, evalue=NA, bitscore=NA, staxids=NA)
-      tax_id <- results_table[which_result,1]
-      genome_name <- results_table[which_result,2]
-      blast_res$MetaScope_Taxid <- tax_id
-      blast_res$MetaScope_Genome <- genome_name
-      blast_res$name <- NA
-      blast_res
-    }
+    if (!is.null(fasta_dir)) {
+      fasta_seqs <- list.files(path=fastas_dir,pattern=paste0(which_result, "_")) |>
+        Biostrings::readDNAStringSet()
+    } else {
+      fasta_seqs <- get_seqs(id = tax_id, bam_file = bam_file, n = num_reads,
+                            quiet = quiet, NCBI_key = NCBI_key,
+                            bam_seqs = bam_seqs) }
+
+    blast_db <- rBLAST::blast(db = db_path, type = "blastn")
+    this_format <- paste("qseqid sseqid pident length mismatch gapopen",
+                         "qstart qend sstart send evalue bitscore staxids")
+    predict.BLAST <- utils::getFromNamespace("predict.BLAST", "rBLAST")
+    blast_res <- predict.BLAST(blast_db, fasta_seqs,
+                               custom_format = this_format,
+                               BLAST_args = paste("-max_target_seqs",
+                                                  hit_list, "-num_threads",
+                                                  num_threads))
+    taxize_genome_df <- taxid_to_name(unique(blast_res$staxids), NCBI_key = NCBI_key)
+    blast_res$MetaScope_Taxid <- tax_id
+    blast_res$MetaScope_Genome <- genome_name
+    blast_res <- dplyr::left_join(blast_res, taxize_genome_df, by = "staxids")
+    blast_res
+  },
+  error = function(e) {
+    cat("Error", conditionMessage(e), "\n")
+    all_colnames <- stringr::str_split(this_format, " ")[[1]]
+    blast_res <- matrix(NA, ncol = length(all_colnames),
+                        dimnames = list(c(), all_colnames)) |> as.data.frame()
+    tax_id <- results_table[which_result, 1]
+    genome_name <- results_table[which_result, 2]
+    blast_res$MetaScope_Taxid <- tax_id
+    blast_res$MetaScope_Genome <- genome_name
+    blast_res$name <- NA
+    blast_res
+  }
   )
   return(res)
 }
@@ -131,27 +138,26 @@ rBLAST_single_result <- function(results_table, fasta_file, which_result = 1, nu
 #' @return Creates and exports num_results number of csv files with blast
 #'   results from local blast
 
-
-rBlast_results <- function(results_table, fasta_files, num_results = 10,
+rBlast_results <- function(results_table, bam_file, num_results = 10,
                            num_reads_per_result = 100, hit_list = 10,
                            num_threads = 1, db_path, out_path,
                            sample_name = NULL, quiet = quiet,
-                           NCBI_key = NULL) {
+                           NCBI_key = NULL, fasta_dir = NULL) {
   # Grab all identifiers
-  #seq_info_df <- as.data.frame(Rsamtools::seqinfo(bam_file)) |>
-  #  tibble::rownames_to_column("seqnames")
-  #bam_seqs <- find_accessions(seq_info_df$seqnames,
-  #                            NCBI_key = NCBI_key, quiet = quiet) |>
-  #  plyr::aaply(1, function(x) x[1])
+  seq_info_df <- as.data.frame(Rsamtools::seqinfo(bam_file)) |>
+    tibble::rownames_to_column("seqnames")
+  bam_seqs <- find_accessions(seq_info_df$seqnames,
+                              NCBI_key = NCBI_key, quiet = quiet) |>
+    plyr::aaply(1, function(x) x[1])
   # Grab results
   num_results2 <- min(num_results, nrow(results_table))
   run_res <- function(i) {
-    fasta_file <- fasta_files[i]
-    df <- rBLAST_single_result(results_table, fasta_file = fasta_file, which_result = i,
+    df <- rBLAST_single_result(results_table, bam_file, which_result = i,
                                num_reads = num_reads_per_result,
                                hit_list = hit_list, num_threads = num_threads,
                                db_path = db_path, quiet = quiet,
-                               NCBI_key = NCBI_key)
+                               NCBI_key = NCBI_key, bam_seqs = bam_seqs,
+                               fasta_dir = fasta_dir)
     tax_id <- results_table[i, 1]
     utils::write.csv(df, file.path(out_path,
                                    paste0(sprintf("%05d", i), "_", sample_name,
@@ -179,7 +185,6 @@ rBlast_results <- function(results_table, fasta_files, num_results = 10,
 #'   genus_contaminant_score
 #'
 
-
 blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
   tryCatch({
     # Load in blast results table
@@ -199,56 +204,52 @@ blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
     meta_tax <- taxid_to_name(unique(blast_results_table$MetaScope_Taxid),
                               NCBI_key = NCBI_key) |> dplyr::select(-"staxids")
 
-    blast_results_table <- blast_results_table %>%
+    blast_results_table_2 <- blast_results_table |>
       dplyr::mutate("MetaScope_genus" = meta_tax$genus[1],
-        "MetaScope_species" = meta_tax$species[1]) |>
+                    "MetaScope_species" = meta_tax$species[1]) |>
       dplyr::rename("query_genus" = "genus",
-        "query_species" = "species")
-
-    # Getting best hit per read
-    blast_results_table <- blast_results_table %>%
-      group_by(.data$qseqid) %>% slice_max(.data$evalue, with_ties = TRUE)
-
-    # Removing duplicate query num and query species
-    blast_results_table <- blast_results_table %>%
+                    "query_species" = "species") |>
+      # Getting best hit per read
+      dplyr::group_by(.data$qseqid) |>
+      dplyr::slice_max(.data$evalue, with_ties = TRUE) |>
+      # Removing duplicate query num and query species
       dplyr::distinct(.data$qseqid, .data$query_species, .keep_all = TRUE)
 
     # Calculating Metrics
-    best_hit <- blast_results_table %>%
-      dplyr::group_by(.data$query_species) %>%
-      dplyr::summarise("num_reads" = dplyr::n()) %>%
+    best_hit <- blast_results_table_2 |>
+      dplyr::group_by(.data$query_species) |>
+      dplyr::summarise("num_reads" = dplyr::n()) |>
       dplyr::slice_max(.data$num_reads, with_ties = FALSE)
 
-    uniqueness_score <- blast_results_table %>%
-      dplyr::group_by(.data$query_species) %>%
-      dplyr::summarise("num_reads" = dplyr::n()) %>%
-      nrow()
+    best_hit_strain <- blast_results_table_2 |>
+      tidyr::separate("sseqid", c(NA, "gi", NA, NA, NA), sep = "\\|")  |>
+      dplyr::group_by(.data$gi) |>
+      dplyr::summarise("num_reads" = dplyr::n()) |>
+      dplyr::slice_max(.data$num_reads, with_ties = TRUE)
+    if (nrow(best_hit_strain) > 1) {
+      best_strain <- NA
+    } else if (nrow(best_hit_strain) == 1) {
+      res <- taxize::genbank2uid(best_hit_strain$gi, NCBI_key = NCBI_key)
+      best_strain <- attr(res[[1]], "name")
+    }
 
-    species_percentage_hit <- blast_results_table %>%
-      dplyr::filter(.data$MetaScope_species == .data$query_species) %>%
-      nrow() / length(unique(blast_results_table$qseqid))
+      all_results <- blast_results_table_2 |>
+      dplyr::ungroup() |>
+      tidyr::replace_na(replace = list("query_genus" = "Unknown",
+                                       "query_species" = "Unknown",
+                                       "MetaScope_genus" = "Unknown",
+                                       "MetaScope_species" = "Unknown")) |>
+      dplyr::mutate("is_equiv_sp" = .data$MetaScope_species == .data$query_species,
+                    "is_equiv_gn" = .data$MetaScope_genus == .data$query_genus) |>
+      dplyr::summarise(uniqueness_score = length(unique(.data$query_species)),
+                       species_percentage_hit = mean(.data$is_equiv_sp),
+                       genus_percentage_hit = mean(.data$is_equiv_gn)) |>
+      dplyr::mutate(species_contaminant_score = 1 - .data$species_percentage_hit,
+                    genus_contaminant_score = 1 - .data$genus_percentage_hit,
+                    best_hit = best_hit$query_species,
+                    best_hit_strain = best_strain)
 
-    genus_percentage_hit <- blast_results_table %>%
-      dplyr::filter(.data$MetaScope_genus == .data$query_genus) %>%
-      nrow() / length(unique(blast_results_table$qseqid))
-
-    species_contaminant_score <- blast_results_table %>%
-      dplyr::filter(.data$MetaScope_species != .data$query_species) %>%
-      dplyr::distinct(.data$qseqid, .keep_all = TRUE) %>%
-      nrow() / length(unique(blast_results_table$qseqid))
-
-    genus_contaminant_score <- blast_results_table %>%
-      dplyr::filter(.data$MetaScope_genus != .data$query_genus) %>%
-      dplyr::distinct(.data$qseqid, .keep_all = TRUE) %>%
-      nrow() / length(unique(blast_results_table$qseqid))
-
-    data.frame(best_hit = best_hit$query_species,
-               uniqueness_score = uniqueness_score,
-               species_percentage_hit = species_percentage_hit,
-               genus_percentage_hit = genus_percentage_hit,
-               species_contaminant_score = species_contaminant_score,
-               genus_contaminant_score = genus_contaminant_score) %>%
-    return()
+    return(all_results)
   },
   error = function(e)
   {
@@ -258,7 +259,9 @@ blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
                       species_percentage_hit = 0,
                       genus_percentage_hit = 0,
                       species_contaminant_score = 0,
-                      genus_contaminant_score = 0))
+                      genus_contaminant_score = 0,
+                      best_hit = NA,
+                      best_hit_strain = NA))
   }
   )
 }
@@ -279,12 +282,16 @@ blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
 #' This is highly computationally intensive and should be ran with multiple
 #' cores, submitted as a multi-threaded computing job if possible.
 #'
+#' Note, if best_hit_strain is FALSE, then no strain was observed more often
+#' among the BLAST results.
+#'
 #' @param metascope_id_path Character string; path to a csv file output by
 #'   `metascope_id()`.
 #' @param bam_file_path Character string; full path to bam file for the same
 #'   sample processed by `metascope_id`. Note that the `filter_bam` function
 #'   must have output a bam file, and not a .csv.gz file. See
-#'   `?filter_bam_bowtie` for more details.
+#'   `?filter_bam_bowtie` for more details. Defaults to
+#'   \code{list.files(file_temp, ".updated.bam$")[1]}.
 #' @param tmp_dir Character string, a temporary directory in which to host
 #'   files.
 #' @param out_dir Character string, path to output directory.
@@ -320,11 +327,13 @@ blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
 #' file_temp <- tempfile()
 #' dir.create(file_temp)
 #'
-#' bamPath <- system.file("extdata", "bowtie_target.bam", package = "MetaScope")
+#' bamPath <- system.file("extdata", "bowtie_target.bam",
+#'                        package = "MetaScope")
 #' file.copy(bamPath, file_temp)
 #'
 #' metascope_id(file.path(file_temp, "bowtie_target.bam"), aligner = "bowtie2",
-#'              input_type = "bam", out_dir = file_temp, num_species_plot = 0)
+#'              input_type = "bam", out_dir = file_temp, num_species_plot = 0,
+#'              update_bam = TRUE)
 #'
 #' ## Run metascope blast
 #' ### Get export name and metascope id results
@@ -335,20 +344,20 @@ blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
 #' # NOTE: change db_path to the location where your BLAST database is stored!
 #' db <- "/restricted/projectnb/pathoscope/data/blastdb/nt/nt"
 #'
-#' Sys.setenv(ENTREZ_KEY = "01d22876be34df5c28f4aedc479a2674c809")
+#' Sys.setenv(ENTREZ_KEY = "<your id here>")
 #'
 #' metascope_blast(metascope_id_path,
-#'                 bam_file_path = file.path(file_temp, "bowtie_target.bam"),
+#'                 bam_file_path = file.path(file_temp, "bowtie_target.updated.bam"),
 #'                 tmp_dir = file_temp,
 #'                 out_dir = file_temp,
 #'                 sample_name = out_base,
 #'                 db_path = db,
 #'                 num_results = 10,
-#'                 num_reads = 100,
+#'                 num_reads = 5,
 #'                 hit_list = 10,
-#'                 num_threads = 1,
+#'                 num_threads = 3,
 #'                 quiet = FALSE,
-#'                 NCBI_key = "01d22876be34df5c28f4aedc479a2674c809")
+#'                 NCBI_key = NULL)
 #'
 #' ## Remove temporary directory
 #' unlink(file_temp, recursive = TRUE)
@@ -356,27 +365,37 @@ blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
 #'
 
 metascope_blast <- function(metascope_id_path,
-                            tmp_dir, out_dir, sample_name,
+                            bam_file_path = list.files(tmp_dir, ".updated.bam$",
+                                                       full.names = TRUE)[1],
+                            tmp_dir, out_dir, sample_name, fasta_dir = NULL,
                             num_results = 10, num_reads = 100, hit_list = 10,
-                            num_threads = 1, db_path, blast_fastas = TRUE,
-                            quiet = FALSE,
+                            num_threads = 1, db_path, quiet = FALSE,
                             NCBI_key = NULL) {
+  if (!is.numeric(threads)) threads <- 1
+  # Sort and index bam file
+  sorted_bam_file_path <- file.path(tmp_dir, paste0(sample_name, "_sorted"))
+  Rsamtools::sortBam(bam_file_path, destination = sorted_bam_file_path)
+  sorted_bam_file <- paste0(sorted_bam_file_path, ".bam")
+  Rsamtools::indexBam(sorted_bam_file)
+  bam_file <- Rsamtools::BamFile(sorted_bam_file, index = sorted_bam_file)
 
   # Load in metascope id file and clean unknown genomes
   metascope_id_in <- utils::read.csv(metascope_id_path, header = TRUE)
 
-  # List fasta files
-  if (blast_fastas) fasta_files <- list.files(file.path(out_dir, "fastas"), full.names = TRUE)
   # Create blast directory in tmp directory to save blast results in
   blast_tmp_dir <- file.path(tmp_dir, "blast")
   if(!dir.exists(blast_tmp_dir)) dir.create(blast_tmp_dir, recursive = TRUE)
 
+
+
+
   # Run rBlast on all metascope microbes
-  rBlast_results(results_table = metascope_id_in, fasta_files = fasta_files,
+  rBlast_results(results_table = metascope_id_in, bam_file = bam_file,
                  num_results = num_results, num_reads_per_result = num_reads,
                  hit_list = hit_list, num_threads = num_threads,
                  db_path = db_path, out_path = blast_tmp_dir,
-                 sample_name = sample_name, quiet = quiet, NCBI_key = NCBI_key)
+                 sample_name = sample_name, quiet = quiet, NCBI_key = NCBI_key,
+                 fasta_dir = fasta_dir)
 
   # Run Blast metrics
   blast_result_metrics_df <- plyr::adply(
@@ -389,7 +408,12 @@ metascope_blast <- function(metascope_id_path,
     blast_result_metrics_df[ind, ] <- NA
   }
   print_file <- file.path(out_dir, paste0(sample_name, ".metascope_blast.csv"))
-  metascope_blast_df <- data.frame(metascope_id_in, blast_result_metrics_df)
+  metascope_blast_df <- data.frame(metascope_id_in, blast_result_metrics_df) |>
+  # Add MetaScope original species after genome
+    dplyr::mutate("MetaID Species" = taxid_to_name(metascope_id_in$TaxonomyID,
+                                NCBI_key = NCBI_key)$species) |>
+    dplyr::relocate("MetaID Species", .after = "Genome") |>
+    dplyr::rename("MetaID Genome" = "Genome")
   utils::write.csv(metascope_blast_df, print_file)
   message("Results written to ", print_file)
   return(metascope_blast_df)

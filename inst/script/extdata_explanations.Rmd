@@ -37,6 +37,8 @@ download_refseq(taxon = "Staphylococcus epidermidis RP62A", representative = FAL
 
 #### Command line code (UNIX)
 
+Make sure that samtools is installed / loaded to use wgsim.
+
 ```{bash, eval = FALSE}
 mv Staphylococcus\\ aureus\\ RF122.fasta Staphylococcus_aureus_RF122.fasta
 
@@ -46,7 +48,7 @@ wgsim -N 1000 -1 250 -2 250 -S 32 Staphylococcus_aureus_RF122.fasta read1.fq rea
 
 wgsim -N 500 -1 250 -2 250 -S 32 Staphylococcus_epidermidis_RP62A.fasta read3.fq read4.fq
 
-cat read1.fq read3.fq \> reads.fastq
+cat read1.fq read3.fq > reads.fastq
 
 ```
 

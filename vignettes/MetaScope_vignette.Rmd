@@ -75,7 +75,7 @@ options("ENTREZ_KEY" = NCBI_key)
 
 # Data
 
-The mock data provided in the package consists of simulated sequencing data generated from the `SAMtools` `wgsim` function (see `DATA_README.txt` in `inst/extdata` to see exact commands). The `wgsim` function is a tool which allows for the generation of FASTQ reads from a reference genome (FASTA). The mock data (`reads.fastq`) contains 1500 reads, of which 1000 reads are derived from the *Staphylococcus aureus* RF122 strain and 500 reads are derived from the *Staphylococcus epidermidis* RP62A strain. In this data set, we assume that the *S. aureus* RF122 reads are the reads of interest, and the *S. epidermidis* RP62A reads are known contaminant reads which should be removed during the analysis. Ideally, the microbial composition report (.csv) produced at the end of the analysis should contain only reads assigned to the *S. aureus* RF122 strain.
+The mock data provided in the package consists of simulated sequencing data generated from the `SAMtools` `wgsim` function (see `extdata_explanations.Rmd` in `inst/script` to see exact commands). The `wgsim` function is a tool which allows for the generation of FASTQ reads from a reference genome (FASTA). The mock data (`reads.fastq`) contains 1500 reads, of which 1000 reads are derived from the *Staphylococcus aureus* RF122 strain and 500 reads are derived from the *Staphylococcus epidermidis* RP62A strain. In this data set, we assume that the *S. aureus* RF122 reads are the reads of interest, and the *S. epidermidis* RP62A reads are known contaminant reads which should be removed during the analysis. Ideally, the microbial composition report (.csv) produced at the end of the analysis should contain only reads assigned to the *S. aureus* RF122 strain.
 
 # Reference Genome Library
 
@@ -93,9 +93,11 @@ Even though in this scenario we know exactly from where the reads in the mock da
 target_ref_temp <- tempfile()
 dir.create(target_ref_temp)
 
-all_species <- c("Staphylococcus aureus RF122",
-                 "Staphylococcus aureus subsp. aureus ST398",
-                 "Staphylococcus aureus subsp. aureus Mu3")
+all_species <- c("Staphylococcus aureus subsp. aureus Mu50",
+                 "Staphylococcus aureus subsp. aureus Mu3",
+                 "Staphylococcus aureus subsp. aureus str. Newman",
+                 "Staphylococcus aureus subsp. aureus N315",
+                 "Staphylococcus aureus RF122", "Staphylococcus aureus subsp. aureus ST398")
 sapply(all_species, download_refseq, 
        reference = FALSE, representative = FALSE, compress = TRUE,
        out_dir = target_ref_temp, caching = TRUE)
@@ -103,8 +105,9 @@ sapply(all_species, download_refseq,
 
 ## Downloading filter genomes
 
-We will also download the genome of the *Staphylococcus epidermidis* RP62A strain from the NCBI nucleotide database, in an uncompressed FASTA format. This genome will act as our filter library.
+We will also download the reference genome and related sequences* of the *Staphylococcus epidermidis* RP62A strain from the NCBI nucleotide database, in an uncompressed FASTA format. This genome will act as our filter library.
 
+* since we are downloading from the nucleotide database with representative and reference = FALSE, several sequences will be downloaded in addition to the main genome.
 ```{R filter lib, warning = FALSE, message = FALSE}
 filter_ref_temp <- tempfile()
 dir.create(filter_ref_temp)
@@ -294,13 +297,18 @@ Following the proper alignment of a sample to all target and filter libraries of
 The identification workflow consists of a single function, `MetaScope_ID()`, which reads in a .bam file, annotates the taxonomy and genome names, reduces the mapping ambiguity using a mixture model, and outputs a .csv file with the results. Currently, it assumes that the genome library/.bam files use NCBI accession names for reference names.
 
 ```{R identification, message = FALSE}
-metascope_id(
+output <- metascope_id(
   final_map,
   input_type = "bam",
   # change input_type to "csv.gz" when not creating a BAM
   aligner = "bowtie2",
   num_species_plot = 0
 )
+
+knitr::kable(output,
+             format = "html",
+             digits = 2,
+             caption = "Table of MetaScope ID results")
 ```
 
 **Note: the next code block is included for the sake of examining the vignette example, but can be skipped. Your results are in the CSV file produced by the `metascope_id()` function.**
