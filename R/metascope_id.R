@@ -474,15 +474,15 @@ metascope_id <- function(input_file, input_type = "csv.gz",
     num_genomes <- min(num_genomes, nrow(results[[1]]))
     dir.create(file.path(out_dir, "fastas"))
     for (i in seq.int(1, num_genomes)) {
-      current_genome <- results[[1]]$Genome[i] %>% stringr::word(1:2) %>% paste0(collapse = "_")
       current_rname_ind <- results[[1]]$hits_ind[i]
       read_indices <- combined_distinct %>% filter(rname == current_rname_ind) %>%
         pull(index)
       current_num_reads <- min(num_reads, length(read_indices))
       read_indices <- read_indices %>% sample(current_num_reads)
       seqs <- reads[[1]]$seq[read_indices]
-      Biostrings::writeXStringSet(seqs, file.path(out_dir, "fastas",
-                                                  paste0(i, "_", current_genome, ".fa")))
+
+      Biostrings::writeXStringSet(seqs,
+                                  file.path(out_dir, "fastas", paste0(sprintf("%04", i), ".fa")))
     }
   }
 
