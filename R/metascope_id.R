@@ -173,7 +173,7 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
                                   hits_ind = hits_ind) %>%
     dplyr::arrange(dplyr::desc(.data$read_count))
   if (!quiet) message("Found reads for ", nrow(results_tibble), " genomes")
-  
+
   return(list(results_tibble, combined_distinct, combined_single))
 }
 
@@ -272,7 +272,7 @@ locations <- function(which_taxid, which_genome,
                   xlab = "Aligned position across genome (leftmost read position)",
                   ylab = "Read Count",
                   caption = paste0("Accession Number: ", choose_acc))
-  
+
   ggplot2::ggsave(paste0(plots_save, "/",
                          stringr::str_replace(use_name, " ", "_"), ".png"),
                   device = "png")
@@ -471,18 +471,13 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                                                       "readsEM", "EMProportion")
   utils::write.csv(metascope_id_file, file = out_file, row.names = FALSE)
   if (!quiet) message("Results written to ", out_file)
-  
+
   if (blast_fastas){
     combined_distinct <- results[[2]]
     num_genomes <- min(num_genomes, nrow(results[[1]]))
     new_file <- file.path(out_dir, "fastas")
     if(!dir.exists(new_file)) dir.create(new_file)
     for (i in seq.int(1, num_genomes)) {
-<<<<<<< HEAD
-=======
-      current_genome <- results[[1]]$Genome[i] %>% stringr::word(1:2) %>%
-        paste0(collapse = "_")
->>>>>>> 44c4112902b8822b36d6904001dd70885324fbd6
       current_rname_ind <- results[[1]]$hits_ind[i]
       read_indices <- combined_distinct %>%
         dplyr::filter(.data$rname == current_rname_ind) %>%
@@ -490,12 +485,11 @@ metascope_id <- function(input_file, input_type = "csv.gz",
       current_num_reads <- min(num_reads, length(read_indices))
       read_indices <- read_indices %>% sample(current_num_reads)
       seqs <- reads[[1]]$seq[read_indices]
-
       Biostrings::writeXStringSet(seqs,
                                   file.path(out_dir, "fastas", paste0(sprintf("%04", i), ".fa")))
     }
   }
-  
+
   if (update_bam) {
     combined_single <- results[3]
     filter_which <- combined_single$single_hit
