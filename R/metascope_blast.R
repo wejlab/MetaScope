@@ -82,12 +82,12 @@ rBLAST_single_result <- function(results_table, bam_file, which_result,
     if (!quiet) message("Current ti: ", tax_id)
 
     if (!is.null(fasta_dir)) {
-      fasta_seqs <- list.files(path=fastas_dir,pattern=paste0(which_result, "_")) |>
+      fasta_seqs <- list.files(path=fasta_dir,pattern=paste0(which_result, ".fa"), full.names = TRUE) |>
         Biostrings::readDNAStringSet()
     } else {
       fasta_seqs <- get_seqs(id = tax_id, bam_file = bam_file, n = num_reads,
-                            quiet = quiet, NCBI_key = NCBI_key,
-                            bam_seqs = bam_seqs) }
+                             quiet = quiet, NCBI_key = NCBI_key,
+                             bam_seqs = bam_seqs) }
 
     blast_db <- rBLAST::blast(db = db_path, type = "blastn")
     this_format <- paste("qseqid sseqid pident length mismatch gapopen",
@@ -106,6 +106,8 @@ rBLAST_single_result <- function(results_table, bam_file, which_result,
   },
   error = function(e) {
     cat("Error", conditionMessage(e), "\n")
+    this_format <- paste("qseqid sseqid pident length mismatch gapopen",
+                         "qstart qend sstart send evalue bitscore staxids")
     all_colnames <- stringr::str_split(this_format, " ")[[1]]
     blast_res <- matrix(NA, ncol = length(all_colnames),
                         dimnames = list(c(), all_colnames)) |> as.data.frame()
@@ -144,11 +146,15 @@ rBlast_results <- function(results_table, bam_file, num_results = 10,
                            sample_name = NULL, quiet = quiet,
                            NCBI_key = NULL, fasta_dir = NULL) {
   # Grab all identifiers
-  seq_info_df <- as.data.frame(Rsamtools::seqinfo(bam_file)) |>
-    tibble::rownames_to_column("seqnames")
-  bam_seqs <- find_accessions(seq_info_df$seqnames,
-                              NCBI_key = NCBI_key, quiet = quiet) |>
-    plyr::aaply(1, function(x) x[1])
+  if (is.null(fasta_dir)) {
+    seq_info_df <- as.data.frame(Rsamtools::seqinfo(bam_file)) |>
+      tibble::rownames_to_column("seqnames")
+    bam_seqs <- find_accessions(seq_info_df$seqnames,
+                                NCBI_key = NCBI_key, quiet = quiet) |>
+      plyr::aaply(1, function(x) x[1])
+  } else {
+    bam_seqs = NULL
+  }
   # Grab results
   num_results2 <- min(num_results, nrow(results_table))
   run_res <- function(i) {
@@ -233,7 +239,7 @@ blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
       best_strain <- attr(res[[1]], "name")
     }
 
-      all_results <- blast_results_table_2 |>
+    all_results <- blast_results_table_2 |>
       dplyr::ungroup() |>
       tidyr::replace_na(replace = list("query_genus" = "Unknown",
                                        "query_species" = "Unknown",
@@ -371,13 +377,15 @@ metascope_blast <- function(metascope_id_path,
                             num_results = 10, num_reads = 100, hit_list = 10,
                             num_threads = 1, db_path, quiet = FALSE,
                             NCBI_key = NULL) {
-  if (!is.numeric(threads)) threads <- 1
+  if (!is.numeric(num_threads)) num_threads <- 1
   # Sort and index bam file
-  sorted_bam_file_path <- file.path(tmp_dir, paste0(sample_name, "_sorted"))
-  Rsamtools::sortBam(bam_file_path, destination = sorted_bam_file_path)
-  sorted_bam_file <- paste0(sorted_bam_file_path, ".bam")
-  Rsamtools::indexBam(sorted_bam_file)
-  bam_file <- Rsamtools::BamFile(sorted_bam_file, index = sorted_bam_file)
+  if (is.null(fasta_dir)) {
+    sorted_bam_file_path <- file.path(tmp_dir, paste0(sample_name, "_sorted"))
+    Rsamtools::sortBam(bam_file_path, destination = sorted_bam_file_path)
+    sorted_bam_file <- paste0(sorted_bam_file_path, ".bam")
+    Rsamtools::indexBam(sorted_bam_file)
+    bam_file <- Rsamtools::BamFile(sorted_bam_file, index = sorted_bam_file)
+  }
 
   # Load in metascope id file and clean unknown genomes
   metascope_id_in <- utils::read.csv(metascope_id_path, header = TRUE)
@@ -409,12 +417,13 @@ metascope_blast <- function(metascope_id_path,
   }
   print_file <- file.path(out_dir, paste0(sample_name, ".metascope_blast.csv"))
   metascope_blast_df <- data.frame(metascope_id_in, blast_result_metrics_df) |>
-  # Add MetaScope original species after genome
+    # Add MetaScope original species after genome
     dplyr::mutate("MetaID Species" = taxid_to_name(metascope_id_in$TaxonomyID,
-                                NCBI_key = NCBI_key)$species) |>
+                                                   NCBI_key = NCBI_key)$species) |>
     dplyr::relocate("MetaID Species", .after = "Genome") |>
     dplyr::rename("MetaID Genome" = "Genome")
   utils::write.csv(metascope_blast_df, print_file)
   message("Results written to ", print_file)
   return(metascope_blast_df)
 }
+
