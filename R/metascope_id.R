@@ -486,7 +486,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
       read_indices <- read_indices %>% sample(current_num_reads)
       seqs <- reads[[1]]$seq[read_indices]
       Biostrings::writeXStringSet(seqs,
-                                  file.path(out_dir, "fastas", paste0(sprintf("%04", i), ".fa")))
+                                  file.path(out_dir, "fastas", paste0(sprintf("%04d", i), ".fa")))
     }
   }
 
