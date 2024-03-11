@@ -191,7 +191,7 @@ rBlast_results <- function(results_table, bam_file, num_results = 10,
 #'   genus_contaminant_score
 #'
 
-blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
+blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL, db = NULL){
   tryCatch({
     # Load in blast results table
     blast_results_table <- utils::read.csv(blast_results_table_path, header = TRUE)
@@ -207,19 +207,33 @@ blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL){
     }
 
     # Adding Species and Genus columns
-    meta_tax <- taxid_to_name(unique(blast_results_table$MetaScope_Taxid),
-                              NCBI_key = NCBI_key) |> dplyr::select(-"staxids")
+    if (db == "silva") {
+      blast_results_table_2 <- blast_results_table |>
+        dplyr::mutate("MetaScope_genus" = strsplit(MetaScope_Genome, ";", fixed = TRUE)[[1]][7],
+                      "MetaScope_species" = strsplit(MetaScope_Genome, ";", fixed = TRUE)[[1]][8]) |>
+        dplyr::rename("query_genus" = "genus",
+                      "query_species" = "species") |>
+        # Getting best hit per read
+        dplyr::group_by(.data$qseqid) |>
+        dplyr::slice_max(.data$evalue, with_ties = TRUE) |>
+        # Removing duplicate query num and query species
+        dplyr::distinct(.data$qseqid, .data$query_species, .keep_all = TRUE)
 
-    blast_results_table_2 <- blast_results_table |>
-      dplyr::mutate("MetaScope_genus" = meta_tax$genus[1],
-                    "MetaScope_species" = meta_tax$species[1]) |>
-      dplyr::rename("query_genus" = "genus",
-                    "query_species" = "species") |>
-      # Getting best hit per read
-      dplyr::group_by(.data$qseqid) |>
-      dplyr::slice_max(.data$evalue, with_ties = TRUE) |>
-      # Removing duplicate query num and query species
-      dplyr::distinct(.data$qseqid, .data$query_species, .keep_all = TRUE)
+    } else {
+      meta_tax <- taxid_to_name(unique(blast_results_table$MetaScope_Taxid),
+                                NCBI_key = NCBI_key) |> dplyr::select(-"staxids")
+
+      blast_results_table_2 <- blast_results_table |>
+        dplyr::mutate("MetaScope_genus" = meta_tax$genus[1],
+                      "MetaScope_species" = meta_tax$species[1]) |>
+        dplyr::rename("query_genus" = "genus",
+                      "query_species" = "species") |>
+        # Getting best hit per read
+        dplyr::group_by(.data$qseqid) |>
+        dplyr::slice_max(.data$evalue, with_ties = TRUE) |>
+        # Removing duplicate query num and query species
+        dplyr::distinct(.data$qseqid, .data$query_species, .keep_all = TRUE)
+    }
 
     # Calculating Metrics
     best_hit <- blast_results_table_2 |>
@@ -376,7 +390,7 @@ metascope_blast <- function(metascope_id_path,
                             tmp_dir, out_dir, sample_name, fasta_dir = NULL,
                             num_results = 10, num_reads = 100, hit_list = 10,
                             num_threads = 1, db_path, quiet = FALSE,
-                            NCBI_key = NULL) {
+                            NCBI_key = NULL, db = NULL) {
   if (!is.numeric(num_threads)) num_threads <- 1
   # Sort and index bam file
   if (is.null(fasta_dir)) {
@@ -408,7 +422,7 @@ metascope_blast <- function(metascope_id_path,
   # Run Blast metrics
   blast_result_metrics_df <- plyr::adply(
     list.files(blast_tmp_dir, full.names = TRUE), 1, blast_result_metrics,
-    NCBI_key = NCBI_key)
+    NCBI_key = NCBI_key, db = db)
 
   # Append Blast Metrics to MetaScope results
   if (nrow(metascope_id_in) > nrow(blast_result_metrics_df)) {
