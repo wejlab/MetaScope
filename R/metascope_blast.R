@@ -82,7 +82,7 @@ rBLAST_single_result <- function(results_table, bam_file, which_result,
     if (!quiet) message("Current ti: ", tax_id)
 
     if (!is.null(fasta_dir)) {
-      fasta_seqs <- list.files(path=fasta_dir,pattern=paste0(which_result, ".fa"), full.names = TRUE) |>
+      fasta_seqs <- list.files(path=fasta_dir, full.names = TRUE)[which_result] |>
         Biostrings::readDNAStringSet()
     } else {
       fasta_seqs <- get_seqs(id = tax_id, bam_file = bam_file, n = num_reads,
@@ -430,12 +430,8 @@ metascope_blast <- function(metascope_id_path,
     blast_result_metrics_df[ind, ] <- NA
   }
   print_file <- file.path(out_dir, paste0(sample_name, ".metascope_blast.csv"))
-  metascope_blast_df <- data.frame(metascope_id_in, blast_result_metrics_df) |>
-    # Add MetaScope original species after genome
-    dplyr::mutate("MetaID Species" = taxid_to_name(metascope_id_in$TaxonomyID,
-                                                   NCBI_key = NCBI_key)$species) |>
-    dplyr::relocate("MetaID Species", .after = "Genome") |>
-    dplyr::rename("MetaID Genome" = "Genome")
+
+  metascope_blast_df <- data.frame(metascope_id_in, blast_result_metrics_df)
   utils::write.csv(metascope_blast_df, print_file)
   message("Results written to ", print_file)
   return(metascope_blast_df)
