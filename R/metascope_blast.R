@@ -11,8 +11,7 @@
 #'
 #' @return Biostrings format sequences
 
-get_seqs <- function(id, bam_file, n = 10, quiet, NCBI_key = NULL,
-                     bam_seqs) {
+get_seqs <- function(id, bam_file, n = 10, bam_seqs) {
   rlang::is_installed("GenomicRanges")
   rlang::is_installed("IRanges")
   allGenomes <- stringr::str_detect(id, bam_seqs)
@@ -35,23 +34,17 @@ get_seqs <- function(id, bam_file, n = 10, quiet, NCBI_key = NULL,
 #' Converts NCBI taxonomy ID to scientific name
 #'
 #' @param taxids List of NCBI taxids to convert to scientific name
+#' @param accessions_path Path to accessionsTaxa.sql
 #' @inheritParams metascope_blast
 #' @importFrom rlang .data
 #' @return Returns a dataframe of blast results for a metascope result
 
-taxid_to_name <- function(taxids, NCBI_key = NULL) {
-  smol_func <- function(x) {
-    out <- class_taxon(x, NCBI_key, 5)
-    if ("genus" %in% out$rank) {
-      genus <- dplyr::filter(out, rank == "genus") |> dplyr::pull("name")
-    } else genus <- NA
-    if ("species" %in% out$rank) {
-      species <- dplyr::filter(out, rank == "species") |> dplyr::pull("name")
-    } else species <- NA
-    tibble::tibble("staxids" = as.integer(x), genus, species)
-  }
-  all_combined <- plyr::adply(taxids, 1, smol_func, .id = NULL)
-  return(all_combined)
+taxid_to_name <- function(taxids, accessions_path) {
+  out <- taxonomizr::getTaxonomy(taxids, accessions_path)
+  out_df <- as.data.frame(out) |> tibble::rownames_to_column("staxids") |>
+    dplyr::select(staxids, genus, species) |>
+    dplyr::mutate(species = str_replace(species, genus, ""))
+  return(out_df)
 }
 
 #' rBLAST_single_result
@@ -71,8 +64,8 @@ taxid_to_name <- function(taxids, NCBI_key = NULL) {
 
 rBLAST_single_result <- function(results_table, bam_file, which_result,
                                  num_reads = 100, hit_list = 10,
-                                 num_threads = 1, db_path, quiet = quiet,
-                                 NCBI_key = NULL, bam_seqs,
+                                 num_threads = 1, db_path, quiet,
+                                 accessions_path, bam_seqs,
                                  fasta_dir = NULL) {
   res <- tryCatch({ #If any errors, should just skip the organism
     rlang::is_installed("rBLAST")
@@ -81,13 +74,13 @@ rBLAST_single_result <- function(results_table, bam_file, which_result,
     tax_id <- results_table[which_result, 1]
     if (!quiet) message("Current ti: ", tax_id)
 
+    # Generate sequences to blast
     if (!is.null(fasta_dir)) {
       fasta_seqs <- list.files(path=fasta_dir, full.names = TRUE)[which_result] |>
         Biostrings::readDNAStringSet()
     } else {
       fasta_seqs <- get_seqs(id = tax_id, bam_file = bam_file, n = num_reads,
-                             quiet = quiet, NCBI_key = NCBI_key,
-                             bam_seqs = bam_seqs) }
+                             quiet = quiet,bam_seqs = bam_seqs) }
 
     blast_db <- rBLAST::blast(db = db_path, type = "blastn")
     this_format <- paste("qseqid sseqid pident length mismatch gapopen",
@@ -98,7 +91,8 @@ rBLAST_single_result <- function(results_table, bam_file, which_result,
                                BLAST_args = paste("-max_target_seqs",
                                                   hit_list, "-num_threads",
                                                   num_threads))
-    taxize_genome_df <- taxid_to_name(unique(blast_res$staxids), NCBI_key = NCBI_key)
+    taxize_genome_df <- taxid_to_name(unique(blast_res$staxids),
+                                      accessions_path = accessions_path)
     blast_res$MetaScope_Taxid <- tax_id
     blast_res$MetaScope_Genome <- genome_name
     blast_res <- dplyr::left_join(blast_res, taxize_genome_df, by = "staxids")
@@ -144,7 +138,7 @@ rBlast_results <- function(results_table, bam_file, num_results = 10,
                            num_reads_per_result = 100, hit_list = 10,
                            num_threads = 1, db_path, out_path,
                            sample_name = NULL, quiet = quiet,
-                           NCBI_key = NULL, fasta_dir = NULL) {
+                           accessions_path, fasta_dir = NULL) {
   # Grab all identifiers
   if (is.null(fasta_dir)) {
     seq_info_df <- as.data.frame(Rsamtools::seqinfo(bam_file)) |>
@@ -163,7 +157,7 @@ rBlast_results <- function(results_table, bam_file, num_results = 10,
                                hit_list = hit_list, num_threads = num_threads,
                                db_path = db_path, quiet = quiet,
                                NCBI_key = NCBI_key, bam_seqs = bam_seqs,
-                               fasta_dir = fasta_dir)
+                               fasta_dir = fasta_dir, accessions_path = accessions_path)
     tax_id <- results_table[i, 1]
     utils::write.csv(df, file.path(out_path,
                                    paste0(sprintf("%05d", i), "_", sample_name,
@@ -191,7 +185,7 @@ rBlast_results <- function(results_table, bam_file, num_results = 10,
 #'   genus_contaminant_score
 #'
 
-blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL, db = NULL){
+blast_result_metrics <- function(blast_results_table_path, accessions_path, db = NULL){
   tryCatch({
     # Load in blast results table
     blast_results_table <- utils::read.csv(blast_results_table_path, header = TRUE)
@@ -221,7 +215,7 @@ blast_result_metrics <- function(blast_results_table_path, NCBI_key = NULL, db =
 
     } else {
       meta_tax <- taxid_to_name(unique(blast_results_table$MetaScope_Taxid),
-                                NCBI_key = NCBI_key) |> dplyr::select(-"staxids")
+                                accessions_path = accessions_path) |> dplyr::select(-"staxids")
 
       blast_results_table_2 <- blast_results_table |>
         dplyr::mutate("MetaScope_genus" = meta_tax$genus[1],
@@ -408,21 +402,22 @@ metascope_blast <- function(metascope_id_path,
   blast_tmp_dir <- file.path(tmp_dir, "blast")
   if(!dir.exists(blast_tmp_dir)) dir.create(blast_tmp_dir, recursive = TRUE)
 
-
-
+  # Create accessions database
+  accessions_path <- file.path(tmp_dir, 'accessionTaxa.sql')
+  taxonomizr::prepareDatabase(accessions_path)
 
   # Run rBlast on all metascope microbes
   rBlast_results(results_table = metascope_id_in, bam_file = bam_file,
                  num_results = num_results, num_reads_per_result = num_reads,
                  hit_list = hit_list, num_threads = num_threads,
                  db_path = db_path, out_path = blast_tmp_dir,
-                 sample_name = sample_name, quiet = quiet, NCBI_key = NCBI_key,
-                 fasta_dir = fasta_dir)
+                 sample_name = sample_name, quiet = quiet,
+                 accessions_path = accessions_path, fasta_dir = fasta_dir)
 
   # Run Blast metrics
   blast_result_metrics_df <- plyr::adply(
     list.files(blast_tmp_dir, full.names = TRUE), 1, blast_result_metrics,
-    NCBI_key = NCBI_key, db = db)
+    accessions_path = accessions_path, db = db)
 
   # Append Blast Metrics to MetaScope results
   if (nrow(metascope_id_in) > nrow(blast_result_metrics_df)) {
@@ -436,4 +431,3 @@ metascope_blast <- function(metascope_id_path,
   message("Results written to ", print_file)
   return(metascope_blast_df)
 }
-
