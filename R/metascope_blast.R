@@ -384,7 +384,7 @@ metascope_blast <- function(metascope_id_path,
                             tmp_dir, out_dir, sample_name, fasta_dir = NULL,
                             num_results = 10, num_reads = 100, hit_list = 10,
                             num_threads = 1, db_path, quiet = FALSE,
-                            NCBI_key = NULL, db = NULL) {
+                            NCBI_key = NULL, db = NULL, accessions_path = NULL) {
   if (!is.numeric(num_threads)) num_threads <- 1
   # Sort and index bam file
   if (is.null(fasta_dir)) {
@@ -403,8 +403,10 @@ metascope_blast <- function(metascope_id_path,
   if(!dir.exists(blast_tmp_dir)) dir.create(blast_tmp_dir, recursive = TRUE)
 
   # Create accessions database
-  accessions_path <- file.path(tmp_dir, 'accessionTaxa.sql')
-  taxonomizr::prepareDatabase(accessions_path)
+  if (is.null(accessions_path)) {
+    accessions_path <- file.path(tmp_dir, 'accessionTaxa.sql')
+    taxonomizr::prepareDatabase(accessions_path)
+  }
 
   # Run rBlast on all metascope microbes
   rBlast_results(results_table = metascope_id_in, bam_file = bam_file,
