@@ -94,7 +94,7 @@ rBLAST_single_result <- function(results_table, bam_file, which_result,
                                custom_format = this_format,
                                BLAST_args = paste("-max_target_seqs",
                                                   hit_list, "-num_threads",
-                                                  num_threads, "-task megablast"))
+                                                  num_threads))
     blast_res <- blast_res |>
       dplyr::mutate(staxids, stringr::str_replace(staxids, ";(.*)$", "")) |>
       dplyr::mutate(staxids, as.integer(staxids))
