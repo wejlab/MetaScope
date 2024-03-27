@@ -43,7 +43,7 @@ taxid_to_name <- function(taxids, accessions_path) {
   out <- taxonomizr::getTaxonomy(taxids, accessions_path)
   out_df <- as.data.frame(out) |> tibble::rownames_to_column("staxids") |>
     dplyr::select(staxids, genus, species) |>
-    dplyr::mutate(species = str_replace(species, genus, ""))
+    dplyr::mutate(species = stringr::str_replace(species, genus, ""))
   return(out_df)
 }
 
