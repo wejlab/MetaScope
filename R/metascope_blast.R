@@ -42,12 +42,12 @@ get_seqs <- function(id, bam_file, n = 10, bam_seqs) {
 taxid_to_name <- function(taxids, accessions_path) {
   taxids <- stringr::str_replace(taxids, ";(.*)$", "") |> as.integer()
   out <- taxonomizr::getTaxonomy(taxids, accessions_path)
-  out_df <- as.data.frame(out) |> tibble::rownames_to_column("staxids") |>
-    dplyr::select(staxids, genus, species) |>
+  out_df <- as.data.frame(out) |> tibble::rownames_to_column("staxid") |>
+    dplyr::select(staxid, genus, species) |>
     dplyr::mutate(species = stringr::str_replace(species, genus, "")) |>
-    dplyr::mutate(staxids = gsub("\\.", "", staxids)) |>
-    dplyr::mutate(staxids = gsub("X", "", staxids)) |>
-    dplyr::mutate(staxids = as.integer(staxids))
+    dplyr::mutate(staxid = gsub("\\.", "", staxid)) |>
+    dplyr::mutate(staxid = gsub("X", "", staxid)) |>
+    dplyr::mutate(staxid = as.integer(staxid))
   return(out_df)
 }
 
@@ -96,19 +96,19 @@ rBLAST_single_result <- function(results_table, bam_file, which_result,
                                                   hit_list, "-num_threads",
                                                   num_threads))
     blast_res <- blast_res |>
-      dplyr::mutate(staxids, stringr::str_replace(staxids, ";(.*)$", "")) |>
-      dplyr::mutate(staxids, as.integer(staxids))
-    taxize_genome_df <- taxid_to_name(unique(blast_res$staxids),
+      dplyr::mutate(staxid, stringr::str_replace(staxid, ";(.*)$", "")) |>
+      dplyr::mutate(staxid, as.integer(staxid))
+    taxize_genome_df <- taxid_to_name(unique(blast_res$staxid),
                                       accessions_path = accessions_path)
     blast_res$MetaScope_Taxid <- tax_id
     blast_res$MetaScope_Genome <- genome_name
-    blast_res <- dplyr::left_join(blast_res, taxize_genome_df, by = "staxids")
+    blast_res <- dplyr::left_join(blast_res, taxize_genome_df, by = "staxid")
     blast_res
   },
   error = function(e) {
     cat("Error", conditionMessage(e), "\n")
     this_format <- paste("qseqid sseqid pident length mismatch gapopen",
-                         "qstart qend sstart send evalue bitscore staxids")
+                         "qstart qend sstart send evalue bitscore staxid")
     all_colnames <- stringr::str_split(this_format, " ")[[1]]
     blast_res <- matrix(NA, ncol = length(all_colnames),
                         dimnames = list(c(), all_colnames)) |> as.data.frame()
@@ -221,7 +221,7 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
 
     } else {
       meta_tax <- taxid_to_name(unique(blast_results_table$MetaScope_Taxid),
-                                accessions_path = accessions_path) |> dplyr::select(-"staxids")
+                                accessions_path = accessions_path) |> dplyr::select(-"staxid")
 
       blast_results_table_2 <- blast_results_table |>
         dplyr::mutate("MetaScope_genus" = meta_tax$genus[1],
