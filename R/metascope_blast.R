@@ -96,8 +96,8 @@ rBLAST_single_result <- function(results_table, bam_file, which_result,
                                                   hit_list, "-num_threads",
                                                   num_threads))
     blast_res <- blast_res |>
-      dplyr::mutate(staxid, stringr::str_replace(staxid, ";(.*)$", "")) |>
-      dplyr::mutate(staxid, as.integer(staxid))
+      dplyr::mutate(staxid = stringr::str_replace(staxid, ";(.*)$", "")) |>
+      dplyr::mutate(staxid = as.integer(staxid))
     taxize_genome_df <- taxid_to_name(unique(blast_res$staxid),
                                       accessions_path = accessions_path)
     blast_res$MetaScope_Taxid <- tax_id
