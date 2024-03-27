@@ -95,6 +95,9 @@ rBLAST_single_result <- function(results_table, bam_file, which_result,
                                BLAST_args = paste("-max_target_seqs",
                                                   hit_list, "-num_threads",
                                                   num_threads, "-task megablast"))
+    blast_res <- blast_res |>
+      dplyr::mutate(staxids, stringr::str_replace(staxids, ";(.*)$", "")) |>
+      dplyr::mutate(staxids, as.integer(staxids))
     taxize_genome_df <- taxid_to_name(unique(blast_res$staxids),
                                       accessions_path = accessions_path)
     blast_res$MetaScope_Taxid <- tax_id
