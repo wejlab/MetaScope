@@ -88,7 +88,7 @@ rBLAST_single_result <- function(results_table, bam_file, which_result,
 
     blast_db <- rBLAST::blast(db = db_path, type = "blastn")
     this_format <- paste("qseqid sseqid pident length mismatch gapopen",
-                         "qstart qend sstart send evalue bitscore staxids")
+                         "qstart qend sstart send evalue bitscore staxid")
     predict.BLAST <- utils::getFromNamespace("predict.BLAST", "rBLAST")
     blast_res <- predict.BLAST(blast_db, fasta_seqs,
                                custom_format = this_format,
