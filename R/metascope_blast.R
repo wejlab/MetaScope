@@ -40,10 +40,14 @@ get_seqs <- function(id, bam_file, n = 10, bam_seqs) {
 #' @return Returns a dataframe of blast results for a metascope result
 
 taxid_to_name <- function(taxids, accessions_path) {
+  taxids <- stringr::str_replace(taxids, ";(.*)$", "") |> as.integer()
   out <- taxonomizr::getTaxonomy(taxids, accessions_path)
   out_df <- as.data.frame(out) |> tibble::rownames_to_column("staxids") |>
     dplyr::select(staxids, genus, species) |>
-    dplyr::mutate(species = stringr::str_replace(species, genus, ""))
+    dplyr::mutate(species = stringr::str_replace(species, genus, "")) |>
+    dplyr::mutate(staxids = gsub("\\.", "", staxids)) |>
+    dplyr::mutate(staxids = gsub("X", "", staxids)) |>
+    dplyr::mutate(staxids = as.integer(staxids))
   return(out_df)
 }
 
@@ -90,7 +94,7 @@ rBLAST_single_result <- function(results_table, bam_file, which_result,
                                custom_format = this_format,
                                BLAST_args = paste("-max_target_seqs",
                                                   hit_list, "-num_threads",
-                                                  num_threads))
+                                                  num_threads, "-task megablast"))
     taxize_genome_df <- taxid_to_name(unique(blast_res$staxids),
                                       accessions_path = accessions_path)
     blast_res$MetaScope_Taxid <- tax_id
