@@ -1,5 +1,12 @@
 globalVariables("count")
 
+
+get_max_index_matrix <- function(mat) {
+  row_max_values <- apply(mat, 1, max)  # Find maximum value in each row
+  is_max <- sweep(mat, 1, row_max_values, "==")  # Compare each element with row max
+  return(is_max)
+}
+
 obtain_reads <- function(input_file, input_type, aligner, blast_fastas = FALSE, quiet) {
   if (blast_fastas) {
     to_pull <- c("qname", "rname", "cigar", "qwidth", "pos", "seq")
@@ -147,7 +154,8 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
     if (!quiet) message(c(it, conv))
   }
   if (!quiet) message("\tDONE! Converged in ", it, " iterations.")
-  hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which
+  #hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which
+  hit_which <- get_max_index_matrix(gammas_new)
   hit <- mapply(function(q, r) hit_which[q,r], combined$qname, combined$rname)
   combined$hit <- hit
   combined_single <- combined %>% dplyr::group_by(.data$qname, .data$rname) %>%
