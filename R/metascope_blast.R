@@ -213,6 +213,8 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
                       "MetaScope_species" = strsplit(MetaScope_Genome, ";", fixed = TRUE)[[1]][8]) |>
         dplyr::rename("query_genus" = "genus",
                       "query_species" = "species") |>
+        # Remove rows with NA
+        tidyr::drop_na() |>
         # Getting best hit per read
         dplyr::group_by(.data$qseqid) |>
         dplyr::slice_max(.data$evalue, with_ties = TRUE) |>

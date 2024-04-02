@@ -451,6 +451,8 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   rname_tax_inds <- rname_tax_inds[order(qname_inds)]
   cigar_strings <- mapped_cigar[order(qname_inds)]
   qwidths <- mapped_qwidth[order(qname_inds)]
+  if (blast_fastas) mapped_seqs <- mapped_seqs[order(qname_inds)]
+
   if (aligner == "bowtie2") {
     # mapped alignments used
     scores <- map_edit_or_align[order(qname_inds)]
@@ -473,22 +475,23 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   if (!quiet) message("Results written to ", out_file)
 
   if (blast_fastas){
-    combined_distinct <- results[[2]]
+    combined_single <- results[[3]]
     num_genomes <- min(num_genomes, nrow(results[[1]]))
     new_file <- file.path(out_dir, "fastas")
     if(!dir.exists(new_file)) dir.create(new_file)
     for (i in seq.int(1, num_genomes)) {
       current_rname_ind <- results[[1]]$hits_ind[i]
-      read_indices <- combined_distinct %>%
-        dplyr::filter(.data$rname == current_rname_ind) %>%
+      read_indices <- combined_single %>%
+        dplyr::filter(.data$rname == current_rname_ind, .data$best_hit == TRUE) %>%
         dplyr::pull("index")
       current_num_reads <- min(num_reads, length(read_indices))
       read_indices <- read_indices %>% sample(current_num_reads)
-      seqs <- reads[[1]]$seq[read_indices]
+      seqs <- mapped_seqs[read_indices]
       Biostrings::writeXStringSet(seqs,
                                   file.path(out_dir, "fastas", paste0(sprintf("%04d", i), ".fa")))
     }
   }
+
 
   if (update_bam) {
     combined_single <- results[3]
@@ -511,3 +514,5 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   } else if (!quiet) message("No coverage plots created")
   return(metascope_id_file)
 }
+
+
