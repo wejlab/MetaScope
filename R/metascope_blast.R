@@ -44,7 +44,7 @@ taxid_to_name <- function(taxids, accessions_path) {
   out <- taxonomizr::getTaxonomy(taxids, accessions_path)
   out_df <- as.data.frame(out) |> tibble::rownames_to_column("staxid") |>
     dplyr::select(staxid, genus, species) |>
-    dplyr::mutate(species = stringr::str_replace(species, genus, "")) |>
+    dplyr::mutate(species = stringr::str_replace(species, paste0(genus, " "), "")) |>
     dplyr::mutate(staxid = gsub("\\.", "", staxid)) |>
     dplyr::mutate(staxid = gsub("X", "", staxid)) |>
     dplyr::mutate(staxid = as.integer(staxid))
@@ -206,11 +206,21 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
                         genus_contaminant_score = 0))
     }
 
-    # Adding Species and Genus columns
+    # Adding MetaScope Species and Genus columns
     if (db == "silva") {
+      # Cleaning up silva genome names
+      #silva_genome <- gsub(";([a-z0-9])", " \\1", blast_results_table$MetaScope_Genome[1])
+      silva_genome <- gsub(" uncultured", ";uncultured", blast_results_table$MetaScope_Genome[1])
+
+      # Creating silva genus and species names
+      silva_genus <- silva_genome |> strsplit(split = ";") |>
+        sapply("[", 7)
+      silva_species <- silva_genome |> strsplit(split = ";") |>
+        sapply("[", 8)
+
       blast_results_table_2 <- blast_results_table |>
-        dplyr::mutate("MetaScope_genus" = strsplit(MetaScope_Genome, ";", fixed = TRUE)[[1]][7],
-                      "MetaScope_species" = strsplit(MetaScope_Genome, ";", fixed = TRUE)[[1]][8]) |>
+        dplyr::mutate("MetaScope_genus" = rep(silva_genus, nrow(blast_results_table)),
+                      "MetaScope_species" = rep(silva_species, nrow(blast_results_table))) |>
         dplyr::rename("query_genus" = "genus",
                       "query_species" = "species") |>
         # Remove rows with NA
@@ -230,6 +240,8 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
                       "MetaScope_species" = meta_tax$species[1]) |>
         dplyr::rename("query_genus" = "genus",
                       "query_species" = "species") |>
+        # Remove rows with NA
+        tidyr::drop_na() |>
         # Getting best hit per read
         dplyr::group_by(.data$qseqid) |>
         dplyr::slice_max(.data$evalue, with_ties = TRUE) |>
@@ -238,7 +250,12 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
     }
 
     # Calculating Metrics
-    best_hit <- blast_results_table_2 |>
+    best_hit_genus <- blast_results_table_2 |>
+      dplyr::group_by(.data$query_genus) |>
+      dplyr::summarise("num_reads" = dplyr::n()) |>
+      dplyr::slice_max(.data$num_reads, with_ties = FALSE)
+
+    best_hit_species <- blast_results_table_2 |>
       dplyr::group_by(.data$query_species) |>
       dplyr::summarise("num_reads" = dplyr::n()) |>
       dplyr::slice_max(.data$num_reads, with_ties = FALSE)
@@ -268,7 +285,8 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
                        genus_percentage_hit = mean(.data$is_equiv_gn)) |>
       dplyr::mutate(species_contaminant_score = 1 - .data$species_percentage_hit,
                     genus_contaminant_score = 1 - .data$genus_percentage_hit,
-                    best_hit = best_hit$query_species,
+                    best_hit_genus = best_hit_genus$query_genus,
+                    best_hit_strain = best_hit_species$query_species,
                     best_hit_strain = best_strain)
 
     return(all_results)
