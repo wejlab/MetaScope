@@ -51,7 +51,43 @@ taxid_to_name <- function(taxids, accessions_path) {
   return(out_df)
 }
 
-#' rBLAST_single_result
+#' Checks if blastn is installed
+#'
+#' @title Check if blastn exists on the system
+#' @description This is an internal function that is not meant to be used
+#'   outside of the package. It checks whether blastn exists on the system.
+#' @return Returns TRUE if blastn exists on the system, else FALSE.
+#'
+
+check_blastn_exists <- function() {
+  if (file.exists(Sys.which("blastn"))) return(TRUE)
+  return(FALSE)
+}
+
+#' BLASTn sequences
+#'
+#' @param database_path
+#' @param fasta_path
+#' @param out_path
+#' @param hit_list
+#' @param num_threads
+#' @return
+
+blastn_seqs <- function(db_path, fasta_path, res_path, hit_list, num_threads) {
+  if (!check_blastn_exists()) {
+    stop("blast not found, please install blast")
+  }
+  sys::exec_wait(
+    "blastn", c("-db", db_path, "-query", fasta_path, "-out", res_path,
+                "-outfmt", paste("10 qseqid sseqid pident length mismatch gapopen",
+                                  "qstart qend sstart send evalue bitscore staxid"),
+                "-max_target_seqs", hit_list, "-num_threads", num_threads,
+                "-task", "megablast"))
+}
+
+
+
+#' blastn_single_result
 #'
 #' @param results_table A dataframe of the Metascope results
 #' @param bam_file A sorted bam file and index file, loaded with
@@ -66,13 +102,12 @@ taxid_to_name <- function(taxids, accessions_path) {
 #'
 #' @return Returns a dataframe of blast results for a metascope result
 
-rBLAST_single_result <- function(results_table, bam_file, which_result,
+blastn_single_result <- function(results_table, bam_file, which_result,
                                  num_reads = 100, hit_list = 10,
                                  num_threads = 1, db_path, quiet,
-                                 accessions_path, bam_seqs,
-                                 fasta_dir = NULL) {
+                                 accessions_path, bam_seqs, out_path,
+                                 sample_name, fasta_dir = NULL) {
   res <- tryCatch({ #If any errors, should just skip the organism
-    rlang::is_installed("rBLAST")
     genome_name <- results_table[which_result, 2]
     if (!quiet) message("Current id: ", genome_name)
     tax_id <- results_table[which_result, 1]
@@ -80,26 +115,25 @@ rBLAST_single_result <- function(results_table, bam_file, which_result,
 
     # Generate sequences to blast
     if (!is.null(fasta_dir)) {
-      fasta_seqs <- list.files(path=fasta_dir, full.names = TRUE)[which_result] |>
-        Biostrings::readDNAStringSet()
+      fasta_path <- list.files(path=fasta_dir, full.names = TRUE)[which_result]
     } else {
-      fasta_seqs <- get_seqs(id = tax_id, bam_file = bam_file, n = num_reads,
-                             quiet = quiet,bam_seqs = bam_seqs) }
+      fasta_path <- get_seqs(id = tax_id, bam_file = bam_file, n = num_reads,
+                             quiet = quiet,bam_seqs = bam_seqs)
+    }
 
-    blast_db <- rBLAST::blast(db = db_path, type = "blastn")
-    this_format <- paste("qseqid sseqid pident length mismatch gapopen",
-                         "qstart qend sstart send evalue bitscore staxid")
-    predict.BLAST <- utils::getFromNamespace("predict.BLAST", "rBLAST")
-    blast_res <- predict.BLAST(blast_db, fasta_seqs,
-                               custom_format = this_format,
-                               BLAST_args = paste("-max_target_seqs",
-                                                  hit_list, "-num_threads",
-                                                  num_threads))
-    blast_res <- blast_res |>
-      dplyr::mutate(staxid = stringr::str_replace(staxid, ";(.*)$", "")) |>
-      dplyr::mutate(staxid = as.integer(staxid))
+    res_path = file.path(out_path, paste0(sprintf("%05d", which_result), "_", sample_name,
+                                          "_", "tax_id_", tax_id, ".csv"))
+
+
+    blastn_seqs(db_path, fasta_path, res_path = res_path, hit_list, num_threads)
+    blast_res <- read.csv(res_path, header = FALSE)
+    colnames(blast_res) <- c("qseqid", "sseqid", "pident", "length", "mismatch",
+                             "gapopen","qstart", "qend", "sstart", "send",
+                             "evalue", "bitscore", "staxid")
+
     taxize_genome_df <- taxid_to_name(unique(blast_res$staxid),
                                       accessions_path = accessions_path)
+
     blast_res$MetaScope_Taxid <- tax_id
     blast_res$MetaScope_Genome <- genome_name
     blast_res <- dplyr::left_join(blast_res, taxize_genome_df, by = "staxid")
@@ -141,7 +175,7 @@ rBLAST_single_result <- function(results_table, bam_file, which_result,
 #' @return Creates and exports num_results number of csv files with blast
 #'   results from local blast
 
-rBlast_results <- function(results_table, bam_file, num_results = 10,
+blastn_results <- function(results_table, bam_file, num_results = 10,
                            num_reads_per_result = 100, hit_list = 10,
                            num_threads = 1, db_path, out_path,
                            sample_name = NULL, quiet = quiet,
@@ -159,10 +193,11 @@ rBlast_results <- function(results_table, bam_file, num_results = 10,
   # Grab results
   num_results2 <- min(num_results, nrow(results_table))
   run_res <- function(i) {
-    df <- rBLAST_single_result(results_table, bam_file, which_result = i,
+    df <- blastn_single_result(results_table, bam_file, which_result = i,
                                num_reads = num_reads_per_result,
                                hit_list = hit_list, num_threads = num_threads,
                                db_path = db_path, quiet = quiet, bam_seqs = bam_seqs,
+                               out_path = out_path, sample_name = sample_name,
                                fasta_dir = fasta_dir, accessions_path = accessions_path)
     tax_id <- results_table[i, 1]
     utils::write.csv(df, file.path(out_path,
@@ -196,6 +231,12 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
     # Load in blast results table
     blast_results_table <- utils::read.csv(blast_results_table_path, header = TRUE)
 
+    # Clean species results
+    blast_results_table <- blast_results_table |>
+      dplyr::filter(!grepl("sp.", species, fixed = TRUE)) |>
+      dplyr::filter(!grepl("uncultured", species, fixed = TRUE)) |>
+      dplyr::filter(!is.na(genus))
+
     # Remove any empty tables
     if (nrow(blast_results_table) < 2) {
       return(data.frame(best_hit = 0,
@@ -227,7 +268,7 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
         tidyr::drop_na() |>
         # Getting best hit per read
         dplyr::group_by(.data$qseqid) |>
-        dplyr::slice_max(.data$evalue, with_ties = TRUE) |>
+        dplyr::slice_min(.data$evalue, with_ties = TRUE) |>
         # Removing duplicate query num and query species
         dplyr::distinct(.data$qseqid, .data$query_species, .keep_all = TRUE)
 
@@ -244,7 +285,7 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
         tidyr::drop_na() |>
         # Getting best hit per read
         dplyr::group_by(.data$qseqid) |>
-        dplyr::slice_max(.data$evalue, with_ties = TRUE) |>
+        dplyr::slice_min(.data$evalue, with_ties = TRUE) |>
         # Removing duplicate query num and query species
         dplyr::distinct(.data$qseqid, .data$query_species, .keep_all = TRUE)
     }
@@ -265,29 +306,45 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
       dplyr::group_by(.data$gi) |>
       dplyr::summarise("num_reads" = dplyr::n()) |>
       dplyr::slice_max(.data$num_reads, with_ties = TRUE)
-    if (nrow(best_hit_strain) > 1) {
+    if (nrow(best_hit_strain) > 1 | db == "silva") {
       best_strain <- NA
     } else if (nrow(best_hit_strain) == 1) {
       res <- taxize::genbank2uid(best_hit_strain$gi, NCBI_key = NCBI_key)
       best_strain <- attr(res[[1]], "name")
     }
 
-    all_results <- blast_results_table_2 |>
-      dplyr::ungroup() |>
-      tidyr::replace_na(replace = list("query_genus" = "Unknown",
-                                       "query_species" = "Unknown",
-                                       "MetaScope_genus" = "Unknown",
-                                       "MetaScope_species" = "Unknown")) |>
-      dplyr::mutate("is_equiv_sp" = .data$MetaScope_species == .data$query_species,
-                    "is_equiv_gn" = .data$MetaScope_genus == .data$query_genus) |>
-      dplyr::summarise(uniqueness_score = length(unique(.data$query_species)),
-                       species_percentage_hit = mean(.data$is_equiv_sp),
-                       genus_percentage_hit = mean(.data$is_equiv_gn)) |>
-      dplyr::mutate(species_contaminant_score = 1 - .data$species_percentage_hit,
-                    genus_contaminant_score = 1 - .data$genus_percentage_hit,
-                    best_hit_genus = best_hit_genus$query_genus,
-                    best_hit_strain = best_hit_species$query_species,
-                    best_hit_strain = best_strain)
+    uniqueness_score <- blast_results_table_2 |>
+      dplyr::group_by(.data$query_species) |>
+      dplyr::summarise("num_reads" = dplyr::n()) |>
+      nrow()
+
+    species_percentage_hit <- blast_results_table_2 |>
+      dplyr::filter(.data$MetaScope_species == .data$query_species) |>
+      nrow() / length(unique(blast_results_table_2$qseqid))
+
+    genus_percentage_hit <- blast_results_table_2 |>
+      dplyr::filter(.data$MetaScope_genus == .data$query_genus) |>
+      dplyr::distinct(.data$qseqid, .keep_all = FALSE) |>
+      nrow() / length(unique(blast_results_table_2$qseqid))
+
+    species_contaminant_score <- blast_results_table_2 |>
+      dplyr::filter(.data$MetaScope_species != .data$query_species) |>
+      dplyr::distinct(.data$qseqid, .keep_all = TRUE) |>
+      nrow() / length(unique(blast_results_table_2$qseqid))
+
+    genus_contaminant_score <- blast_results_table_2 |>
+      dplyr::filter(.data$MetaScope_genus != .data$query_genus) |>
+      dplyr::distinct(.data$qseqid, .keep_all = TRUE) |>
+      nrow() / length(unique(blast_results_table_2$qseqid))
+
+
+    all_results <- c(uniqueness_score, species_percentage_hit, genus_percentage_hit,
+                     species_contaminant_score, genus_contaminant_score,
+                     best_hit_genus$query_genus, best_hit_species$query_species,
+                     best_strain)
+    names(all_results) <- c("uniqueness_score", "species_percentage_hit", "genus_percentage_hit",
+                            "species_contaminant_score", "genus_contaminant_score",
+                            "best_hit_genus", "best_hit_species", "best_hit_strain")
 
     return(all_results)
   },
