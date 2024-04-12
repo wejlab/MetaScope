@@ -516,3 +516,81 @@ metascope_blast <- function(metascope_id_path,
   message("Results written to ", print_file)
   return(metascope_blast_df)
 }
+
+
+#' Reassign reads from Blast alignment
+#'
+#' This function allows the user to reassign reads who's NCBI BLAST results
+#' contradict results provided by MetaScope to assignments that were BLAST
+#' validated. It returns an updated csv with reads reassigned according to their
+#' BLAST validation.
+#'
+#'
+#' @param
+
+
+
+
+blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
+                               blast_tmp_dir, out_dir, sample_name) {
+
+  # Create validated column to determine if reads should be reassigned to accession
+  metascope_blast_df <- metascope_blast_df |>
+    dplyr::mutate(blast_validated = (species_percentage_hit > species_threshold),
+                  index = 1:nrow(metascope_blast_df))
+  reassigned_metascope_blast <- metascope_blast_df
+
+  blast_files <- list.files(blast_tmp_dir, full.names = TRUE)
+
+  # Create vector of indices that have been reassigned
+  drop_indices <- c()
+
+  for (i in 2:num_hits){
+    if (!metascope_blast_df$blast_validated[i]){
+      blast_summary <- utils::read.csv(blast_files[i]) |>
+        dplyr::group_by(.data$qseqid) |>
+        dplyr::slice_min(.data$evalue, with_ties = TRUE) |>
+        # Removing duplicate query num and query species
+        dplyr::distinct(.data$qseqid, .data$species, .keep_all = TRUE) |>
+        dplyr::ungroup() |>
+        dplyr::group_by( .data$genus, .data$species) |>
+        dplyr::summarise("num_reads" = dplyr::n(), .groups="keep") |>
+        dplyr::slice_max(order_by = num_reads, with_ties = TRUE)
+      blast_summary <- dplyr::left_join(blast_summary, metascope_blast_df[1:i-1, ],
+                                        by = dplyr::join_by(genus == best_hit_genus,
+                                                            species == best_hit_species)) |>
+        dplyr::filter(.data$blast_validated == TRUE) |>
+        dplyr::mutate(reassignment_proportion = .data$num_reads / sum(.data$num_reads),
+                      reassigned_read_count = metascope_blast_df$read_count[i] / .data$reassignment_proportion,
+                      reassigned_Proportion = metascope_blast_df$Proportion[i]/ .data$reassignment_proportion,
+                      reassigned_readsEM = metascope_blast_df$readsEM[i] / .data$reassignment_proportion,
+                      reassigned_EMProportion = metascope_blast_df$EMProportion[i] / .data$reassignment_proportion)
+
+
+      if (nrow(blast_summary) > 0) {
+        for (n in 1:nrow(blast_summary)) {
+          metascope_index <- blast_summary$index[n]
+          print(reassigned_metascope_blast$read_count[metascope_index])
+          print(blast_summary$reassigned_read_count[n])
+          reassigned_metascope_blast$read_count[metascope_index] <-
+            reassigned_metascope_blast$read_count[metascope_index] + blast_summary$reassigned_read_count[n]
+          reassigned_metascope_blast$Proportion[metascope_index] <-
+            reassigned_metascope_blast$Proportion[metascope_index] + blast_summary$reassigned_Proportion[n]
+          reassigned_metascope_blast$readsEM[metascope_index] <-
+            metascope_blast_df$readsEM[metascope_index] + blast_summary$readsEM[n]
+          reassigned_metascope_blast$EMProportion[metascope_index] <-
+            reassigned_metascope_blast$EMProportion[metascope_index] + blast_summary$EMProportion[n]
+          drop_indices <- append(drop_indices, i)
+
+        }
+      }
+    }
+  }
+  reassigned_metascope_blast <- reassigned_metascope_blast[-drop_indices,] |>
+    dplyr::select(-index)
+
+  print_file <- file.path(out_dir, paste0(sample_name, ".metascope_blast_reassigned.csv"))
+
+  utils::write.csv(reassigned_metascope_blast, print_file)
+  message("Results written to ", print_file)
+}
