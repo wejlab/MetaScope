@@ -556,7 +556,7 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
         dplyr::group_by( .data$genus, .data$species) |>
         dplyr::summarise("num_reads" = dplyr::n(), .groups="keep") |>
         dplyr::slice_max(order_by = num_reads, with_ties = TRUE)
-      blast_summary <- dplyr::left_join(blast_summary, metascope_blast_df[1:i-1, ],
+      blast_summary <- dplyr::left_join(blast_summary, metascope_blast_df[1:num_hits, ],
                                         by = dplyr::join_by(genus == best_hit_genus,
                                                             species == best_hit_species)) |>
         dplyr::filter(.data$blast_validated == TRUE) |>

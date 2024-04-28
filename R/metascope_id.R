@@ -373,11 +373,13 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                          db_feature_table = NULL,
                          NCBI_key = NULL,
                          out_dir = dirname(input_file),
+                         tmp_dir,
                          convEM = 1 / 10000, maxitsEM = 25,
-                         blast_fastas = FALSE, num_genomes = 100,
+                         q50 = FALSE, num_genomes = 100,
                          num_reads = 50, update_bam = FALSE,
                          num_species_plot = NULL,
-                         quiet = TRUE)  {
+                         quiet = TRUE,
+                         blast_fastas = FALSE, num_genomes = 100)  {
   out_base <- input_file %>% base::basename() %>% strsplit(split = "\\.") %>%
     magrittr::extract2(1) %>% magrittr::extract(1)
   out_file <- file.path(out_dir, paste0(out_base, ".metascope_id.csv"))
@@ -488,15 +490,15 @@ metascope_id <- function(input_file, input_type = "csv.gz",
       read_indices <- read_indices %>% sample(current_num_reads)
       seqs <- mapped_seqs[read_indices]
       Biostrings::writeXStringSet(seqs,
-                                  file.path(out_dir, "fastas", paste0(sprintf("%04d", i), ".fa")))
+                                  file.path(tmp_dir, "fastas", paste0(sprintf("%04d", i), ".fa")))
     }
   }
 
 
   if (update_bam) {
-    combined_single <- results[3]
-    filter_which <- combined_single$single_hit
-    bam_out <- file.path(out_dir, paste0(out_base, ".updated.bam"))
+    combined_single <- results[[3]]
+    filter_which <- combined_single$best_hit
+    bam_out <- file.path(tmp_dir, paste0(out_base, ".updated.bam"))
     Rsamtools::indexBam(files = input_file)
     Rsamtools::filterBam(file = input_file, destination = bam_out, filter = filter_which)
   }
