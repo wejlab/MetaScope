@@ -375,11 +375,10 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                          out_dir = dirname(input_file),
                          tmp_dir = NULL,
                          convEM = 1 / 10000, maxitsEM = 25,
-                         q50 = FALSE, num_genomes = 100,
-                         num_reads = 50, update_bam = FALSE,
+                         q50 = FALSE, update_bam = FALSE,
                          num_species_plot = NULL,
-                         quiet = TRUE,
-                         blast_fastas = FALSE, num_genomes = 100)  {
+                         blast_fastas = FALSE, num_genomes = 100,
+                         num_reads = 50, quiet = TRUE)  {
   out_base <- input_file %>% base::basename() %>% strsplit(split = "\\.") %>%
     magrittr::extract2(1) %>% magrittr::extract(1)
   out_file <- file.path(out_dir, paste0(out_base, ".metascope_id.csv"))
