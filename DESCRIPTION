@@ -58,6 +58,7 @@ Suggests:
     spelling,
     sys,
     testthat,
+    taxonomizr,
     usethis
 Enhances:
     BiocParallel
