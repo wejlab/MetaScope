@@ -181,7 +181,7 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
                                   hits_ind = hits_ind) %>%
     dplyr::arrange(dplyr::desc(.data$read_count))
   if (!quiet) message("Found reads for ", nrow(results_tibble), " genomes")
-  
+
   return(list(results_tibble, combined_distinct, combined_single))
 }
 
@@ -280,7 +280,7 @@ locations <- function(which_taxid, which_genome,
                   xlab = "Aligned position across genome (leftmost read position)",
                   ylab = "Read Count",
                   caption = paste0("Accession Number: ", choose_acc))
-  
+
   ggplot2::ggsave(paste0(plots_save, "/",
                          stringr::str_replace(use_name, " ", "_"), ".png"),
                   device = "png")
@@ -381,11 +381,12 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                          db_feature_table = NULL,
                          NCBI_key = NULL,
                          out_dir = dirname(input_file),
+                         tmp_dir = NULL,
                          convEM = 1 / 10000, maxitsEM = 25,
-                         blast_fastas = FALSE, num_genomes = 100,
-                         num_reads = 50, update_bam = FALSE,
+                         q50 = FALSE, update_bam = FALSE,
                          num_species_plot = NULL,
-                         quiet = TRUE)  {
+                         blast_fastas = FALSE, num_genomes = 100,
+                         num_reads = 50, quiet = TRUE)  {
   out_base <- input_file %>% base::basename() %>% strsplit(split = "\\.") %>%
     magrittr::extract2(1) %>% magrittr::extract(1)
   out_file <- file.path(out_dir, paste0(out_base, ".metascope_id.csv"))
@@ -459,6 +460,8 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   rname_tax_inds <- rname_tax_inds[order(qname_inds)]
   cigar_strings <- mapped_cigar[order(qname_inds)]
   qwidths <- mapped_qwidth[order(qname_inds)]
+  if (blast_fastas) mapped_seqs <- mapped_seqs[order(qname_inds)]
+
   if (aligner == "bowtie2") {
     # mapped alignments used
     scores <- map_edit_or_align[order(qname_inds)]
@@ -479,31 +482,30 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                                                       "readsEM", "EMProportion")
   utils::write.csv(metascope_id_file, file = out_file, row.names = FALSE)
   if (!quiet) message("Results written to ", out_file)
-  
+
   if (blast_fastas){
-    combined_distinct <- results[[2]]
+    combined_single <- results[[3]]
     num_genomes <- min(num_genomes, nrow(results[[1]]))
     new_file <- file.path(out_dir, "fastas")
     if(!dir.exists(new_file)) dir.create(new_file)
     for (i in seq.int(1, num_genomes)) {
-      current_genome <- results[[1]]$Genome[i] %>% stringr::word(1:2) %>%
-        paste0(collapse = "_")
       current_rname_ind <- results[[1]]$hits_ind[i]
-      read_indices <- combined_distinct %>%
-        dplyr::filter(.data$rname == current_rname_ind) %>%
+      read_indices <- combined_single %>%
+        dplyr::filter(.data$rname == current_rname_ind, .data$best_hit == TRUE) %>%
         dplyr::pull("index")
       current_num_reads <- min(num_reads, length(read_indices))
       read_indices <- read_indices %>% sample(current_num_reads)
-      seqs <- reads[[1]]$seq[read_indices]
-      Biostrings::writeXStringSet(seqs, file.path(out_dir, "fastas",
-                                                  paste0(i, "_", current_genome, ".fa")))
+      seqs <- mapped_seqs[read_indices]
+      Biostrings::writeXStringSet(seqs,
+                                  file.path(tmp_dir, "fastas", paste0(sprintf("%04d", i), ".fa")))
     }
   }
-  
+
+
   if (update_bam) {
-    combined_single <- results[3]
-    filter_which <- combined_single$single_hit
-    bam_out <- file.path(out_dir, paste0(out_base, ".updated.bam"))
+    combined_single <- results[[3]]
+    filter_which <- combined_single$best_hit
+    bam_out <- file.path(tmp_dir, paste0(out_base, ".updated.bam"))
     Rsamtools::indexBam(files = input_file)
     Rsamtools::filterBam(file = input_file, destination = bam_out, filter = filter_which)
   }
@@ -521,3 +523,5 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   } else if (!quiet) message("No coverage plots created")
   return(metascope_id_file)
 }
+
+
