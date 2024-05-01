@@ -4,10 +4,19 @@
 \alias{blast_result_metrics}
 \title{Calculates result metrics from a blast results table}
 \usage{
-blast_result_metrics(blast_results_table_path, NCBI_key = NULL)
+blast_result_metrics(
+  blast_results_table_path,
+  accessions_path,
+  db = NULL,
+  NCBI_key = NULL
+)
 }
 \arguments{
 \item{blast_results_table_path}{path for blast results csv file}
+
+\item{accessions_path}{Needed for accessions (inc.)}
+
+\item{db}{Needed for blast_result_metrics_df (inc.)}
 
 \item{NCBI_key}{(character) NCBI Entrez API key. optional. See
 taxize::use_entrez(). Due to the high number of requests made to NCBI, this

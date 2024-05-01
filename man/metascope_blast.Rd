@@ -10,13 +10,16 @@ metascope_blast(
   tmp_dir,
   out_dir,
   sample_name,
+  fasta_dir = NULL,
   num_results = 10,
   num_reads = 100,
   hit_list = 10,
   num_threads = 1,
   db_path,
   quiet = FALSE,
-  NCBI_key = NULL
+  NCBI_key = NULL,
+  db = NULL,
+  accessions_path = NULL
 )
 }
 \arguments{
@@ -35,6 +38,8 @@ files.}
 \item{out_dir}{Character string, path to output directory.}
 
 \item{sample_name}{Character string, sample name for output files.}
+
+\item{fasta_dir}{Directory where fastas will be stored (inc.)}
 
 \item{num_results}{Integer, the maximum number of taxa from the metascope_id
 output to check reads. Takes the top n taxa, i.e. those with largest
@@ -62,6 +67,10 @@ is FALSE.}
 \item{NCBI_key}{(character) NCBI Entrez API key. optional. See
 taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 function will be less prone to errors if you obtain an NCBI key.}
+
+\item{db}{Needed for blast_result_metrics_df (inc.)}
+
+\item{accessions_path}{Needed for accessions (inc.)}
 }
 \value{
 This function writes an updated csv file with metrics evaluating...

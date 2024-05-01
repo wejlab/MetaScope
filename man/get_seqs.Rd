@@ -4,7 +4,7 @@
 \alias{get_seqs}
 \title{Gets sequences from bam file}
 \usage{
-get_seqs(id, bam_file, n = 10, quiet, NCBI_key = NULL, bam_seqs)
+get_seqs(id, bam_file, n = 10, bam_seqs)
 }
 \arguments{
 \item{id}{Taxonomy ID of genome to get sequences from}
@@ -13,13 +13,6 @@ get_seqs(id, bam_file, n = 10, quiet, NCBI_key = NULL, bam_seqs)
 Rsamtools::bamFile}
 
 \item{n}{Number of sequences to retrieve}
-
-\item{quiet}{Logical, whether to print out more informative messages. Default
-is FALSE.}
-
-\item{NCBI_key}{(character) NCBI Entrez API key. optional. See
-taxize::use_entrez(). Due to the high number of requests made to NCBI, this
-function will be less prone to errors if you obtain an NCBI key.}
 
 \item{bam_seqs}{A list of the sequence IDs from the bam file}
 }

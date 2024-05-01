@@ -7,7 +7,6 @@
 #'   Rsamtools::bamFile
 #' @param n Number of sequences to retrieve
 #' @param bam_seqs A list of the sequence IDs from the bam file
-#' @inheritParams metascope_blast
 #'
 #' @return Biostrings format sequences
 
@@ -35,19 +34,19 @@ get_seqs <- function(id, bam_file, n = 10, bam_seqs) {
 #'
 #' @param taxids List of NCBI taxids to convert to scientific name
 #' @param accessions_path Path to accessionsTaxa.sql
-#' @inheritParams metascope_blast
 #' @importFrom rlang .data
 #' @return Returns a dataframe of blast results for a metascope result
+#' 
 
 taxid_to_name <- function(taxids, accessions_path) {
   taxids <- stringr::str_replace(taxids, ";(.*)$", "") |> as.integer()
   out <- taxonomizr::getTaxonomy(taxids, accessions_path)
   out_df <- as.data.frame(out) |> tibble::rownames_to_column("staxid") |>
-    dplyr::select(staxid, genus, species) |>
-    dplyr::mutate(species = stringr::str_replace(species, paste0(genus, " "), "")) |>
-    dplyr::mutate(staxid = gsub("\\.", "", staxid)) |>
-    dplyr::mutate(staxid = gsub("X", "", staxid)) |>
-    dplyr::mutate(staxid = as.integer(staxid))
+    dplyr::select("staxid", "genus", "species") |>
+    dplyr::mutate("species" = stringr::str_replace(.data$species, paste0(.data$genus, " "), "")) |>
+    dplyr::mutate("staxid" = gsub("\\.", "", .data$staxid)) |>
+    dplyr::mutate("staxid" = gsub("X", "", .data$staxid)) |>
+    dplyr::mutate("staxid" = as.integer(.data$staxid))
   return(out_df)
 }
 
@@ -64,14 +63,8 @@ check_blastn_exists <- function() {
   return(FALSE)
 }
 
-#' BLASTn sequences
-#'
-#' @param database_path
-#' @param fasta_path
-#' @param out_path
-#' @param hit_list
-#' @param num_threads
-#' @return
+# BLASTn sequences
+
 
 blastn_seqs <- function(db_path, fasta_path, res_path, hit_list, num_threads) {
   if (!check_blastn_exists()) {
@@ -98,6 +91,8 @@ blastn_seqs <- function(db_path, fasta_path, res_path, hit_list, num_threads) {
 #' @param num_threads Number of threads if multithreading
 #' @param db_path Blast database path
 #' @param bam_seqs A list of the sequence IDs from the bam file
+#' @param out_path Path to output results.
+#' @param fasta_dir Path to where fasta files are stored.
 #' @inheritParams metascope_blast
 #'
 #' @return Returns a dataframe of blast results for a metascope result
@@ -118,7 +113,7 @@ blastn_single_result <- function(results_table, bam_file, which_result,
       fasta_path <- list.files(path=fasta_dir, full.names = TRUE)[which_result]
     } else {
       fasta_path <- get_seqs(id = tax_id, bam_file = bam_file, n = num_reads,
-                             quiet = quiet,bam_seqs = bam_seqs)
+                             bam_seqs = bam_seqs)
     }
 
     res_path = file.path(out_path, paste0(sprintf("%05d", which_result), "_", sample_name,
@@ -126,7 +121,7 @@ blastn_single_result <- function(results_table, bam_file, which_result,
 
 
     blastn_seqs(db_path, fasta_path, res_path = res_path, hit_list, num_threads)
-    blast_res <- read.csv(res_path, header = FALSE)
+    blast_res <- utils::read.csv(res_path, header = FALSE)
     colnames(blast_res) <- c("qseqid", "sseqid", "pident", "length", "mismatch",
                              "gapopen","qstart", "qend", "sstart", "send",
                              "evalue", "bitscore", "staxid")
@@ -170,6 +165,7 @@ blastn_single_result <- function(results_table, bam_file, which_result,
 #' @param db_path Blast database path
 #' @param out_path Output directory to save csv files, including base name of
 #'   files
+#' @param fasta_dir inc.
 #' @inheritParams metascope_blast
 #'
 #' @return Creates and exports num_results number of csv files with blast
@@ -179,7 +175,8 @@ blastn_results <- function(results_table, bam_file, num_results = 10,
                            num_reads_per_result = 100, hit_list = 10,
                            num_threads = 1, db_path, out_path,
                            sample_name = NULL, quiet = quiet,
-                           accessions_path, fasta_dir = NULL) {
+                           accessions_path, fasta_dir = NULL,
+                           NCBI_key = NULL) {
   # Grab all identifiers
   if (is.null(fasta_dir)) {
     seq_info_df <- as.data.frame(Rsamtools::seqinfo(bam_file)) |>
@@ -226,16 +223,17 @@ blastn_results <- function(results_table, bam_file, num_results = 10,
 #'   genus_contaminant_score
 #'
 
-blast_result_metrics <- function(blast_results_table_path, accessions_path, db = NULL){
+blast_result_metrics <- function(blast_results_table_path, accessions_path, db = NULL,
+                                 NCBI_key = NULL){
   tryCatch({
     # Load in blast results table
     blast_results_table <- utils::read.csv(blast_results_table_path, header = TRUE)
 
     # Clean species results
     blast_results_table <- blast_results_table |>
-      dplyr::filter(!grepl("sp.", species, fixed = TRUE)) |>
-      dplyr::filter(!grepl("uncultured", species, fixed = TRUE)) |>
-      dplyr::filter(!is.na(genus))
+      dplyr::filter(!grepl("sp.", .data$species, fixed = TRUE)) |>
+      dplyr::filter(!grepl("uncultured", .data$species, fixed = TRUE)) |>
+      dplyr::filter(!is.na(.data$genus))
 
     # Remove any empty tables
     if (nrow(blast_results_table) < 2) {
@@ -351,14 +349,14 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
   error = function(e)
   {
     cat("Error", conditionMessage(e), "/n")
-    return(data.frame(best_hit = 0,
-                      uniqueness_score = 0,
-                      species_percentage_hit = 0,
-                      genus_percentage_hit = 0,
-                      species_contaminant_score = 0,
-                      genus_contaminant_score = 0,
-                      best_hit = NA,
-                      best_hit_strain = NA))
+    return(data.frame("best_hit" = 0,
+                      "uniqueness_score" = 0,
+                      "species_percentage_hit" = 0,
+                      "genus_percentage_hit" = 0,
+                      "species_contaminant_score" = 0,
+                      "genus_contaminant_score" = 0,
+                      "best_hit" = NA,
+                      "best_hit_strain" = NA))
   }
   )
 }
@@ -413,6 +411,9 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
 #' @param NCBI_key (character) NCBI Entrez API key. optional. See
 #'   taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 #'   function will be less prone to errors if you obtain an NCBI key.
+#' @param db Needed for blast_result_metrics_df (inc.)
+#' @param fasta_dir Directory where fastas will be stored (inc.)
+#' @param accessions_path Needed for accessions (inc.)
 #'
 #' @returns This function writes an updated csv file with metrics evaluating...
 #'
@@ -497,7 +498,8 @@ metascope_blast <- function(metascope_id_path,
                  hit_list = hit_list, num_threads = num_threads,
                  db_path = db_path, out_path = blast_tmp_dir,
                  sample_name = sample_name, quiet = quiet,
-                 accessions_path = accessions_path, fasta_dir = fasta_dir)
+                 accessions_path = accessions_path, fasta_dir = fasta_dir,
+                 NCBI_key = NULL)
 
   # Run Blast metrics
   blast_result_metrics_df <- plyr::adply(
@@ -518,26 +520,21 @@ metascope_blast <- function(metascope_id_path,
 }
 
 
-#' Reassign reads from Blast alignment
-#'
-#' This function allows the user to reassign reads who's NCBI BLAST results
-#' contradict results provided by MetaScope to assignments that were BLAST
-#' validated. It returns an updated csv with reads reassigned according to their
-#' BLAST validation.
-#'
-#'
-#' @param
-
-
-
+# Reassign reads from Blast alignment
+# 
+# This function allows the user to reassign reads who's NCBI BLAST results
+# contradict results provided by MetaScope to assignments that were BLAST
+# validated. It returns an updated csv with reads reassigned according to their
+# BLAST validation.
+# 
 
 blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
                                blast_tmp_dir, out_dir, sample_name) {
 
   # Create validated column to determine if reads should be reassigned to accession
   metascope_blast_df <- metascope_blast_df |>
-    dplyr::mutate(blast_validated = (species_percentage_hit > species_threshold),
-                  index = 1:nrow(metascope_blast_df))
+    dplyr::mutate("blast_validated" = (.data$species_percentage_hit > .data$species_threshold),
+                  "index" = 1:nrow(metascope_blast_df))
   reassigned_metascope_blast <- metascope_blast_df
 
   blast_files <- list.files(blast_tmp_dir, full.names = TRUE)
@@ -555,10 +552,10 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
         dplyr::ungroup() |>
         dplyr::group_by( .data$genus, .data$species) |>
         dplyr::summarise("num_reads" = dplyr::n(), .groups="keep") |>
-        dplyr::slice_max(order_by = num_reads, with_ties = TRUE)
+        dplyr::slice_max(order_by = .data$num_reads, with_ties = TRUE)
       blast_summary <- dplyr::left_join(blast_summary, metascope_blast_df[1:num_hits, ],
-                                        by = dplyr::join_by(genus == best_hit_genus,
-                                                            species == best_hit_species)) |>
+                                        by = dplyr::join_by(.data$genus == .data$best_hit_genus,
+                                                            .data$species == .data$best_hit_species)) |>
         dplyr::filter(.data$blast_validated == TRUE) |>
         dplyr::mutate(reassignment_proportion = .data$num_reads / sum(.data$num_reads),
                       reassigned_read_count = metascope_blast_df$read_count[i] / .data$reassignment_proportion,
@@ -587,7 +584,7 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
     }
   }
   reassigned_metascope_blast <- reassigned_metascope_blast[-drop_indices,] |>
-    dplyr::select(-index)
+    dplyr::select(-"index")
 
   print_file <- file.path(out_dir, paste0(sample_name, ".metascope_blast_reassigned.csv"))
 

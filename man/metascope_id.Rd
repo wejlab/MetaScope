@@ -12,13 +12,15 @@ metascope_id(
   db_feature_table = NULL,
   NCBI_key = NULL,
   out_dir = dirname(input_file),
+  tmp_dir = NULL,
   convEM = 1/10000,
   maxitsEM = 25,
+  q50 = FALSE,
+  update_bam = FALSE,
+  num_species_plot = NULL,
   blast_fastas = FALSE,
   num_genomes = 100,
   num_reads = 50,
-  update_bam = FALSE,
-  num_species_plot = NULL,
   quiet = TRUE
 )
 }
@@ -49,6 +51,8 @@ enter the string as an input or set it as ENTREZ_KEY in .Renviron.}
 \item{out_dir}{The directory to which the .csv output file will be output.
 Defaults to \code{dirname(input_file)}.}
 
+\item{tmp_dir}{Path to a directory to which files can be saved (inc.)}
+
 \item{convEM}{The convergence parameter of the EM algorithm. Default set at
 \code{1/10000}.}
 
@@ -56,6 +60,16 @@ Defaults to \code{dirname(input_file)}.}
 the convEM is below the threshhold. Default set at \code{50}. If set at
 \code{0}, the algorithm skips the EM step and summarizes the .bam file 'as
 is'}
+
+\item{q50}{(inc.)}
+
+\item{update_bam}{Whether to update BAM file with new read assignments.
+Default is \code{FALSE}. If \code{TRUE}, requires \code{input_type = TRUE}
+such that a BAM file is the input to the function.}
+
+\item{num_species_plot}{The number of genome coverage plots to be saved.
+Default is \code{NULL}, which saves coverage plots for the ten most highly
+abundant species.}
 
 \item{blast_fastas}{Logical, whether or not to output fasta files for MetaBlast.
 Default is \code{FALSE}.}
@@ -65,14 +79,6 @@ Default is \code{100}.}
 
 \item{num_reads}{Number of reads per genome per fasta file for MetaBlast.
 Default is \code{50}.}
-
-\item{update_bam}{Whether to update BAM file with new read assignments.
-Default is \code{FALSE}. If \code{TRUE}, requires \code{input_type = TRUE}
-such that a BAM file is the input to the function.}
-
-\item{num_species_plot}{The number of genome coverage plots to be saved.
-Default is \code{NULL}, which saves coverage plots for the ten most highly
-abundant species.}
 
 \item{quiet}{Turns off most messages. Default is \code{TRUE}.}
 }
