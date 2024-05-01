@@ -50,8 +50,6 @@ Suggests:
     knitr,
     lintr,
     plyr,
-    qlcMatrix,
-    rBLAST,
     rmarkdown,
     R.utils,
     Rsubread,
@@ -63,8 +61,6 @@ Enhances:
     BiocParallel
 VignetteBuilder:
     knitr
-Remotes:
-    mhahsler/rBLAST
 BiocType: Software
 biocViews: MicrobiomeData, ReproducibleResearch, SequencingData
 Encoding: UTF-8
