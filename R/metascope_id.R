@@ -375,7 +375,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                          out_dir = dirname(input_file),
                          tmp_dir = NULL,
                          convEM = 1 / 10000, maxitsEM = 25,
-                         q50 = FALSE, update_bam = FALSE,
+                         update_bam = FALSE,
                          num_species_plot = NULL,
                          blast_fastas = FALSE, num_genomes = 100,
                          num_reads = 50, quiet = TRUE)  {
@@ -496,10 +496,14 @@ metascope_id <- function(input_file, input_type = "csv.gz",
 
   if (update_bam) {
     combined_single <- results[[3]]
-    filter_which <- combined_single$best_hit
+    filter_which <- FilterRules(list(test=function(x) {
+      combined_single$best_hit
+    }))
     bam_out <- file.path(tmp_dir, paste0(out_base, ".updated.bam"))
     Rsamtools::indexBam(files = input_file)
-    Rsamtools::filterBam(file = input_file, destination = bam_out, filter = filter_which)
+    input_bam <- Rsamtools::BamFile(input_file, index = input_file,
+                                    yieldSize = 10000000)
+    Rsamtools::filterBam(input_bam, destination = bam_out, filter = filter_which)
   }
   # Plotting genome locations
   num_plot <- num_species_plot
