@@ -496,7 +496,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
 
   if (update_bam) {
     combined_single <- results[[3]]
-    filter_which <- FilterRules(list(test=function(x) {
+    filter_which <- S4Vectors::FilterRules(list(test=function(x) {
       combined_single$best_hit
     }))
     bam_out <- file.path(tmp_dir, paste0(out_base, ".updated.bam"))
