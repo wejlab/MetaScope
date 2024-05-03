@@ -144,7 +144,7 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
     it <- it + 1
     conv <- max(abs(pi_new - pi_old) / pi_old, na.rm = TRUE)
     pi_old <- pi_new
-    if (!quiet) message(c(it, conv))
+    if (!quiet) message(c(it, " ", conv))
   }
   if (!quiet) message("\tDONE! Converged in ", it, " iterations.")
   hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which
@@ -495,10 +495,22 @@ metascope_id <- function(input_file, input_type = "csv.gz",
 
 
   if (update_bam) {
-    combined_single <- results[[3]]
-    filter_which <- S4Vectors::FilterRules(list(test=function(x) {
-      combined_single$best_hit
-    }))
+    combined_distinct <- results[[2]] |>
+      dplyr::mutate(qname_names = read_names[qname],
+                    rname_names = unique(reads[[1]]$rname)[rname])
+
+    bam_index_df <- data.frame(index = c(1:length(reads[[1]]$qname)),
+                               qname_names = reads[[1]]$qname,
+                               rname_names = as.character(reads[[1]]$rname))
+
+    combined_bam_index <- dplyr::right_join(bam_index_df, combined_distinct, by = (c("qname_names", "rname_names"))) |>
+      dplyr::mutate(qname_rname = paste(qname, rname, sep = "_"),
+                    first_qname_rname = !duplicated(qname_rname)) |>
+      dplyr::filter(first_qname_rname == TRUE)
+
+    filter_which <- rep(FALSE, nrow(bam_index_df))
+    filter_which[combined_bam_index$index.x] <- TRUE
+
     bam_out <- file.path(tmp_dir, paste0(out_base, ".updated.bam"))
     Rsamtools::indexBam(files = input_file)
     input_bam <- Rsamtools::BamFile(input_file, index = input_file,
