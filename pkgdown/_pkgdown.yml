@@ -8,7 +8,7 @@ reference:
  - title: "MetaDemultiplex (optional)"
    desc: "Obtain non-barcoded sequencing reads."
    contents:
-   - demultiplex
+   - meta_demultiplex
  - title: "MetaRef"
    desc: "Obtain target and filter genome sequences from NCBI nucleotide database and index using the Bowtie 2 or Subread aligner"
    contents:
@@ -72,8 +72,12 @@ navbar:
       menu:
       - text: "Introduction to MetaScope"
         href: articles/MetaScope_vignette.html
+      - text: "Condensed MetaScope Tutorial"
+        href: articles/MetaScopeTutorial.html
       - text: "Usage with SILVA 16S Database"
         href: articles/SILVA.html
+      - text: "Example MetaScope Script"
+        href: articles/Example_Script.html
     - text: "Function Reference"
       href: reference/index.html
     - text: "Package News"

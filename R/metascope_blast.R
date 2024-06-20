@@ -411,11 +411,15 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
 #' @param NCBI_key (character) NCBI Entrez API key. optional. See
 #'   taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 #'   function will be less prone to errors if you obtain an NCBI key.
-#' @param db Needed for blast_result_metrics_df (inc.)
-#' @param fasta_dir Directory where fastas will be stored (inc.)
-#' @param accessions_path Needed for accessions (inc.)
+#' @param db Currently accepts one of \code{c("ncbi", "silva", "other")}
+#' Default is \code{"ncbi"}, appropriate for samples aligned against indices
+#' compiled from NCBI whole genome databases. Alternatively, usage of an
+#' alternate database (like Greengenes2) should be specified with
+#' \code{"other"}.
+#' @param fasta_dir Directory where fasta files for blast will be stored.
+#' @param accessions_path Directory where accession files for blast are stored.
 #'
-#' @returns This function writes an updated csv file with metrics evaluating...
+#' @returns This function writes an updated csv file with metrics.
 #'
 #' @export
 #'

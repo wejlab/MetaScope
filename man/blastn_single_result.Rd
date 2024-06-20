@@ -39,7 +39,7 @@ Rsamtools::bamFile}
 \item{quiet}{Logical, whether to print out more informative messages. Default
 is FALSE.}
 
-\item{accessions_path}{Needed for accessions (inc.)}
+\item{accessions_path}{Directory where accession files for blast are stored.}
 
 \item{bam_seqs}{A list of the sequence IDs from the bam file}
 

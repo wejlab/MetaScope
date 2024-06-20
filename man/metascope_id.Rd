@@ -51,7 +51,8 @@ enter the string as an input or set it as ENTREZ_KEY in .Renviron.}
 \item{out_dir}{The directory to which the .csv output file will be output.
 Defaults to \code{dirname(input_file)}.}
 
-\item{tmp_dir}{Path to a directory to which files can be saved (inc.)}
+\item{tmp_dir}{Path to a directory to which bam and updated bam files can be saved.
+Required.}
 
 \item{convEM}{The convergence parameter of the EM algorithm. Default set at
 \code{1/10000}.}

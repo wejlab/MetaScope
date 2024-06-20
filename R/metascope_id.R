@@ -332,7 +332,8 @@ locations <- function(which_taxid, which_genome,
 #' Default is \code{FALSE}. If \code{TRUE}, requires \code{input_type = TRUE}
 #' such that a BAM file is the input to the function.
 #' @param quiet Turns off most messages. Default is \code{TRUE}.
-#' @param tmp_dir Path to a directory to which files can be saved (inc.)
+#' @param tmp_dir Path to a directory to which bam and updated bam files can be saved.
+#' Required.
 #' @param q50 (inc.)
 #'
 #' @return This function returns a .csv file with annotated read counts to
