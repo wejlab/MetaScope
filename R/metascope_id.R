@@ -514,7 +514,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
     bam_out <- file.path(tmp_dir, paste0(out_base, ".updated.bam"))
     Rsamtools::indexBam(files = input_file)
     input_bam <- Rsamtools::BamFile(input_file, index = input_file,
-                                    yieldSize = 10000000)
+                                    yieldSize = 100000000)
     Rsamtools::filterBam(input_bam, destination = bam_out, filter = filter_which)
   }
   # Plotting genome locations
