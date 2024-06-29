@@ -478,7 +478,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   if (blast_fastas){
     combined_single <- results[[3]]
     num_genomes <- min(num_genomes, nrow(results[[1]]))
-    new_file <- file.path(out_dir, "fastas")
+    new_file <- file.path(tmp_dir, "fastas")
     if(!dir.exists(new_file)) dir.create(new_file)
     for (i in seq.int(1, num_genomes)) {
       current_rname_ind <- results[[1]]$hits_ind[i]
