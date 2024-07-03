@@ -233,8 +233,8 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
 
     # Clean species results
     blast_results_table <- blast_results_table |>
-      dplyr::filter(!grepl("sp.", species, fixed = TRUE)) |>
-      dplyr::filter(!grepl("uncultured", species, fixed = TRUE)) |>
+      dplyr::filter(!grepl("sp.", "species", fixed = TRUE)) |>
+      dplyr::filter(!grepl("uncultured", "species", fixed = TRUE)) |>
       dplyr::filter(!is.na(genus))
 
     # Remove any empty tables
@@ -527,6 +527,7 @@ metascope_blast <- function(metascope_id_path,
 #'
 #'
 #' @param
+#` @export
 
 
 
