@@ -557,13 +557,12 @@ metascope_blast <- function(metascope_id_path,
                             NCBI_key = NULL, db = NULL, accessions_path = NULL) {
   if (!is.numeric(num_threads)) num_threads <- 1
   # Sort and index bam file
-  if (is.null(fasta_dir)) {
-    sorted_bam_file_path <- file.path(tmp_dir, paste0(sample_name, "_sorted"))
-    Rsamtools::sortBam(bam_file_path, destination = sorted_bam_file_path)
-    sorted_bam_file <- paste0(sorted_bam_file_path, ".bam")
-    Rsamtools::indexBam(sorted_bam_file)
-    bam_file <- Rsamtools::BamFile(sorted_bam_file, index = sorted_bam_file)
-  }
+  sorted_bam_file_path <- file.path(tmp_dir, paste0(sample_name, "_sorted"))
+  Rsamtools::sortBam(bam_file_path, destination = sorted_bam_file_path)
+  sorted_bam_file <- paste0(sorted_bam_file_path, ".bam")
+  Rsamtools::indexBam(sorted_bam_file)
+  bam_file <- Rsamtools::BamFile(sorted_bam_file, index = sorted_bam_file)
+
 
   # Load in metascope id file and clean unknown genomes
   metascope_id_in <- utils::read.csv(metascope_id_path, header = TRUE)
@@ -620,7 +619,7 @@ metascope_blast <- function(metascope_id_path,
                  hit_list = hit_list, num_threads = num_threads,
                  db_path = db_path, out_path = blast_tmp_dir,
                  sample_name = sample_name, quiet = quiet,
-                 accessions_path = accessions_path, fasta_dir = fasta_dir)
+                 accessions_path = accessions_path, fasta_dir = fastas_tmp_dir)
 
   # Run Blast metrics
   blast_result_metrics_df <- plyr::adply(
