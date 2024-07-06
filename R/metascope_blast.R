@@ -614,7 +614,7 @@ metascope_blast <- function(metascope_id_path,
   }
 
   # Run rBlast on all metascope microbes
-  blastn_results(results_table = metascope_id_in, bam_file = bam_file,
+  blastn_results(results_table = metascope_id_species, bam_file = bam_file,
                  num_results = num_results, num_reads_per_result = num_reads,
                  hit_list = hit_list, num_threads = num_threads,
                  db_path = db_path, out_path = blast_tmp_dir,
@@ -627,16 +627,16 @@ metascope_blast <- function(metascope_id_path,
     accessions_path = accessions_path, db = db)
 
   # Append Blast Metrics to MetaScope results
-  if (nrow(metascope_id_in) > nrow(blast_result_metrics_df)) {
+  if (nrow(metascope_id_species) > nrow(blast_result_metrics_df)) {
     ind <- seq(nrow(blast_result_metrics_df) + 1, nrow(metascope_id_in))
     blast_result_metrics_df[ind, ] <- NA
   }
   print_file <- file.path(out_dir, paste0(sample_name, ".metascope_blast.csv"))
 
-  metascope_blast_df <- data.frame(metascope_id_in, blast_result_metrics_df)
+  metascope_blast_df <- data.frame(metascope_id_species, blast_result_metrics_df)
   utils::write.csv(metascope_blast_df, print_file)
   message("Results written to ", print_file)
-  return(metascope_blast_df)
+  return(head(metascope_blast_df))
 }
 
 
