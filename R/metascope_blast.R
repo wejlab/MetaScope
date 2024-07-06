@@ -239,13 +239,21 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
 
     # Remove any empty tables
     if (nrow(blast_results_table) < 2) {
-      return(data.frame(best_hit = 0,
-                        uniqueness_score = 0,
+      return(data.frame(uniqueness_score = 0,
                         species_percentage_hit = 0,
                         genus_percentage_hit = 0,
                         species_contaminant_score = 0,
-                        genus_contaminant_score = 0))
+                        genus_contaminant_score = 0,
+                        best_hit_genus = NA,
+                        best_hit_species = NA,
+                        best_hit_strain = NA))
     }
+
+    # Clean species results
+    blast_results_table <- blast_results_table |>
+      dplyr::filter(!grepl("sp.", species, fixed = TRUE)) |>
+      dplyr::filter(!grepl("uncultured", species, fixed = TRUE)) |>
+      dplyr::filter(!is.na(genus))
 
     # Adding MetaScope Species and Genus columns
     if (db == "silva") {
@@ -351,13 +359,13 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
   error = function(e)
   {
     cat("Error", conditionMessage(e), "/n")
-    return(data.frame(best_hit = 0,
-                      uniqueness_score = 0,
+    return(data.frame(uniqueness_score = 0,
                       species_percentage_hit = 0,
                       genus_percentage_hit = 0,
                       species_contaminant_score = 0,
                       genus_contaminant_score = 0,
-                      best_hit = NA,
+                      best_hit_genus = NA,
+                      best_hit_species = NA,
                       best_hit_strain = NA))
   }
   )
