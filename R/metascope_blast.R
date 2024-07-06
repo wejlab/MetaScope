@@ -582,7 +582,7 @@ metascope_blast <- function(metascope_id_path,
                      read_proportions = paste0(read_count/sum(read_count), collapse = ",")) |>
     dplyr::arrange(desc(read_counts))
 
-  write.csv(metascope_id_species, file = file.path(out_dir, paste0(sample_name, ".metascope_species.csv"))
+  write.csv(metascope_id_species, file = file.path(out_dir, paste0(sample_name, ".metascope_species.csv")))
 
   # Create fasta directory in tmp directory to save fasta sequences
   fastas_tmp_dir <- file.path(tmp_dir, "fastas")
