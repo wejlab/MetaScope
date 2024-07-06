@@ -273,7 +273,7 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
         dplyr::rename("query_genus" = "genus",
                       "query_species" = "species") |>
         # Remove rows with NA
-        tidyr::drop_na() |>
+        tidyr::drop_na(query_genus, query_species) |>
         # Getting best hit per read
         dplyr::group_by(.data$qseqid) |>
         dplyr::slice_min(.data$evalue, with_ties = TRUE) |>
