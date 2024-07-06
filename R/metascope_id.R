@@ -144,7 +144,7 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
     it <- it + 1
     conv <- max(abs(pi_new - pi_old) / pi_old, na.rm = TRUE)
     pi_old <- pi_new
-    if (!quiet) message(c(it, conv))
+    if (!quiet) message(c(it, " ", conv))
   }
   if (!quiet) message("\tDONE! Converged in ", it, " iterations.")
   hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which
@@ -373,11 +373,12 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                          db_feature_table = NULL,
                          NCBI_key = NULL,
                          out_dir = dirname(input_file),
+                         tmp_dir = NULL,
                          convEM = 1 / 10000, maxitsEM = 25,
-                         blast_fastas = FALSE, num_genomes = 100,
-                         num_reads = 50, update_bam = FALSE,
+                         update_bam = FALSE,
                          num_species_plot = NULL,
-                         quiet = TRUE)  {
+                         blast_fastas = FALSE, num_genomes = 100,
+                         num_reads = 50, quiet = TRUE)  {
   out_base <- input_file %>% base::basename() %>% strsplit(split = "\\.") %>%
     magrittr::extract2(1) %>% magrittr::extract(1)
   out_file <- file.path(out_dir, paste0(out_base, ".metascope_id.csv"))
@@ -451,6 +452,8 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   rname_tax_inds <- rname_tax_inds[order(qname_inds)]
   cigar_strings <- mapped_cigar[order(qname_inds)]
   qwidths <- mapped_qwidth[order(qname_inds)]
+  if (blast_fastas) mapped_seqs <- mapped_seqs[order(qname_inds)]
+
   if (aligner == "bowtie2") {
     # mapped alignments used
     scores <- map_edit_or_align[order(qname_inds)]
@@ -473,29 +476,46 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   if (!quiet) message("Results written to ", out_file)
 
   if (blast_fastas){
-    combined_distinct <- results[[2]]
+    combined_single <- results[[3]]
     num_genomes <- min(num_genomes, nrow(results[[1]]))
-    new_file <- file.path(out_dir, "fastas")
+    new_file <- file.path(tmp_dir, "fastas")
     if(!dir.exists(new_file)) dir.create(new_file)
     for (i in seq.int(1, num_genomes)) {
       current_rname_ind <- results[[1]]$hits_ind[i]
-      read_indices <- combined_distinct %>%
-        dplyr::filter(.data$rname == current_rname_ind) %>%
+      read_indices <- combined_single %>%
+        dplyr::filter(.data$rname == current_rname_ind, .data$best_hit == TRUE) %>%
         dplyr::pull("index")
       current_num_reads <- min(num_reads, length(read_indices))
       read_indices <- read_indices %>% sample(current_num_reads)
-      seqs <- reads[[1]]$seq[read_indices]
+      seqs <- mapped_seqs[read_indices]
       Biostrings::writeXStringSet(seqs,
-                                  file.path(out_dir, "fastas", paste0(sprintf("%04d", i), ".fa")))
+                                  file.path(tmp_dir, "fastas", paste0(sprintf("%04d", i), ".fa")))
     }
   }
 
+
   if (update_bam) {
-    combined_single <- results[3]
-    filter_which <- combined_single$single_hit
-    bam_out <- file.path(out_dir, paste0(out_base, ".updated.bam"))
+    combined_distinct <- results[[2]] |>
+      dplyr::mutate(qname_names = read_names[qname],
+                    rname_names = unique(reads[[1]]$rname)[rname])
+
+    bam_index_df <- data.frame(index = c(1:length(reads[[1]]$qname)),
+                               qname_names = reads[[1]]$qname,
+                               rname_names = as.character(reads[[1]]$rname))
+
+    combined_bam_index <- dplyr::right_join(bam_index_df, combined_distinct, by = (c("qname_names", "rname_names"))) |>
+      dplyr::mutate(qname_rname = paste(qname, rname, sep = "_"),
+                    first_qname_rname = !duplicated(qname_rname)) |>
+      dplyr::filter(first_qname_rname == TRUE)
+
+    filter_which <- rep(FALSE, nrow(bam_index_df))
+    filter_which[combined_bam_index$index.x] <- TRUE
+
+    bam_out <- file.path(tmp_dir, paste0(out_base, ".updated.bam"))
     Rsamtools::indexBam(files = input_file)
-    Rsamtools::filterBam(file = input_file, destination = bam_out, filter = filter_which)
+    input_bam <- Rsamtools::BamFile(input_file, index = input_file,
+                                    yieldSize = 100000000)
+    Rsamtools::filterBam(input_bam, destination = bam_out, filter = filter_which)
   }
   # Plotting genome locations
   num_plot <- num_species_plot
@@ -511,3 +531,5 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   } else if (!quiet) message("No coverage plots created")
   return(metascope_id_file)
 }
+
+
