@@ -1,3 +1,45 @@
+#' Adds in taxa if silva database
+
+#' Returns MetaScope Table with silva taxa in separate columns
+
+#' @param combined_pre MetaScope ID file with silva taxa
+#' @param caching Boolean for if all_silva_headrs.rds is already downloaded
+#' @param path_to_write Path to save all_silva_headers.rds
+
+add_in_taxa <- function(combined_pre, caching, path_to_write) {
+  location <- "https://github.com/wejlab/metascope-docs/raw/main/all_silva_headers.rds"
+  filename <- "all_silva_headers.rds"
+  if (!caching) {
+    if (!dir.exists(path_to_write)) dir.create(path_to_write)
+    destination <- paste(path_to_write, filename, sep = "/")
+    utils::download.file(location, destination)
+  } else if (caching) {
+    bfc <- .get_cache()
+    rid <- BiocFileCache::bfcquery(bfc, filename, "rname")$rid
+    if (!length(rid)) {
+      rid <- names(BiocFileCache::bfcadd(bfc, filename, location))
+    }
+    if (!isFALSE(BiocFileCache::bfcneedsupdate(bfc, rid))) {
+      BiocFileCache::bfcdownload(bfc, rid)
+      BiocFileCache::bfcrpath(bfc, rids = rid)
+    } else {
+      message("Caching is set to TRUE, ",
+              "and it appears that this file is already downloaded ",
+              "in the cache. It will not be downloaded again.")
+    }
+    destination <- BiocFileCache::bfcrpath(bfc, rids = rid)
+  }
+  all_silva_headers <- readRDS(destination)
+  tax_table_pre <- combined_pre %>%
+    dplyr::distinct(.data$TaxonomyID, .keep_all = TRUE) %>%
+    dplyr::left_join(all_silva_headers, by = c("TaxonomyID")) %>%
+    dplyr::relocate("genus", "species", .after = "family") %>%
+    dplyr::relocate("read_count", "Proportion", "readsEM", "EMProportion", .after = "species") %>%
+    dplyr::select(-"Genome")
+  return(tax_table_pre)
+}
+
+
 #' Gets sequences from bam file
 #'
 #' Returns fasta sequences from a bam file with a given taxonomy ID
@@ -30,6 +72,43 @@ get_seqs <- function(id, bam_file, n = 10, bam_seqs) {
   seqs <- sample(allseqs$seq, n)
   return(seqs)
 }
+
+
+#' Gets multiple sequences from different accessions in a bam file
+#'
+#' Returns fasta sequences from a bam file with given taxonomy IDs
+#'
+#' @param ids_n List of vectors with Taxonomy IDs and the number of sequences to get from each
+#' @param bam_file A sorted bam file and index file, loaded with
+#'   Rsamtools::bamFile
+#' @inheritParams metascope_blast
+#'
+#' @return Biostrings format sequences
+get_multi_seqs <- function(ids_n, bam_file) {
+  id = ids_n[1]
+  print(id)
+  n = as.numeric(ids_n[2])
+  print(n)
+  rlang::is_installed("GenomicRanges")
+  rlang::is_installed("IRanges")
+  # Get sequence info (Genome Name) from bam file
+  seq_info_df <- as.data.frame(Rsamtools::seqinfo(bam_file)) |>
+    tibble::rownames_to_column("seqnames")
+  allGenomes <- stringr::str_subset(seq_info_df$seqnames, id)
+  # Sample one of the Genomes that match
+  Genome <- sample(allGenomes, 1)
+  # Scan Bam file for all sequences that match genome
+  param <- Rsamtools::ScanBamParam(what = c("rname", "seq"),
+                                   which = GenomicRanges::GRanges(
+                                     Genome,
+                                     IRanges::IRanges(1, 1e+07)))
+  allseqs <- Rsamtools::scanBam(bam_file, param = param)[[1]]
+  n <- min(n, length(allseqs$seq))
+  print(length(allseqs$seq))
+  seqs <- sample(allseqs$seq, n)
+  return(seqs)
+}
+
 
 #' Converts NCBI taxonomy ID to scientific name
 #'
@@ -489,6 +568,42 @@ metascope_blast <- function(metascope_id_path,
   # Load in metascope id file and clean unknown genomes
   metascope_id_in <- utils::read.csv(metascope_id_path, header = TRUE)
 
+  # Group metascope id by species and create metascope species id
+  metascope_id_tax <- add_in_taxa(metascope_id_in, caching = FALSE, path_to_write = tmp_dir)
+
+  metascope_id_species <- metascope_id_tax |> dplyr::mutate(id = dplyr::row_number()) |>
+    dplyr::group_by(superkingdom, kingdom, phylum, class, order, family, genus, species) |>
+    dplyr::summarise(read_counts = sum(read_count), 
+                     Proportion = sum(Proportion),
+                     readsEM = sum(readsEM), 
+                     EMProportion = sum(EMProportion), 
+                     IDs = paste0(id, collapse = ","),
+                     TaxonomyIDs = paste0(TaxonomyID, collapse = ","),
+                     read_proportions = paste0(read_count/sum(read_count), collapse = ",")) |>
+    dplyr::arrange(desc(read_counts))
+
+  write.csv(metascope_id_species, file = file.path(out_dir, paste0(sample_name, ".metascope_species.csv"))
+
+  # Create fasta directory in tmp directory to save fasta sequences
+  fastas_tmp_dir <- file.path(tmp_dir, "fastas")
+  if(!dir.exists(fastas_tmp_dir)) dir.create(fastas_tmp_dir, recursive = TRUE)
+            
+  # Generate fasta sequences from bam file
+  for (i in c(1:100)) {
+    taxids = strsplit(metascope_id_species$TaxonomyIDs[i], split = ",")[[1]]
+    read_proportions = strsplit(metascope_id_species$read_proportions[i], split = ",")[[1]]
+    reads_to_sample = ceiling(as.numeric(read_proportions) * num_reads)
+    if (length(reads_to_sample) > num_reads) {
+      taxids = taxids[1:num_reads]
+      reads_to_sample = reads_to_sample[1:num_reads]
+    }
+    ids_n <- lapply(1:length(taxids), function(i) c(taxids[i], reads_to_sample[i]))
+    seqs_list <- lapply(ids_n, get_multi_seqs, bam_file = bam_file)
+    seqs <- do.call(c, seqs_list)
+    Biostrings::writeXStringSet(seqs, filepath = file.path(fastas_tmp_dir, paste0(sprintf("%04d", i), ".fa")))
+  }
+
+                    
   # Create blast directory in tmp directory to save blast results in
   blast_tmp_dir <- file.path(tmp_dir, "blast")
   if(!dir.exists(blast_tmp_dir)) dir.create(blast_tmp_dir, recursive = TRUE)
