@@ -570,10 +570,10 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
                                                             species == best_hit_species)) |>
         dplyr::filter(.data$blast_validated == TRUE) |>
         dplyr::mutate(reassignment_proportion = .data$num_reads / sum(.data$num_reads),
-                      reassigned_read_count = metascope_blast_df$read_count[i] / .data$reassignment_proportion,
-                      reassigned_Proportion = metascope_blast_df$Proportion[i]/ .data$reassignment_proportion,
-                      reassigned_readsEM = metascope_blast_df$readsEM[i] / .data$reassignment_proportion,
-                      reassigned_EMProportion = metascope_blast_df$EMProportion[i] / .data$reassignment_proportion)
+                      reassigned_read_count = metascope_blast_df$read_count[i] * .data$reassignment_proportion,
+                      reassigned_Proportion = metascope_blast_df$Proportion[i] * .data$reassignment_proportion,
+                      reassigned_readsEM = metascope_blast_df$readsEM[i] * .data$reassignment_proportion,
+                      reassigned_EMProportion = metascope_blast_df$EMProportion[i] * .data$reassignment_proportion)
 
 
       if (nrow(blast_summary) > 0) {
