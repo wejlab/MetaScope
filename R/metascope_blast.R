@@ -187,8 +187,10 @@ blastn_single_result <- function(results_table, bam_file, which_result,
                                  accessions_path, bam_seqs, out_path,
                                  sample_name, fasta_dir = NULL) {
   res <- tryCatch({ #If any errors, should just skip the organism
-    genome_name <- results_table[which_result, 9] # This is only for silva databases
+    genome_name <- results_table[which_result, 9]
     if (!quiet) message("Current id: ", genome_name)
+    tax_id <- results_table[which_result, 15] |> str_split(split = ",") |> dplyr::first() |> dplyr::first() # Grabs First TaxID
+    if (!quiet) message("Current ti: ", tax_id)
 
     # Generate sequences to blast
     if (!is.null(fasta_dir)) {
@@ -211,6 +213,7 @@ blastn_single_result <- function(results_table, bam_file, which_result,
     taxize_genome_df <- taxid_to_name(unique(blast_res$staxid),
                                       accessions_path = accessions_path)
 
+    blast_res$MetaScope_Taxid <- tax_id
     blast_res$MetaScope_Genome <- genome_name
     blast_res <- dplyr::left_join(blast_res, taxize_genome_df, by = "staxid")
     blast_res
@@ -224,6 +227,7 @@ blastn_single_result <- function(results_table, bam_file, which_result,
                         dimnames = list(c(), all_colnames)) |> as.data.frame()
     tax_id <- results_table[which_result, 1]
     genome_name <- results_table[which_result, 2]
+    blast_res$MetaScope_Taxid <- tax_id
     blast_res$MetaScope_Genome <- genome_name
     blast_res$name <- NA
     blast_res
