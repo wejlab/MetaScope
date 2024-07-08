@@ -187,7 +187,7 @@ blastn_single_result <- function(results_table, bam_file, which_result,
                                  accessions_path, bam_seqs, out_path,
                                  sample_name, fasta_dir = NULL) {
   res <- tryCatch({ #If any errors, should just skip the organism
-    genome_name <- results_table[which_result, 9]
+    genome_name <- results_table[which_result, 9] # This is only for silva databases
     if (!quiet) message("Current id: ", genome_name)
 
     # Generate sequences to blast
@@ -224,7 +224,6 @@ blastn_single_result <- function(results_table, bam_file, which_result,
                         dimnames = list(c(), all_colnames)) |> as.data.frame()
     tax_id <- results_table[which_result, 1]
     genome_name <- results_table[which_result, 2]
-    blast_res$MetaScope_Taxid <- tax_id
     blast_res$MetaScope_Genome <- genome_name
     blast_res$name <- NA
     blast_res
@@ -564,6 +563,7 @@ metascope_blast <- function(metascope_id_path,
   # Load in metascope id file and clean unknown genomes
   metascope_id_in <- utils::read.csv(metascope_id_path, header = TRUE)
 
+  # This should only be for silva databases, NCBI databases need to add in taxa through another function
   # Group metascope id by species and create metascope species id
   metascope_id_tax <- add_in_taxa(metascope_id_in, caching = FALSE, path_to_write = tmp_dir)
 
