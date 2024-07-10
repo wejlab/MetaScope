@@ -189,7 +189,7 @@ blastn_single_result <- function(results_table, bam_file, which_result,
   res <- tryCatch({ #If any errors, should just skip the organism
     genome_name <- results_table[which_result, 9]
     if (!quiet) message("Current id: ", genome_name)
-    tax_id <- results_table[which_result, 15] |> str_split(split = ",") |> dplyr::first() |> dplyr::first() # Grabs First TaxID
+    tax_id <- results_table[which_result, 15] |> stringr::str_split(",") |> dplyr::first() |> dplyr::first() # Grabs First TaxID
     if (!quiet) message("Current ti: ", tax_id)
 
     # Generate sequences to blast
