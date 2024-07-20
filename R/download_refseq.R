@@ -37,7 +37,7 @@ id_kingdom_rank <- function(classification_table, taxon, rank_input, quiet) {
   return(parent_kingdom)
 }
 
-# Helper function to download refseq table (for a given group)
+# Helper function to download the refseq table (for a given group)
 get_table <- function(what_tax) {
   refseq_link <- paste("https://ftp.ncbi.nlm.nih.gov/genomes/refseq/",
                        what_tax, "/assembly_summary.txt", sep = "")

@@ -4,10 +4,23 @@
 \alias{blast_result_metrics}
 \title{Calculates result metrics from a blast results table}
 \usage{
-blast_result_metrics(blast_results_table_path, NCBI_key = NULL)
+blast_result_metrics(
+  blast_results_table_path,
+  accessions_path,
+  db = NULL,
+  NCBI_key = NULL
+)
 }
 \arguments{
 \item{blast_results_table_path}{path for blast results csv file}
+
+\item{accessions_path}{Directory where accession files for blast are stored.}
+
+\item{db}{Currently accepts one of \code{c("ncbi", "silva", "other")}
+Default is \code{"ncbi"}, appropriate for samples aligned against indices
+compiled from NCBI whole genome databases. Alternatively, usage of an
+alternate database (like Greengenes2) should be specified with
+\code{"other"}.}
 
 \item{NCBI_key}{(character) NCBI Entrez API key. optional. See
 taxize::use_entrez(). Due to the high number of requests made to NCBI, this

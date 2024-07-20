@@ -10,13 +10,16 @@ metascope_blast(
   tmp_dir,
   out_dir,
   sample_name,
+  fasta_dir = NULL,
   num_results = 10,
   num_reads = 100,
   hit_list = 10,
   num_threads = 1,
   db_path,
   quiet = FALSE,
-  NCBI_key = NULL
+  NCBI_key = NULL,
+  db = NULL,
+  accessions_path = NULL
 )
 }
 \arguments{
@@ -35,6 +38,8 @@ files.}
 \item{out_dir}{Character string, path to output directory.}
 
 \item{sample_name}{Character string, sample name for output files.}
+
+\item{fasta_dir}{Directory where fasta files for blast will be stored.}
 
 \item{num_results}{Integer, the maximum number of taxa from the metascope_id
 output to check reads. Takes the top n taxa, i.e. those with largest
@@ -62,9 +67,17 @@ is FALSE.}
 \item{NCBI_key}{(character) NCBI Entrez API key. optional. See
 taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 function will be less prone to errors if you obtain an NCBI key.}
+
+\item{db}{Currently accepts one of \code{c("ncbi", "silva", "other")}
+Default is \code{"ncbi"}, appropriate for samples aligned against indices
+compiled from NCBI whole genome databases. Alternatively, usage of an
+alternate database (like Greengenes2) should be specified with
+\code{"other"}.}
+
+\item{accessions_path}{Directory where accession files for blast are stored.}
 }
 \value{
-This function writes an updated csv file with metrics evaluating...
+This function writes an updated csv file with metrics.
 }
 \description{
 This function allows the user to check a subset of identified reads against

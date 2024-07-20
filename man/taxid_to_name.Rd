@@ -4,14 +4,12 @@
 \alias{taxid_to_name}
 \title{Converts NCBI taxonomy ID to scientific name}
 \usage{
-taxid_to_name(taxids, NCBI_key = NULL)
+taxid_to_name(taxids, accessions_path)
 }
 \arguments{
 \item{taxids}{List of NCBI taxids to convert to scientific name}
 
-\item{NCBI_key}{(character) NCBI Entrez API key. optional. See
-taxize::use_entrez(). Due to the high number of requests made to NCBI, this
-function will be less prone to errors if you obtain an NCBI key.}
+\item{accessions_path}{Path to accessionsTaxa.sql}
 }
 \value{
 Returns a dataframe of blast results for a metascope result

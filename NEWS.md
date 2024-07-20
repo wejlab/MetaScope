@@ -1,3 +1,8 @@
+# Development version
+
+## Major changes
+* Changed name of `demultiplex()` to `meta_demultiplex()`
+
 # MetaScope 1.3.7 (Bioc 3.19)
 
 ## Bug Fixes
