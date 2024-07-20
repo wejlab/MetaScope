@@ -151,7 +151,7 @@ get_assignments <- function(combined, convEM, maxitsEM, unique_taxids,
     it <- it + 1
     conv <- max(abs(pi_new - pi_old) / pi_old, na.rm = TRUE)
     pi_old <- pi_new
-    if (!quiet) message(c(it, conv))
+    if (!quiet) message(c(it, " ", conv))
   }
   if (!quiet) message("\tDONE! Converged in ", it, " iterations.")
   #hit_which <- qlcMatrix::rowMax(gammas_new, which = TRUE)$which
@@ -386,7 +386,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                          out_dir = dirname(input_file),
                          tmp_dir = NULL,
                          convEM = 1 / 10000, maxitsEM = 25,
-                         q50 = FALSE, update_bam = FALSE,
+                         update_bam = FALSE,
                          num_species_plot = NULL,
                          blast_fastas = FALSE, num_genomes = 100,
                          num_reads = 50, quiet = TRUE)  {
@@ -489,7 +489,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   if (blast_fastas){
     combined_single <- results[[3]]
     num_genomes <- min(num_genomes, nrow(results[[1]]))
-    new_file <- file.path(out_dir, "fastas")
+    new_file <- file.path(tmp_dir, "fastas")
     if(!dir.exists(new_file)) dir.create(new_file)
     for (i in seq.int(1, num_genomes)) {
       current_rname_ind <- results[[1]]$hits_ind[i]
@@ -506,11 +506,27 @@ metascope_id <- function(input_file, input_type = "csv.gz",
 
 
   if (update_bam) {
-    combined_single <- results[[3]]
-    filter_which <- combined_single$best_hit
+    combined_distinct <- results[[2]] |>
+      dplyr::mutate(qname_names = read_names[qname],
+                    rname_names = unique(reads[[1]]$rname)[rname])
+
+    bam_index_df <- data.frame(index = c(1:length(reads[[1]]$qname)),
+                               qname_names = reads[[1]]$qname,
+                               rname_names = as.character(reads[[1]]$rname))
+
+    combined_bam_index <- dplyr::right_join(bam_index_df, combined_distinct, by = (c("qname_names", "rname_names"))) |>
+      dplyr::mutate(qname_rname = paste(qname, rname, sep = "_"),
+                    first_qname_rname = !duplicated(qname_rname)) |>
+      dplyr::filter(first_qname_rname == TRUE)
+
+    filter_which <- rep(FALSE, nrow(bam_index_df))
+    filter_which[combined_bam_index$index.x] <- TRUE
+
     bam_out <- file.path(tmp_dir, paste0(out_base, ".updated.bam"))
     Rsamtools::indexBam(files = input_file)
-    Rsamtools::filterBam(file = input_file, destination = bam_out, filter = filter_which)
+    input_bam <- Rsamtools::BamFile(input_file, index = input_file,
+                                    yieldSize = 100000000)
+    Rsamtools::filterBam(input_bam, destination = bam_out, filter = filter_which)
   }
   # Plotting genome locations
   num_plot <- num_species_plot
