@@ -57,9 +57,10 @@ reference:
     - filter_unmapped_reads
     - check_samtools_exists
     - blast_result_metrics
+    - blastn_results
+    - blastn_single_result
+    - check_blastn_exists
     - get_seqs
-    - rBLAST_single_result
-    - rBlast_results
     - taxid_to_name
 
 navbar:
@@ -75,9 +76,9 @@ navbar:
       - text: "Condensed MetaScope Tutorial"
         href: articles/MetaScopeTutorial.html
       - text: "Usage with SILVA 16S Database"
-        href: articles/SILVA.html
+        href: articles/docs/SILVA.html
       - text: "Example MetaScope Script"
-        href: articles/Example_Script.html
+        href: articles/docs/Example_Script.html
     - text: "Function Reference"
       href: reference/index.html
     - text: "Package News"
