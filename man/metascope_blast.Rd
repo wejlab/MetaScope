@@ -123,18 +123,22 @@ db <- "/restricted/projectnb/pathoscope/data/blastdb/nt/nt"
 
 Sys.setenv(ENTREZ_KEY = "<your id here>")
 
-metascope_blast(metascope_id_path,
-                bam_file_path = file.path(file_temp, "bowtie_target.updated.bam"),
-                tmp_dir = file_temp,
-                out_dir = file_temp,
-                sample_name = out_base,
-                db_path = db,
-                num_results = 10,
-                num_reads = 5,
-                hit_list = 10,
-                num_threads = 3,
-                quiet = FALSE,
-                NCBI_key = NULL)
+ metascope_blast(metascope_id_path,
+              bam_file_path = file.path(file_temp, "bowtie_target.bam"),
+              #bam_file_path = file.path(file_temp, "bowtie_target.updated.bam")
+              tmp_dir = file_temp,
+              out_dir = file_temp,
+              sample_name = out_base,
+              db_path = db_path,
+              num_results = 10,
+              num_reads = 5,
+              hit_list = 10,
+              num_threads = 3,
+              db = "ncbi",
+              quiet = FALSE,
+              NCBI_key = NULL,
+              fasta_dir = NULL ,
+              accessions_path = NULL)
 
 ## Remove temporary directory
 unlink(file_temp, recursive = TRUE)

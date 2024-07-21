@@ -15,7 +15,6 @@ metascope_id(
   tmp_dir = NULL,
   convEM = 1/10000,
   maxitsEM = 25,
-  q50 = FALSE,
   update_bam = FALSE,
   num_species_plot = NULL,
   blast_fastas = FALSE,
@@ -61,8 +60,6 @@ Required.}
 the convEM is below the threshhold. Default set at \code{50}. If set at
 \code{0}, the algorithm skips the EM step and summarizes the .bam file 'as
 is'}
-
-\item{q50}{(inc.)}
 
 \item{update_bam}{Whether to update BAM file with new read assignments.
 Default is \code{FALSE}. If \code{TRUE}, requires \code{input_type = TRUE}

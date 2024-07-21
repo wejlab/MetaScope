@@ -37,7 +37,7 @@ MetaScope is a complete metagenomics profiling package that can accurately ident
 
 The major workflow of MetaScope is delineated below. It is composed of core modules that are formed by groups  of functions.
 
-![Figure 1. The MetaScope workflow and its associated modules with function descriptions. The MetaRef, MetaAlign, MetaFilter, and MetaID modules form the backbone of package operation, whereas the MetaDemultiplex, MetaBLAST, and MetaCombine modules are complementary to the core package functionality.](MetaScope Workflow.png)
+![Figure 1. The MetaScope workflow and its associated modules with function descriptions. The MetaRef, MetaAlign, MetaFilter, and MetaID modules form the backbone of package operation, whereas the MetaDemultiplex, MetaBLAST, and MetaCombine modules are complementary to the core package functionality.](MetaScope_Workflow.png)
 
 The core modules are as follows:
 1. **MetaDemultiplex:** Obtain non-barcoded sequencing reads

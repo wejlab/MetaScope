@@ -23,7 +23,7 @@ This is a condensed tutorial for the MetaScope package. We will walk through the
 
 The following diagram reveals the general module workflow of the MetaScope package.
 
-![Figure 1. The MetaScope workflow and its associated modules with function descriptions. The MetaRef, MetaAlign, MetaFilter, and MetaID modules form the backbone of package operation, whereas the MetaDemultiplex, MetaBLAST, and MetaCombine modules are complementary to the core package functionality.](MetaScope Workflow.png)
+![Figure 1. The MetaScope workflow and its associated modules with function descriptions. The MetaRef, MetaAlign, MetaFilter, and MetaID modules form the backbone of package operation, whereas the MetaDemultiplex, MetaBLAST, and MetaCombine modules are complementary to the core package functionality.](MetaScope_Workflow.png)
 
 The core modules are as follows:
 1. **MetaDemultiplex:** Obtain non-barcoded sequencing reads

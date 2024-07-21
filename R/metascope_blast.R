@@ -31,6 +31,7 @@ add_in_taxa <- function(combined_pre, caching, path_to_write) {
   }
   all_silva_headers <- readRDS(destination)
   tax_table_pre <- combined_pre %>%
+    dplyr::mutate("TaxonomyID" = as.character(.data$TaxonomyID)) %>%
     dplyr::distinct(.data$TaxonomyID, .keep_all = TRUE) %>%
     dplyr::left_join(all_silva_headers, by = c("TaxonomyID")) %>%
     dplyr::relocate("genus", "species", .after = "family") %>%
@@ -39,6 +40,38 @@ add_in_taxa <- function(combined_pre, caching, path_to_write) {
   return(tax_table_pre)
 }
 
+#' Adds in taxa if NCBI database
+
+#' Returns MetaScope Table with NCBI taxa in separate columns
+
+#' @param combined_pre MetaScope ID file with NCBI taxa qnames
+#' 
+
+add_in_taxa_ncbi <- function(combined_pre, NCBI_key) {
+  taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class",
+                  "order", "family", "genus", "species")
+  all_ncbi <- plyr::llply(combined_pre$TaxonomyID, .fun = class_taxon,
+                          NCBI_key = NCBI_key, .progress = "text",
+                          num_tries = 3)
+  # fix unknowns
+  na_ind <- which(is.na(all_ncbi))
+  unk_tab <- data.frame(name = "unknown", rank = taxon_ranks, id = 0)
+  if (length(na_ind) > 0) for (i in na_ind) all_ncbi[[i]] <- unk_tab
+  # Create table
+  taxonomy_table <- plyr::llply(all_ncbi, mk_table, taxon_ranks) %>%
+    dplyr::bind_rows() %>% as.data.frame()
+  colnames(taxonomy_table) <- taxon_ranks
+    # later
+  tax_table_pre <- taxonomy_table %>%
+    dplyr::mutate(TaxonomyID = combined_pre$TaxonomyID) %>%
+    dplyr::relocate(TaxonomyID) %>%
+    dplyr::distinct(.data$TaxonomyID, .keep_all = TRUE) %>%
+    dplyr::left_join(combined_pre, by = c("TaxonomyID")) %>%
+    dplyr::relocate("genus", "species", .after = "family") %>%
+    dplyr::relocate("read_count", "Proportion", "readsEM", "EMProportion", .after = "species") %>%
+    dplyr::select(-"Genome")
+  return(tax_table_pre)
+}
 
 #' Gets sequences from bam file
 #'
@@ -80,34 +113,69 @@ get_seqs <- function(id, bam_file, n = 10, bam_seqs) {
 #' @param ids_n List of vectors with Taxonomy IDs and the number of sequences to get from each
 #' @param bam_file A sorted bam file and index file, loaded with
 #'   Rsamtools::bamFile
-#' @inheritParams metascope_blast
 #'
 #' @return Biostrings format sequences
-get_multi_seqs <- function(ids_n, bam_file) {
-  id = ids_n[1]
-  print(id)
-  n = as.numeric(ids_n[2])
-  print(n)
-  rlang::is_installed("GenomicRanges")
-  rlang::is_installed("IRanges")
-  # Get sequence info (Genome Name) from bam file
-  seq_info_df <- as.data.frame(Rsamtools::seqinfo(bam_file)) |>
-    tibble::rownames_to_column("seqnames")
-  allGenomes <- stringr::str_subset(seq_info_df$seqnames, id)
+get_multi_seqs <- function(ids_n, bam_file, seq_info_df,
+                           metascope_id_tax = metascope_id_tax) {
+  id <- ids_n[[1]][1]
+  require("GenomicRanges")
+  require("IRanges")
+  allGenomes <- seq_info_df %>%
+    dplyr::filter(seqnames == id) %>%
+    dplyr::pull(original_seqids)
   # Sample one of the Genomes that match
   Genome <- sample(allGenomes, 1)
-  # Scan Bam file for all sequences that match genome
-  param <- Rsamtools::ScanBamParam(what = c("rname", "seq"),
-                                   which = GenomicRanges::GRanges(
-                                     Genome,
-                                     IRanges::IRanges(1, 1e+07)))
-  allseqs <- Rsamtools::scanBam(bam_file, param = param)[[1]]
-  n <- min(n, length(allseqs$seq))
-  print(length(allseqs$seq))
-  seqs <- sample(allseqs$seq, n)
-  return(seqs)
+  # Define BAM file with smaller yield size
+  YS <- 1000
+  bf <- Rsamtools::BamFile(sorted_bam_file, yieldSize = YS)
+  
+  alt_n <- metascope_id_tax %>%
+    dplyr::filter(TaxonomyID == id) %>% dplyr::pull("read_count") 
+  n_seqs <- ifelse(test = is.na(as.numeric(ids_n[[1]][2])),
+                   yes = min(alt_n, 100),
+                   no = as.numeric(ids_n[[1]][2]))
+  
+  YIELD <- function(bf) {
+    param <- Rsamtools::ScanBamParam(what = c("rname", "seq"),
+                                     which = GenomicRanges::GRanges(
+                                       Genome,
+                                       IRanges::IRanges(1, 1e+07)))
+    value <- Rsamtools::scanBam(bf, param = param)[[1]]
+    return(value)
+  }
+  MAP <- function(value) {
+    if(length(value$rname) == 0) return(dplyr::tibble(NULL))
+    y <- dplyr::tibble("UID" = value$rname |> unlist(),
+                       "Sequence" = as.character(value$seq))
+    return(y)
+  }
+  REDUCE <- function(x, y) {
+    all_join <- dplyr::bind_rows(x, y)
+    # Print all current reads to file
+    return(all_join)
+  }
+  
+  reduceByYield_multiseqs <- function(X, YIELD, MAP, REDUCE, n_end) {
+    if (!Rsamtools::isOpen(X)) {
+      Rsamtools::open.BamFile(X)
+      on.exit(Rsamtools::close.BamFile(X))
+    }
+    result <- dplyr::tibble(NULL)
+    
+    while(nrow(result) < n_end) {
+      data <- YIELD(X)
+      result <- REDUCE(result, MAP(data))
+      print(nrow(result))
+      print(n_end)
+    }
+    return(result)
+  }
+  
+  seqs <- reduceByYield_multiseqs(bf, YIELD, MAP, REDUCE, n_end = n_seqs)
+  
+  final_seqs <- list(rname = seqs$UID, seq = Biostrings::DNAStringSet(seqs$Sequence))
+  return(final_seqs)
 }
-
 
 #' Converts NCBI taxonomy ID to scientific name
 #'
@@ -328,9 +396,9 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
 
     # Clean species results
     blast_results_table <- blast_results_table |>
-      dplyr::filter(!grepl("sp.", species, fixed = TRUE)) |>
-      dplyr::filter(!grepl("uncultured", species, fixed = TRUE)) |>
-      dplyr::filter(!is.na(genus))
+      dplyr::filter(!grepl("sp.", .data$species, fixed = TRUE)) |>
+      dplyr::filter(!grepl("uncultured", .data$species, fixed = TRUE)) |>
+      dplyr::filter(!is.na(.data$genus))
 
     # Adding MetaScope Species and Genus columns
     if (db == "silva") {
@@ -339,10 +407,8 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
       silva_genome <- gsub(" uncultured", ";uncultured", blast_results_table$MetaScope_Genome[1])
 
       # Creating silva genus and species names
-      silva_genus <- silva_genome |> strsplit(split = ";") |>
-        sapply("[", 7)
-      silva_species <- silva_genome |> strsplit(split = ";") |>
-        sapply("[", 8)
+      silva_genus <- silva_genome |> strsplit(split = ";") |> sapply("[", 7)
+      silva_species <- silva_genome |> strsplit(split = ";") |> sapply("[", 8)
 
       blast_results_table_2 <- blast_results_table |>
         dplyr::mutate("MetaScope_genus" = rep(silva_genus, nrow(blast_results_table)),
@@ -350,7 +416,7 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
         dplyr::rename("query_genus" = "genus",
                       "query_species" = "species") |>
         # Remove rows with NA
-        tidyr::drop_na(query_genus, query_species) |>
+        tidyr::drop_na("query_genus", "query_species") |>
         # Getting best hit per read
         dplyr::group_by(.data$qseqid) |>
         dplyr::slice_min(.data$evalue, with_ties = TRUE) |>
@@ -359,7 +425,8 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
 
     } else {
       meta_tax <- taxid_to_name(unique(blast_results_table$MetaScope_Taxid),
-                                accessions_path = accessions_path) |> dplyr::select(-"staxid")
+                                accessions_path = accessions_path) |>
+        dplyr::select(-"staxid")
 
       blast_results_table_2 <- blast_results_table |>
         dplyr::mutate("MetaScope_genus" = meta_tax$genus[1],
@@ -534,19 +601,23 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
 #' db <- "/restricted/projectnb/pathoscope/data/blastdb/nt/nt"
 #'
 #' Sys.setenv(ENTREZ_KEY = "<your id here>")
-#'
-#' metascope_blast(metascope_id_path,
-#'                 bam_file_path = file.path(file_temp, "bowtie_target.updated.bam"),
-#'                 tmp_dir = file_temp,
-#'                 out_dir = file_temp,
-#'                 sample_name = out_base,
-#'                 db_path = db,
-#'                 num_results = 10,
-#'                 num_reads = 5,
-#'                 hit_list = 10,
-#'                 num_threads = 3,
-#'                 quiet = FALSE,
-#'                 NCBI_key = NULL)
+#' 
+#'  metascope_blast(metascope_id_path,
+#'               bam_file_path = file.path(file_temp, "bowtie_target.bam"),
+#'               #bam_file_path = file.path(file_temp, "bowtie_target.updated.bam")
+#'               tmp_dir = file_temp,
+#'               out_dir = file_temp,
+#'               sample_name = out_base,
+#'               db_path = db_path,
+#'               num_results = 10,
+#'               num_reads = 5,
+#'               hit_list = 10,
+#'               num_threads = 3,
+#'               db = "ncbi",
+#'               quiet = FALSE,
+#'               NCBI_key = NULL,
+#'               fasta_dir = NULL ,
+#'               accessions_path = NULL)
 #'
 #' ## Remove temporary directory
 #' unlink(file_temp, recursive = TRUE)
@@ -568,44 +639,69 @@ metascope_blast <- function(metascope_id_path,
   Rsamtools::indexBam(sorted_bam_file)
   bam_file <- Rsamtools::BamFile(sorted_bam_file, index = sorted_bam_file)
 
-
   # Load in metascope id file and clean unknown genomes
   metascope_id_in <- utils::read.csv(metascope_id_path, header = TRUE)
+  
+  if (db == "silva") {
+    # Group metascope id by species and create metascope species id
+    metascope_id_tax <- add_in_taxa(metascope_id_in, caching = FALSE,
+                                    path_to_write = tmp_dir)
+  } else if (db == "ncbi") {
+    metascope_id_tax <- add_in_taxa_ncbi(metascope_id_in)
+  }
 
-  # This should only be for silva databases, NCBI databases need to add in taxa through another function
-  # Group metascope id by species and create metascope species id
-  metascope_id_tax <- add_in_taxa(metascope_id_in, caching = FALSE, path_to_write = tmp_dir)
+  metascope_id_species <- metascope_id_tax |> dplyr::mutate("id" = dplyr::row_number()) |>
+    dplyr::group_by(.data$superkingdom, .data$kingdom, .data$phylum, .data$class,
+                    .data$order, .data$family, .data$genus, .data$species) |>
+    dplyr::summarise("read_counts" = sum(.data$read_count), 
+                     "Proportion" = sum(.data$Proportion),
+                     "readsEM" = sum(.data$readsEM), 
+                     "EMProportion" = sum(.data$EMProportion), 
+                     "IDs" = paste0(.data$id, collapse = ","),
+                     "TaxonomyIDs" = paste0(.data$TaxonomyID, collapse = ","),
+                     "read_proportions" = paste0(.data$read_count/sum(.data$read_count),
+                                                 collapse = ","),
+                     .groups = "drop") |>
+    dplyr::arrange(dplyr::desc(.data$read_counts))
 
-  metascope_id_species <- metascope_id_tax |> dplyr::mutate(id = dplyr::row_number()) |>
-    dplyr::group_by(superkingdom, kingdom, phylum, class, order, family, genus, species) |>
-    dplyr::summarise(read_counts = sum(read_count), 
-                     Proportion = sum(Proportion),
-                     readsEM = sum(readsEM), 
-                     EMProportion = sum(EMProportion), 
-                     IDs = paste0(id, collapse = ","),
-                     TaxonomyIDs = paste0(TaxonomyID, collapse = ","),
-                     read_proportions = paste0(read_count/sum(read_count), collapse = ",")) |>
-    dplyr::arrange(desc(read_counts))
-
-  write.csv(metascope_id_species, file = file.path(out_dir, paste0(sample_name, ".metascope_species.csv")))
+  utils::write.csv(metascope_id_species,
+            file = file.path(out_dir,
+                             paste0(sample_name, ".metascope_species.csv")))
 
   # Create fasta directory in tmp directory to save fasta sequences
   fastas_tmp_dir <- file.path(tmp_dir, "fastas")
-  if(!dir.exists(fastas_tmp_dir)) dir.create(fastas_tmp_dir, recursive = TRUE)
+  if(!dir.exists(fastas_tmp_dir)) dir.create(fastas_tmp_dir,
+                                             recursive = TRUE)
             
   # Generate fasta sequences from bam file
-  for (i in c(1:100)) {
-    taxids = strsplit(metascope_id_species$TaxonomyIDs[i], split = ",")[[1]]
-    read_proportions = strsplit(metascope_id_species$read_proportions[i], split = ",")[[1]]
-    reads_to_sample = ceiling(as.numeric(read_proportions) * num_reads)
+  
+  # How many taxa
+  num_taxa_loop <- min(nrow(taxonomy_table), 100)
+  # Extract sequence information from BAM file
+  seq_info_df <- as.data.frame(Rsamtools::seqinfo(bam_file)) |>
+    tibble::rownames_to_column("seqnames") |>
+    dplyr::mutate("original_seqids" = seqnames)
+  if (db == "ncbi") {
+    all_ids <- taxize::genbank2uid(id = seq_info_df$seqnames, key = NCBI_key) |>
+      lapply(function(x) x[[1]]) |> unlist()
+    seq_info_df$seqnames <- all_ids
+  }
+  for (i in seq_len(num_taxa_loop)) {
+    taxids <- strsplit(metascope_id_species$TaxonomyIDs[i], split = ",")[[1]]
+    read_proportions <- strsplit(metascope_id_species$read_proportions[i],
+                                 split = ",")[[1]]
+    reads_to_sample <- ceiling(as.numeric(read_proportions) * num_reads)
     if (length(reads_to_sample) > num_reads) {
-      taxids = taxids[1:num_reads]
-      reads_to_sample = reads_to_sample[1:num_reads]
+      taxids <- taxids[seq_len(num_reads)]
+      reads_to_sample <- reads_to_sample[seq_len(num_reads)]
     }
-    ids_n <- lapply(1:length(taxids), function(i) c(taxids[i], reads_to_sample[i]))
-    seqs_list <- lapply(ids_n, get_multi_seqs, bam_file = bam_file)
+    ids_n <- lapply(seq_along(taxids), function(i) c(taxids[i], reads_to_sample[i]))
+    seqs_list <- lapply(ids_n, get_multi_seqs, bam_file = bam_file,
+                        seq_info_df = seq_info_df,
+                        metascope_id_tax = metascope_id_tax)
     seqs <- do.call(c, seqs_list)
-    Biostrings::writeXStringSet(seqs, filepath = file.path(fastas_tmp_dir, paste0(sprintf("%04d", i), ".fa")))
+    Biostrings::writeXStringSet(
+      seqs, filepath = file.path(fastas_tmp_dir, paste0(sprintf("%04d", i), ".fa")))
   }
 
                     
@@ -642,19 +738,16 @@ metascope_blast <- function(metascope_id_path,
   metascope_blast_df <- data.frame(metascope_id_species, blast_result_metrics_df)
   utils::write.csv(metascope_blast_df, print_file)
   message("Results written to ", print_file)
-  return(head(metascope_blast_df))
+  return(utils::head(metascope_blast_df))
 }
 
-#' Reassign reads from Blast alignment
-#'
-#' This function allows the user to reassign reads who's NCBI BLAST results
-#' contradict results provided by MetaScope to assignments that were BLAST
-#' validated. It returns an updated csv with reads reassigned according to their
-#' BLAST validation.
-#'
-#'
-#' @param
-#` @export
+# Reassign reads from Blast alignment
+# 
+# This function allows the user to reassign reads who's NCBI BLAST results
+# contradict results provided by MetaScope to assignments that were BLAST
+# validated. It returns an updated csv with reads reassigned according to their
+# BLAST validation.
+# 
 
 blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
                                blast_tmp_dir, out_dir, sample_name) {

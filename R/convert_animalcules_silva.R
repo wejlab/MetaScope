@@ -51,8 +51,7 @@ organize_tax_counts <- function(combined_list, tax_table) {
     tibble::column_to_rownames("TaxonomyID")
   # Upsample counts
   counts_up <- animalcules::upsample_counts(prelim_counts, tax_table_2, "species")
-  tax_up <- tax_table_2 %>%
-    dplyr::distinct(.data$species, .keep_all = TRUE)
+  tax_up <- tax_table_2[!duplicated(tax_table_2[, "species"]), ]
   rownames(tax_up) <- tax_up$species
   order_ind_2 <- match(rownames(counts_up), rownames(tax_up))
   tax_final <- tax_up[order_ind_2, ]
@@ -60,7 +59,7 @@ organize_tax_counts <- function(combined_list, tax_table) {
 }
 
 # Helper function
-add_in_taxa <- function(combined_pre, caching, path_to_write) {
+add_in_taxa_silva <- function(combined_pre, caching, path_to_write) {
   location <- "https://github.com/wejlab/metascope-docs/raw/main/all_silva_headers.rds"
   filename <- "all_silva_headers.rds"
   if (!caching) {
@@ -84,9 +83,9 @@ add_in_taxa <- function(combined_pre, caching, path_to_write) {
     destination <- BiocFileCache::bfcrpath(bfc, rids = rid)
   }
   all_silva_headers <- readRDS(destination)
-  tax_table_pre <- lapply(combined_pre, function(x) x[[2]]) %>%
-    dplyr::bind_rows() %>%
-    dplyr::distinct(.data$TaxonomyID, .keep_all = TRUE) %>%
+  tax_table_pre_1 <- lapply(combined_pre, function(x) x[[2]]) %>%
+    dplyr::bind_rows()
+  tax_table_pre <- tax_table_pre_1[!duplicated(tax_table_pre_1[, "TaxonomyID"]), ] %>%
     dplyr::left_join(all_silva_headers, by = c("TaxonomyID")) %>%
     dplyr::relocate("genus", "species", "TaxonomyID", .after = "family") %>%
     dplyr::select(-"Genome")
@@ -179,7 +178,7 @@ convert_animalcules_silva <- function(meta_counts, annot_path, which_annot_col,
     dplyr::group_by(.data$TaxonomyID) %>%
     dplyr::summarise(dplyr::across(dplyr::where(is.numeric), sum))
   
-  tax_table_pre <- add_in_taxa(combined_pre, caching, path_to_write)
+  tax_table_pre <- add_in_taxa_silva(combined_pre, caching, path_to_write)
   final_res <- organize_tax_counts(combined_list, tax_table_pre)
   MAE <- create_MAE(annot_path, which_annot_col, final_res$counts,
                     final_res$tax, path_to_write, qiime_biom_out)

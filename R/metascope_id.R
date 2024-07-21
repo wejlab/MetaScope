@@ -334,7 +334,6 @@ locations <- function(which_taxid, which_genome,
 #' @param quiet Turns off most messages. Default is \code{TRUE}.
 #' @param tmp_dir Path to a directory to which bam and updated bam files can be saved.
 #' Required.
-#' @param q50 (inc.)
 #'
 #' @return This function returns a .csv file with annotated read counts to
 #'   genomes with mapped reads. The function itself returns the output .csv file
@@ -507,17 +506,18 @@ metascope_id <- function(input_file, input_type = "csv.gz",
 
   if (update_bam) {
     combined_distinct <- results[[2]] |>
-      dplyr::mutate(qname_names = read_names[qname],
-                    rname_names = unique(reads[[1]]$rname)[rname])
+      dplyr::mutate(qname_names = read_names[.data$qname],
+                    rname_names = unique(reads[[1]]$rname)[.data$rname])
 
-    bam_index_df <- data.frame(index = c(1:length(reads[[1]]$qname)),
-                               qname_names = reads[[1]]$qname,
-                               rname_names = as.character(reads[[1]]$rname))
+    bam_index_df <- data.frame("index" = c(1:length(reads[[1]]$qname)),
+                               "qname_names" = reads[[1]]$qname,
+                               "rname_names" = as.character(reads[[1]]$rname))
 
-    combined_bam_index <- dplyr::right_join(bam_index_df, combined_distinct, by = (c("qname_names", "rname_names"))) |>
-      dplyr::mutate(qname_rname = paste(qname, rname, sep = "_"),
-                    first_qname_rname = !duplicated(qname_rname)) |>
-      dplyr::filter(first_qname_rname == TRUE)
+    combined_bam_index <- dplyr::right_join(bam_index_df, combined_distinct,
+                                            by = (c("qname_names", "rname_names"))) |>
+      dplyr::mutate("qname_rname" = paste(.data$qname, .data$rname, sep = "_"),
+                    "first_qname_rname" = !duplicated(.data$qname_rname)) |>
+      dplyr::filter(.data$first_qname_rname == TRUE)
 
     filter_which <- rep(FALSE, nrow(bam_index_df))
     filter_which[combined_bam_index$index.x] <- TRUE
