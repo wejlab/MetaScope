@@ -3,7 +3,7 @@
 #' Returns MetaScope Table with silva taxa in separate columns
 
 #' @param combined_pre MetaScope ID file with silva taxa
-#' @param caching Boolean for if all_silva_headrs.rds is already downloaded
+#' @param caching Boolean for if all_silva_headers.rds is already downloaded
 #' @param path_to_write Path to save all_silva_headers.rds
 
 add_in_taxa <- function(combined_pre, caching, path_to_write) {
@@ -45,6 +45,9 @@ add_in_taxa <- function(combined_pre, caching, path_to_write) {
 #' Returns MetaScope Table with NCBI taxa in separate columns
 
 #' @param combined_pre MetaScope ID file with NCBI taxa qnames
+#' @param NCBI_key (character) NCBI Entrez API key. optional.
+#' See taxize::use_entrez(). Due to the high number of requests made to NCBI,
+#' this function will be less prone to errors if you obtain an NCBI key.
 #' 
 
 add_in_taxa_ncbi <- function(combined_pre, NCBI_key) {
@@ -64,7 +67,7 @@ add_in_taxa_ncbi <- function(combined_pre, NCBI_key) {
     # later
   tax_table_pre <- taxonomy_table %>%
     dplyr::mutate(TaxonomyID = combined_pre$TaxonomyID) %>%
-    dplyr::relocate(TaxonomyID) %>%
+    dplyr::relocate("TaxonomyID") %>%
     dplyr::distinct(.data$TaxonomyID, .keep_all = TRUE) %>%
     dplyr::left_join(combined_pre, by = c("TaxonomyID")) %>%
     dplyr::relocate("genus", "species", .after = "family") %>%
@@ -113,16 +116,20 @@ get_seqs <- function(id, bam_file, n = 10, bam_seqs) {
 #' @param ids_n List of vectors with Taxonomy IDs and the number of sequences to get from each
 #' @param bam_file A sorted bam file and index file, loaded with
 #'   Rsamtools::bamFile
+#' @param seq_info_df Dataframe of sequence information from metascope_blast()
+#' @param metascope_id_tax Data.frame of taxonomy information
+#' @param sorted_bam_file Filepath to sorted bam file
 #'
 #' @return Biostrings format sequences
 get_multi_seqs <- function(ids_n, bam_file, seq_info_df,
-                           metascope_id_tax = metascope_id_tax) {
+                           metascope_id_tax,
+                           sorted_bam_file) {
   id <- ids_n[[1]][1]
-  require("GenomicRanges")
-  require("IRanges")
+  requireNamespace("GenomicRanges")
+  requireNamespace("IRanges")
   allGenomes <- seq_info_df %>%
-    dplyr::filter(seqnames == id) %>%
-    dplyr::pull(original_seqids)
+    dplyr::filter(.data$seqnames == id) %>%
+    dplyr::pull("original_seqids")
   # Sample one of the Genomes that match
   Genome <- sample(allGenomes, 1)
   # Define BAM file with smaller yield size
@@ -130,7 +137,7 @@ get_multi_seqs <- function(ids_n, bam_file, seq_info_df,
   bf <- Rsamtools::BamFile(sorted_bam_file, yieldSize = YS)
   
   alt_n <- metascope_id_tax %>%
-    dplyr::filter(TaxonomyID == id) %>% dplyr::pull("read_count") 
+    dplyr::filter(.data$TaxonomyID == id) %>% dplyr::pull("read_count") 
   n_seqs <- ifelse(test = is.na(as.numeric(ids_n[[1]][2])),
                    yes = min(alt_n, 100),
                    no = as.numeric(ids_n[[1]][2]))
@@ -680,7 +687,7 @@ metascope_blast <- function(metascope_id_path,
   # Extract sequence information from BAM file
   seq_info_df <- as.data.frame(Rsamtools::seqinfo(bam_file)) |>
     tibble::rownames_to_column("seqnames") |>
-    dplyr::mutate("original_seqids" = seqnames)
+    dplyr::mutate("original_seqids" = .data$seqnames)
   if (db == "ncbi") {
     all_ids <- taxize::genbank2uid(id = seq_info_df$seqnames, key = NCBI_key) |>
       lapply(function(x) x[[1]]) |> unlist()
@@ -698,7 +705,8 @@ metascope_blast <- function(metascope_id_path,
     ids_n <- lapply(seq_along(taxids), function(i) c(taxids[i], reads_to_sample[i]))
     seqs_list <- lapply(ids_n, get_multi_seqs, bam_file = bam_file,
                         seq_info_df = seq_info_df,
-                        metascope_id_tax = metascope_id_tax)
+                        metascope_id_tax = metascope_id_tax,
+                        sorted_bam_file = sorted_bam_file)
     seqs <- do.call(c, seqs_list)
     Biostrings::writeXStringSet(
       seqs, filepath = file.path(fastas_tmp_dir, paste0(sprintf("%04d", i), ".fa")))

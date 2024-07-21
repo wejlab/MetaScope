@@ -51,7 +51,6 @@ UID
 accessionsTaxa
 al
 amplicon
-aubrey
 bam
 bamFile
 barcode
@@ -79,6 +78,7 @@ fastq
 filepath
 github
 gz
+headrs
 https
 indexFile
 io
@@ -101,12 +101,13 @@ parallelization
 parallelize
 pathoscope
 phredOffset
-png
 pre
 premade
 qiime
+qnames
 rBlast
 rRNA
+rds
 readFile
 refseq
 reheader
@@ -116,6 +117,7 @@ sam
 sampleName
 sampleNames
 samtools
+silva
 sql
 subread
 taxid

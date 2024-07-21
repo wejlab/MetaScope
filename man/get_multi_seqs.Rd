@@ -4,18 +4,19 @@
 \alias{get_multi_seqs}
 \title{Gets multiple sequences from different accessions in a bam file}
 \usage{
-get_multi_seqs(
-  ids_n,
-  bam_file,
-  seq_info_df,
-  metascope_id_tax = metascope_id_tax
-)
+get_multi_seqs(ids_n, bam_file, seq_info_df, metascope_id_tax, sorted_bam_file)
 }
 \arguments{
 \item{ids_n}{List of vectors with Taxonomy IDs and the number of sequences to get from each}
 
 \item{bam_file}{A sorted bam file and index file, loaded with
 Rsamtools::bamFile}
+
+\item{seq_info_df}{Dataframe of sequence information from metascope_blast()}
+
+\item{metascope_id_tax}{Data.frame of taxonomy information}
+
+\item{sorted_bam_file}{Filepath to sorted bam file}
 }
 \value{
 Biostrings format sequences

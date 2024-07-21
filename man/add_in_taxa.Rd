@@ -10,7 +10,7 @@ add_in_taxa(combined_pre, caching, path_to_write)
 \arguments{
 \item{combined_pre}{MetaScope ID file with silva taxa}
 
-\item{caching}{Boolean for if all_silva_headrs.rds is already downloaded}
+\item{caching}{Boolean for if all_silva_headers.rds is already downloaded}
 
 \item{path_to_write}{Path to save all_silva_headers.rds}
 }
