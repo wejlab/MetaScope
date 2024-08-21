@@ -711,7 +711,6 @@ metascope_blast <- function(metascope_id_path,
     Biostrings::writeXStringSet(
       seqs, filepath = file.path(fastas_tmp_dir, paste0(sprintf("%04d", i), ".fa")))
   }
-
                     
   # Create blast directory in tmp directory to save blast results in
   blast_tmp_dir <- file.path(tmp_dir, "blast")

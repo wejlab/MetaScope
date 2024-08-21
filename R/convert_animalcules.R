@@ -141,6 +141,14 @@ fill_in_missing <- function(combined_pre, NCBI_key = NULL) {
 #' @param meta_counts A vector of filepaths to the counts ID CSVs output by
 #'   \code{metascope_id()}.
 #' @param annot_path The filepath to the CSV annotation file for the samples.
+#' This CSV metadata/annotation file should contain at least two columns,
+#' one with names of all samples WITHOUT the extension listed in \code{end_string},
+#' e.g. for output file "sample_x76.metascope_id.csv", the column specified in
+#' \code{which_annot_col} should contain the entry "sample_x76". Sample names
+#' containing characters "_", "-", and "." are fine, however sample names
+#' beginning with numbers should be renamed to have a prefix, e.g. "777897sample"
+#' should be renamed to "X777897sample" for both the output file name and the
+#' annotation name.
 #' @param end_string The end string used at the end of the metascope_id files.
 #'   Default is ".metascope_id.csv".
 #' @param which_annot_col The name of the column of the annotation file
