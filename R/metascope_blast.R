@@ -737,7 +737,7 @@ metascope_blast <- function(metascope_id_path,
 
   # Append Blast Metrics to MetaScope results
   if (nrow(metascope_id_species) > nrow(blast_result_metrics_df)) {
-    ind <- seq(nrow(blast_result_metrics_df) + 1, nrow(metascope_id_in))
+    ind <- seq(nrow(blast_result_metrics_df) + 1, nrow(metascope_id_species))
     blast_result_metrics_df[ind, ] <- NA
   }
   print_file <- file.path(out_dir, paste0(sample_name, ".metascope_blast.csv"))
