@@ -414,8 +414,8 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
       silva_genome <- gsub(" uncultured", ";uncultured", blast_results_table$MetaScope_Genome[1])
 
       # Creating silva genus and species names
-      silva_genus <- silva_genome |> strsplit(split = ";") |> sapply("[", 7)
-      silva_species <- silva_genome |> strsplit(split = ";") |> sapply("[", 8)
+      silva_genus <- silva_genome |> strsplit(split = "_") |> sapply("[", 1)
+      silva_species <- silva_genome |> strsplit(split = "_") |> sapply("[", 2)
 
       blast_results_table_2 <- blast_results_table |>
         dplyr::mutate("MetaScope_genus" = rep(silva_genus, nrow(blast_results_table)),
