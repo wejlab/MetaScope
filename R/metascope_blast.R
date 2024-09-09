@@ -258,9 +258,9 @@ blastn_single_result <- function(results_table, bam_file, which_result,
                                  accessions_path, bam_seqs, out_path,
                                  sample_name, fasta_dir = NULL) {
   res <- tryCatch({ #If any errors, should just skip the organism
-    genome_name <- results_table[which_result, 9]
+    genome_name <- results_table[which_result, 8]
     if (!quiet) message("Current id: ", genome_name)
-    tax_id <- results_table[which_result, 15] |> stringr::str_split(",") |> dplyr::first() |> dplyr::first() # Grabs First TaxID
+    tax_id <- results_table[which_result, 14] |> stringr::str_split(",") |> dplyr::first() |> dplyr::first() # Grabs First TaxID
     if (!quiet) message("Current ti: ", tax_id)
 
     # Generate sequences to blast
@@ -282,9 +282,8 @@ blastn_single_result <- function(results_table, bam_file, which_result,
 
     taxize_genome_df <- taxid_to_name(unique(blast_res$staxid),
                                       accessions_path = accessions_path)
-
-    blast_res$MetaScope_Taxid <- rep(tax_id, nrow(blast_res))
-    blast_res$MetaScope_Genome <- rep(genome_name, nrow(blast_res))
+    blast_res$MetaScope_Taxid <- tax_id
+    blast_res$MetaScope_Genome <- as.character(genome_name)
     blast_res <- dplyr::left_join(blast_res, taxize_genome_df, by = "staxid")
     blast_res
   },
@@ -354,7 +353,7 @@ blastn_results <- function(results_table, bam_file, num_results = 10,
                                    paste0(sprintf("%05d", i), "_", sample_name, ".csv")),
                      row.names = FALSE)
   }
-  plyr::a_ply(seq_len(num_results2), 1, run_res)
+  lapply(seq_len(num_results2), run_res)
 }
 
 #' Calculates result metrics from a blast results table
@@ -732,9 +731,11 @@ metascope_blast <- function(metascope_id_path,
                  accessions_path = accessions_path, fasta_dir = fastas_tmp_dir)
 
   # Run Blast metrics
+  message("Running BLAST metrics on all blast results")
   blast_result_metrics_df <- plyr::adply(
     list.files(blast_tmp_dir, full.names = TRUE), 1, blast_result_metrics,
     accessions_path = accessions_path, db = db)
+  blast_result_metrics_df <- blast_result_metrics_df[ , -which(names(blast_result_metrics_df) %in% c("X1"))]
 
   # Append Blast Metrics to MetaScope results
   if (nrow(metascope_id_species) > nrow(blast_result_metrics_df)) {
