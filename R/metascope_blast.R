@@ -750,13 +750,22 @@ metascope_blast <- function(metascope_id_path,
   return(utils::head(metascope_blast_df))
 }
 
-# Reassign reads from Blast alignment
-#
-# This function allows the user to reassign reads who's NCBI BLAST results
-# contradict results provided by MetaScope to assignments that were BLAST
-# validated. It returns an updated csv with reads reassigned according to their
-# BLAST validation.
-#
+#' Reassign reads from Blast alignment
+#'
+#' This function allows the user to reassign reads who's NCBI BLAST results
+#' contradict results provided by MetaScope to assignments that were BLAST
+#' validated. It returns an updated csv with reads reassigned according to their
+#' BLAST validation.
+#'
+#' @param metascope_blast_df
+#' @param species_threshold
+#' @param num_hits
+#' @param blast_tmp_dir
+#' @param out_dir
+#' @param sample_name Export tag for the sample
+#'
+#' @returns Returns an updated blast reassignment file
+#'
 #' @export
 
 blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
