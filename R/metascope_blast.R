@@ -283,8 +283,8 @@ blastn_single_result <- function(results_table, bam_file, which_result,
     taxize_genome_df <- taxid_to_name(unique(blast_res$staxid),
                                       accessions_path = accessions_path)
 
-    blast_res$MetaScope_Taxid <- tax_id
-    blast_res$MetaScope_Genome <- genome_name
+    blast_res$MetaScope_Taxid <- rep(tax_id, nrow(blast_res))
+    blast_res$MetaScope_Genome <- rep(genome_name, nrow(blast_res))
     blast_res <- dplyr::left_join(blast_res, taxize_genome_df, by = "staxid")
     blast_res
   },
