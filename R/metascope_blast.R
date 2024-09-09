@@ -271,7 +271,7 @@ blastn_single_result <- function(results_table, bam_file, which_result,
                              bam_seqs = bam_seqs)
     }
 
-    res_path = file.path(out_path, paste0(sprintf("%05d", i), "_", sample_name, ".csv"))
+    res_path = file.path(out_path, paste0(sprintf("%05d", which_result), "_", sample_name, ".csv"))
 
 
     blastn_seqs(db_path, fasta_path, res_path = res_path, hit_list, num_threads)
