@@ -114,8 +114,8 @@ metascope_id(file.path(file_temp, "bowtie_target.bam"), aligner = "bowtie2",
 
 ## Run metascope blast
 ### Get export name and metascope id results
-out_base <- bamPath \%>\% base::basename() \%>\% strsplit(split = "\\\\.") \%>\%
-  magrittr::extract2(1) \%>\% magrittr::extract(1)
+out_base <- bamPath |> base::basename() |> strsplit(split = "\\\\.") |>
+  magrittr::extract2(1) |> magrittr::extract(1)
 metascope_id_path <- file.path(file_temp, paste0(out_base, ".metascope_id.csv"))
 
 # NOTE: change db_path to the location where your BLAST database is stored!

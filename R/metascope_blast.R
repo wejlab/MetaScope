@@ -757,11 +757,11 @@ metascope_blast <- function(metascope_id_path,
 #' validated. It returns an updated csv with reads reassigned according to their
 #' BLAST validation.
 #'
-#' @param metascope_blast_df
-#' @param species_threshold
-#' @param num_hits
-#' @param blast_tmp_dir
-#' @param out_dir
+#' @param metascope_blast_df metascope blast dataframe
+#' @param species_threshold species threshold for validation
+#' @param num_hits number of hits
+#' @param blast_tmp_dir directory with blast results
+#' @param out_dir output directory
 #' @param sample_name Export tag for the sample
 #'
 #' @returns Returns an updated blast reassignment file
