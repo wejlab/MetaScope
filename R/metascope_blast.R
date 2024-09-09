@@ -271,8 +271,7 @@ blastn_single_result <- function(results_table, bam_file, which_result,
                              bam_seqs = bam_seqs)
     }
 
-    res_path = file.path(out_path, paste0(sprintf("%05d", which_result), "_", sample_name,
-                                          "_", "tax_id_", tax_id, ".csv"))
+    res_path = file.path(out_path, paste0(sprintf("%05d", i), "_", sample_name, ".csv"))
 
 
     blastn_seqs(db_path, fasta_path, res_path = res_path, hit_list, num_threads)
@@ -351,10 +350,8 @@ blastn_results <- function(results_table, bam_file, num_results = 10,
                                db_path = db_path, quiet = quiet, bam_seqs = bam_seqs,
                                out_path = out_path, sample_name = sample_name,
                                fasta_dir = fasta_dir, accessions_path = accessions_path)
-    tax_id <- results_table[i, 1]
     utils::write.csv(df, file.path(out_path,
-                                   paste0(sprintf("%05d", i), "_", sample_name,
-                                          "_", "tax_id_", tax_id, ".csv")),
+                                   paste0(sprintf("%05d", i), "_", sample_name, ".csv")),
                      row.names = FALSE)
   }
   plyr::a_ply(seq_len(num_results2), 1, run_res)
@@ -684,6 +681,7 @@ metascope_blast <- function(metascope_id_path,
                                              recursive = TRUE)
 
   # Generate fasta sequences from bam file
+  message("Generating fasta sequences from bam file")
   # How many taxa
   num_taxa_loop <- min(nrow(metascope_id_species), num_results)
   # Extract sequence information from BAM file
@@ -725,6 +723,7 @@ metascope_blast <- function(metascope_id_path,
   }
 
   # Run rBlast on all metascope microbes
+  message("Running BLASTN on all sequences")
   blastn_results(results_table = metascope_id_species, bam_file = bam_file,
                  num_results = num_results, num_reads_per_result = num_reads,
                  hit_list = hit_list, num_threads = num_threads,
