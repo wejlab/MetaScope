@@ -784,24 +784,44 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
 
   for (i in 2:num_hits){
     if (!metascope_blast_df$blast_validated[i]){
-      blast_summary <- utils::read.csv(blast_files[i]) |>
-        dplyr::group_by(.data$qseqid) |>
-        dplyr::slice_min(.data$evalue, with_ties = TRUE) |>
-        # Removing duplicate query num and query species
-        dplyr::distinct(.data$qseqid, .data$species, .keep_all = TRUE) |>
-        dplyr::ungroup() |>
-        dplyr::group_by( .data$genus, .data$species) |>
-        dplyr::summarise("num_reads" = dplyr::n(), .groups="keep") |>
-        dplyr::slice_max(order_by = .data$num_reads, with_ties = TRUE)
-      blast_summary <- dplyr::left_join(blast_summary, metascope_blast_df[1:num_hits, ],
-                                        by = dplyr::join_by(.data$genus == .data$best_hit_genus,
-                                                            .data$species == .data$best_hit_species)) |>
-        dplyr::filter(.data$blast_validated == TRUE) |>
-        dplyr::mutate(reassignment_proportion = .data$num_reads / sum(.data$num_reads),
-                      reassigned_read_count = metascope_blast_df$read_count[i] * .data$reassignment_proportion,
-                      reassigned_Proportion = metascope_blast_df$Proportion[i] * .data$reassignment_proportion,
-                      reassigned_readsEM = metascope_blast_df$readsEM[i] * .data$reassignment_proportion,
-                      reassigned_EMProportion = metascope_blast_df$EMProportion[i] * .data$reassignment_proportion)
+      blast_summary <-
+        tryCatch(
+          {
+            blast_summary <- utils::read.csv(blast_files[i]) |>
+              dplyr::group_by(.data$qseqid) |>
+              dplyr::slice_min(.data$evalue, with_ties = TRUE) |>
+              # Removing duplicate query num and query species
+              dplyr::distinct(.data$qseqid, .data$species, .keep_all = TRUE) |>
+              dplyr::ungroup() |>
+              dplyr::group_by( .data$genus, .data$species) |>
+              dplyr::summarise("num_reads" = dplyr::n(), .groups="keep") |>
+              dplyr::slice_max(order_by = .data$num_reads, with_ties = TRUE)
+            blast_summary <- dplyr::left_join(blast_summary, metascope_blast_df[1:num_hits, ],
+                                              by = dplyr::join_by(genus == best_hit_genus,
+                                                                  species == best_hit_species)) |>
+              dplyr::filter(.data$blast_validated == TRUE) |>
+              dplyr::mutate(reassignment_proportion = .data$num_reads / sum(.data$num_reads),
+                            reassigned_read_count = metascope_blast_df$read_count[i] * .data$reassignment_proportion,
+                            reassigned_Proportion = metascope_blast_df$Proportion[i] * .data$reassignment_proportion,
+                            reassigned_readsEM = metascope_blast_df$readsEM[i] * .data$reassignment_proportion,
+                            reassigned_EMProportion = metascope_blast_df$EMProportion[i] * .data$reassignment_proportion)
+
+            return(blast_summary)
+          },
+          error = function(cond) {
+            message("Error in blast summary for current file: ")
+            message(blast_files[i])
+            message(cond)
+            # Choose a return value in case of error
+            blast_summary <- dplyr::tibble(
+              genus = numeric(),
+              species = numeric(),
+              num_reads = numeric()
+            )
+            return(blast_summary)
+          }
+        )
+
 
 
       if (nrow(blast_summary) > 0) {
