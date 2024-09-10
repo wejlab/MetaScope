@@ -773,7 +773,7 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
 
   # Create validated column to determine if reads should be reassigned to accession
   metascope_blast_df <- metascope_blast_df |>
-    dplyr::mutate("blast_validated" = (.data$species_percentage_hit > .data$species_threshold),
+    dplyr::mutate("blast_validated" = (.data$species_percentage_hit > species_threshold),
                   "index" = 1:nrow(metascope_blast_df))
   reassigned_metascope_blast <- metascope_blast_df
 
@@ -823,8 +823,14 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
       }
     }
   }
-  reassigned_metascope_blast <- reassigned_metascope_blast[-drop_indices,] |>
-    dplyr::select(-"index")
+  if (length(drop_indices) > 0) {
+    reassigned_metascope_blast <- reassigned_metascope_blast[-drop_indices,] |>
+      dplyr::select(-"index")
+  }
+  else {
+    reassigned_metascope_blast <- reassigned_metascope_blast |> dplyr::select(-"index")
+  }
+
 
   print_file <- file.path(out_dir, paste0(sample_name, ".metascope_blast_reassigned.csv"))
 
