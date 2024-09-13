@@ -52,7 +52,7 @@ ref_temp <- tempfile()
 dir.create(ref_temp)
 
 ## Download reference genome
-download_refseq('Shotokuvirae', reference = TRUE, representative = FALSE,
+download_refseq('Bovismacovirus', reference = FALSE, representative = FALSE,
                 out_dir = ref_temp, compress = TRUE, patho_out = FALSE,
                 caching = TRUE)
 
