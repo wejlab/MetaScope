@@ -56,15 +56,15 @@ In this vignette, we will analyze the mock data provided in the package via the 
 
 ## Installation
 
-In order to install MetaScope from GitHub, run the following code:
+In order to install MetaScope from Bioconductor, run the following code:
 
-```{R, eval = FALSE}
-if (!requireNamespace("devtools", quietly = TRUE))
-  install.packages("devtools")
-devtools::install_github("wejlab/MetaScope")
+```{R show_install, eval = FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("MetaScope")
 ```
 
-```{R}
+```{R load_packages, eval = TRUE}
 suppressPackageStartupMessages({
   library(MetaScope)
   library(magrittr)
@@ -75,7 +75,7 @@ suppressPackageStartupMessages({
 
 We highly recommend grabbing an Entrez key using the function `taxize::use_entrez()`. Then set your key as a global environment variable like so:
 
-```{R eval = FALSE}
+```{R ncbi_key, eval = FALSE}
 NCBI_key <- "<Your key here>"
 options("ENTREZ_KEY" = NCBI_key)
 ```
@@ -122,7 +122,7 @@ The `download_refseq()` function automatically extracts custom reference genome 
 
 Even though in this scenario we know exactly from where the reads in the mock data (`reads.fastq`) originate, in most cases we may only have a general idea of read origins. Therefore, in the following code, we will download the genome of the *Staphylococcus aureus* RF122 strain along with the genomes of a few other closely related *Staphylococcus aureus* strains from the NCBI RefSeq database. These genomes together will act as our target genome library.
 
-```{R target lib, eval = TRUE, warning = FALSE, message = FALSE}
+```{R target_lib, eval = TRUE, warning = FALSE, message = FALSE}
 target_ref_temp <- tempfile()
 dir.create(target_ref_temp)
 
@@ -141,7 +141,7 @@ sapply(all_species, download_refseq,
 We will also download the reference genome and related sequences* of the *Staphylococcus epidermidis* RP62A strain from the NCBI nucleotide database, in an uncompressed FASTA format. This genome will act as our filter library.
 
 * since we are downloading from the nucleotide database with representative and reference = FALSE, several sequences will be downloaded in addition to the main genome.
-```{R filter lib, warning = FALSE, message = FALSE}
+```{R filter_lib, warning = FALSE, message = FALSE}
 filter_ref_temp <- tempfile()
 dir.create(filter_ref_temp)
 
@@ -158,7 +158,7 @@ We now use `mk_bowtie_index()`, a wrapper for the `Rbowtie2::bowtie2_build` func
 
 The target and filter reference genomes downloaded in the previous step have been combined and renamed to target.fasta and filter.fasta respectively for convenience. These are the files from which the Bowtie2 indexes will be made from.
 
-```{R makeindexes, eval = TRUE}
+```{R make_indexes, eval = TRUE}
 # Create temp directory to store the Bowtie2 indices
 index_temp <- tempfile()
 dir.create(index_temp)
@@ -192,7 +192,7 @@ In practice, `align_target_bowtie()` maps reads to each target library separatel
 
 We will now align the sample reads (reads.fastq) to the target reference genomes using the Bowtie 2 indexes that we just built.
 
-```{R alignment align}
+```{R alignment_align}
 # Create a temp directory to store output bam file
 output_temp <- tempfile()
 dir.create(output_temp)
@@ -216,7 +216,7 @@ target_map <-
 ## MetaFilter
 The last step in the mapping workflow is to filter the output BAM file according to the reference genome for the filter/host species. Although we have already filtered out any unmapped reads, which may belong to one or more host species or otherwise, there may still remain some sort of unwelcome contamination in the data from the filter species which we wish to remove. To do this, we employ `filter_host_bowtie()` (Rsubread equivalent: `filter_host()`), which takes as an input the location of the BAM file created from `align_target_bowtie()`, the directory where the indexes are stored, and the names of the filter indexes to align against, to produce a sorted BAM file with any reads that match the filter libraries removed. We will then use this final BAM file downstream for further analysis.
 
-```{R alignment filter}
+```{R alignment_filter}
 final_map <-
   filter_host_bowtie(
     reads_bam = target_map,
@@ -235,7 +235,7 @@ final_map <-
 
 Prior to the last step in the analysis, we will look at the primary alignments of the mapped reads in the filtered BAM file that we just created using the `filter_host_bowtie()` function. According to the [Bowtie2 manual](http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml), a primary alignment is described as the alignment that received the highest alignment score among all alignments for that read. When looking at the primary alignments of the mapped reads, we can see that the majority of reads have mapped to the correct *Staphylococcus aureus* RF122 strain. However, some residual reads have primary alignments to the other *S. aureus* strains which are incorrect. If we were to stop the analysis at this point, we could potentially be lead to believe that our sample has increased microbial diversity, when it actually does not.
 
-```{R bam primary alignment}
+```{R bam_primary_alignment}
 bamFile <- Rsamtools::BamFile(final_map)
 
 param <-
@@ -269,7 +269,7 @@ knitr::kable(
 
 We can also look at the secondary alignments of the mapped reads within our filtered BAM file. A secondary alignment occurs when a read maps to multiple different genomes. We can see that the majority of our secondary alignments are to the other Staphylococcus aureus strains, which makes sense considering that the majority of the primary alignments were to the correct Staphylococcus aureus RF122 strain.
 
-```{R bam secondary alignment}
+```{R bam_secondary_alignment}
 bamFile <- Rsamtools::BamFile(final_map)
 
 param <-
@@ -328,7 +328,7 @@ knitr::kable(output,
 
 We will now look at the read reassignment results reported in the output CSV file.
 
-```{R CSV summary}
+```{R CSV_summary}
 relevant_col <- dirname(final_map) %>%
   file.path("bowtie_target.metascope_id.csv") %>%
   read.csv() %>% dplyr::select(2:4)
@@ -350,6 +350,6 @@ We can see that the read reassignment function has reassigned the majority of th
 
 # Session Info
 
-```{r session info}
+```{r session_info}
 sessionInfo()
 ```
