@@ -647,8 +647,8 @@ metascope_blast <- function(metascope_id_path,
   # Load in metascope id file and clean unknown genomes
   metascope_id_in <- utils::read.csv(metascope_id_path, header = TRUE)
 
+  # Group metascope id by species and create metascope species id
   if (db == "silva") {
-    # Group metascope id by species and create metascope species id
     metascope_id_tax <- add_in_taxa(metascope_id_in, caching = FALSE,
                                     path_to_write = tmp_dir)
   } else if (db == "ncbi") {
@@ -674,10 +674,13 @@ metascope_blast <- function(metascope_id_path,
                              paste0(sample_name, ".metascope_species.csv")))
   message("Saving metascope grouped species to ",
           file.path(out_dir, paste0(sample_name, ".metascope_species.csv")))
+  
+  
   # Create fasta directory in tmp directory to save fasta sequences
   fastas_tmp_dir <- file.path(tmp_dir, "fastas")
   if(!dir.exists(fastas_tmp_dir)) dir.create(fastas_tmp_dir,
                                              recursive = TRUE)
+  unlink(paste0(fastas_tmp_dir, "/*"), recursive = TRUE)
 
   # Generate fasta sequences from bam file
   message("Generating fasta sequences from bam file")
@@ -714,6 +717,7 @@ metascope_blast <- function(metascope_id_path,
   # Create blast directory in tmp directory to save blast results in
   blast_tmp_dir <- file.path(tmp_dir, "blast")
   if(!dir.exists(blast_tmp_dir)) dir.create(blast_tmp_dir, recursive = TRUE)
+  unlink(paste0(blast_tmp_dir, "/*"), recursive = TRUE)
 
   # Create accessions database
   if (is.null(accessions_path)) {
