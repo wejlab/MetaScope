@@ -782,7 +782,7 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
   reassigned_metascope_blast <- metascope_blast_df
 
   blast_files <- list.files(blast_tmp_dir, full.names = TRUE)
-
+  
   # Create vector of indices that have been reassigned
   drop_indices <- c()
 
@@ -811,7 +811,7 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
                             reassigned_EMProportion = metascope_blast_df$EMProportion[i] * .data$reassignment_proportion)
             
             message("Blast summary for current file: ", blast_files[i])
-            return(blast_summary)
+            blast_summary
           },
           error = function(cond) {
             message("Error in blast summary for current file: ")
@@ -823,7 +823,7 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
               species = numeric(),
               num_reads = numeric()
             )
-            return(blast_summary)
+          blast_summary
           }
         )
 
@@ -857,7 +857,11 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
   }
 
   # Clean up unused columns
-  reassigned_metascope_blast <- reassigned_metascope_blast |> dplyr::select(-c("IDs", "TaxonomyIDs"))
+  reassigned_metascope_blast <- reassigned_metascope_blast |> 
+    dplyr::select(-c("IDs", "TaxonomyIDs", "read_proportions",
+                     "read_counts", "Proportion", "readsEM", "EMProportion", "X"))
+  names(reassigned_metascope_blast)[names(reassigned_metascope_blast) == 'read_count'] <- 'reassigned_read_count'
+  
   print_file <- file.path(out_dir, paste0(sample_name, ".metascope_blast_reassigned.csv"))
 
   utils::write.csv(reassigned_metascope_blast, print_file)
