@@ -809,7 +809,8 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
                             reassigned_Proportion = metascope_blast_df$Proportion[i] * .data$reassignment_proportion,
                             reassigned_readsEM = metascope_blast_df$readsEM[i] * .data$reassignment_proportion,
                             reassigned_EMProportion = metascope_blast_df$EMProportion[i] * .data$reassignment_proportion)
-
+            
+            message("Blast summary for current file: ", blast_files[i])
             return(blast_summary)
           },
           error = function(cond) {
@@ -831,8 +832,8 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
       if (nrow(blast_summary) > 0) {
         for (n in 1:nrow(blast_summary)) {
           metascope_index <- blast_summary$index[n]
-          print(reassigned_metascope_blast$read_count[metascope_index])
-          print(blast_summary$reassigned_read_count[n])
+          #print(reassigned_metascope_blast$read_count[metascope_index])
+          #print(blast_summary$reassigned_read_count[n])
           reassigned_metascope_blast$read_count[metascope_index] <-
             reassigned_metascope_blast$read_count[metascope_index] + blast_summary$reassigned_read_count[n]
           reassigned_metascope_blast$Proportion[metascope_index] <-
@@ -861,5 +862,6 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
 
   utils::write.csv(reassigned_metascope_blast, print_file)
   message("Results written to ", print_file)
+  return(reassigned_metascope_blast)
 }
 
