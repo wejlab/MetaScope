@@ -855,7 +855,8 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
     reassigned_metascope_blast <- reassigned_metascope_blast |> dplyr::select(-"index")
   }
 
-
+  # Clean up unused columns
+  reassigned_metascope_blast <- reassigned_metascope_blast |> dplyr::select(-c("IDs", "TaxonomyIDs"))
   print_file <- file.path(out_dir, paste0(sample_name, ".metascope_blast_reassigned.csv"))
 
   utils::write.csv(reassigned_metascope_blast, print_file)

@@ -527,6 +527,15 @@ metascope_id <- function(input_file, input_type = "csv.gz",
     input_bam <- Rsamtools::BamFile(input_file, index = input_file,
                                     yieldSize = 100000000)
     Rsamtools::filterBam(input_bam, destination = bam_out, filter = filter_which)
+    # Delete old bam file
+    old_bam <- file.path(tmp_dir, paste0(out_base, ".bam"))
+    old_bam_bai <- file.path(tmp_dir, paste0(out_base, ".bam"))
+    if (file.exists(old_bam)) {
+      #Delete file if it exists
+      file.remove(old_bam)
+      file.remove(old_bam_bai)
+    }
+    
   }
   # Plotting genome locations
   num_plot <- num_species_plot
