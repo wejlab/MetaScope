@@ -369,7 +369,7 @@ blastn_results <- function(results_table, bam_file, num_results = 10,
 #' @param blast_results_table_path path for blast results csv file
 #' @inheritParams metascope_blast
 #'
-#' @return a dataframe with best_hit, uniqueness_score, species_percentage_hit
+#' @return a vector with best_hit, uniqueness_score, species_percentage_hit
 #'   genus_percentage_hit, species_contaminant_score, and
 #'   genus_contaminant_score
 #'
@@ -388,14 +388,12 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
 
     # Remove any empty tables
     if (nrow(blast_results_table) < 2) {
-      return(data.frame(uniqueness_score = 0,
-                        species_percentage_hit = 0,
-                        genus_percentage_hit = 0,
-                        species_contaminant_score = 0,
-                        genus_contaminant_score = 0,
-                        best_hit_genus = NA,
-                        best_hit_species = NA,
-                        best_hit_strain = NA))
+      error_vector <- c(0,0,0,0,0, NA, NA, NA)
+      names(error_vector) <- c("uniqueness_score", "species_percentage_hit", "genus_percentage_hit",
+                               "species_contaminant_score", "genus_contaminant_score",
+                               "best_hit_genus", "best_hit_species", "best_hit_strain")
+
+      return(error_vector)
     }
 
     # Clean species results
@@ -501,23 +499,21 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
     names(all_results) <- c("uniqueness_score", "species_percentage_hit", "genus_percentage_hit",
                             "species_contaminant_score", "genus_contaminant_score",
                             "best_hit_genus", "best_hit_species", "best_hit_strain")
-
     return(all_results)
   },
   error = function(e)
   {
     cat("Error", conditionMessage(e), "/n")
-    return(data.frame(uniqueness_score = 0,
-                      species_percentage_hit = 0,
-                      genus_percentage_hit = 0,
-                      species_contaminant_score = 0,
-                      genus_contaminant_score = 0,
-                      best_hit_genus = NA,
-                      best_hit_species = NA,
-                      best_hit_strain = NA))
+    error_vector <- c(0,0,0,0,0, NA, NA, NA)
+    names(error_vector) <- c("uniqueness_score", "species_percentage_hit", "genus_percentage_hit",
+                             "species_contaminant_score", "genus_contaminant_score",
+                             "best_hit_genus", "best_hit_species", "best_hit_strain")
+
+    return(error_vector)
   }
   )
 }
+
 
 #' Blast reads from MetaScope aligned files
 #'
@@ -674,8 +670,8 @@ metascope_blast <- function(metascope_id_path,
                              paste0(sample_name, ".metascope_species.csv")))
   message("Saving metascope grouped species to ",
           file.path(out_dir, paste0(sample_name, ".metascope_species.csv")))
-  
-  
+
+
   # Create fasta directory in tmp directory to save fasta sequences
   fastas_tmp_dir <- file.path(tmp_dir, "fastas")
   if(!dir.exists(fastas_tmp_dir)) dir.create(fastas_tmp_dir,
@@ -782,7 +778,7 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
   reassigned_metascope_blast <- metascope_blast_df
 
   blast_files <- list.files(blast_tmp_dir, full.names = TRUE)
-  
+
   # Create vector of indices that have been reassigned
   drop_indices <- c()
 
@@ -809,7 +805,7 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
                             reassigned_Proportion = metascope_blast_df$Proportion[i] * .data$reassignment_proportion,
                             reassigned_readsEM = metascope_blast_df$readsEM[i] * .data$reassignment_proportion,
                             reassigned_EMProportion = metascope_blast_df$EMProportion[i] * .data$reassignment_proportion)
-            
+
             message("Blast summary for current file: ", blast_files[i])
             blast_summary
           },
@@ -857,11 +853,11 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
   }
 
   # Clean up unused columns
-  reassigned_metascope_blast <- reassigned_metascope_blast |> 
+  reassigned_metascope_blast <- reassigned_metascope_blast |>
     dplyr::select(-c("IDs", "TaxonomyIDs", "read_proportions",
                      "read_counts", "Proportion", "readsEM", "EMProportion", "X"))
   names(reassigned_metascope_blast)[names(reassigned_metascope_blast) == 'read_count'] <- 'reassigned_read_count'
-  
+
   print_file <- file.path(out_dir, paste0(sample_name, ".metascope_blast_reassigned.csv"))
 
   utils::write.csv(reassigned_metascope_blast, print_file)
