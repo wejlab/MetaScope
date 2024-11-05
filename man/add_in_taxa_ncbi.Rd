@@ -18,3 +18,4 @@ this function will be less prone to errors if you obtain an NCBI key.}
 Adds in taxa if NCBI database
 Returns MetaScope Table with NCBI taxa in separate columns
 }
+\keyword{internal}

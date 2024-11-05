@@ -18,3 +18,4 @@ add_in_taxa(combined_pre, caching, path_to_write)
 Adds in taxa if silva database
 Returns MetaScope Table with silva taxa in separate columns
 }
+\keyword{internal}
