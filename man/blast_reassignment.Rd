@@ -14,17 +14,20 @@ blast_reassignment(
 )
 }
 \arguments{
-\item{metascope_blast_df}{metascope blast dataframe}
+\item{metascope_blast_df}{metascope blast dataframe; this is the output of metascope_blast
+that was written to a CSV file.}
 
-\item{species_threshold}{species threshold for validation}
+\item{species_threshold}{species threshold for validation
+Species percentage hit (Blasted reads) threshold to validate a taxa
+Threshold >0.5 to be considered  (50%, so this is a proportion, can be 0.2 default)}
 
 \item{num_hits}{number of hits}
 
 \item{blast_tmp_dir}{directory with blast results}
 
-\item{out_dir}{output directory}
+\item{out_dir}{Character string, path to output directory.}
 
-\item{sample_name}{Export tag for the sample}
+\item{sample_name}{Character string, sample name for output files.}
 }
 \value{
 Returns an updated blast reassignment file

@@ -17,7 +17,8 @@ blastn_results(
   quiet = quiet,
   accessions_path,
   fasta_dir = NULL,
-  NCBI_key = NULL
+  NCBI_key = NULL,
+  param
 )
 }
 \arguments{
