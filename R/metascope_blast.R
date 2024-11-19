@@ -306,18 +306,25 @@ blastn_single_result <- function(results_table, bam_file, which_result,
 
 #' rBlast_results
 #'
-#' @param results_table A data.frame of the Metascope results
-#' @param bam_file A sorted bam file and index file, loaded with
-#'   Rsamtools::bamFile
-#' @param num_results A number indicating number of Metascope results to blast
-#' @param num_reads_per_result A number indicating number of reads to blast per
-#'   result
-#' @param hit_list A number of how many blast results to fetch for each read
-#' @param num_threads Number of threads if multithreading
-#' @param db_path Blast database path
-#' @param out_path Output directory to save csv files, including base name of
-#'   files
-#' @param fasta_dir inc.
+#' @param results_table data.frame containing the MetaScope results.
+#' @param bam_file \code{Rsamtools::bamFile} instance for the given sample.
+#' @param num_results Integer; maximum number of Metascope results to BLAST.
+#'   Default is 10.
+#' @param num_reads_per_result Integer; number of reads to BLAST per result.
+#'   Defauly is 100.
+#' @param hit_list Integer; how many BLAST results to fetch for each read.
+#'   Default is 10.
+#' @param num_threads Integer; how many threads to use if multithreading.
+#'   Default is 1.
+#' @param db_path Character string; filepath for the location of the
+#'   pre-installed BLAST database.
+#' @param out_path Character string; Output directory to save CSV output files,
+#'   including base name of files. For example, given a sample "X78256",
+#'   filepath would be \code{file.path(directory_here, "X78256")} with extension
+#'   omitted.
+#' @param fasta_dir Character string; Directory where fastas from
+#'   \code{metascope_id} are stored.
+#' @param param \code{BiocParallel} param for parallelization.
 #' @inheritParams metascope_blast
 #'
 #' @return Creates and exports num_results number of csv files with blast
@@ -585,8 +592,8 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
 #'
 #' ## Run metascope blast
 #' ### Get export name and metascope id results
-#' out_base <- bamPath |> base::basename() |> strsplit(split = "\\.") |>
-#'   magrittr::extract2(1) |> magrittr::extract(1)
+#' out_base <- bamPath |> basename() |> tools::file_path_sans_ext() |>
+#'   tools::file_path_sans_ext()
 #' metascope_id_path <- file.path(file_temp, paste0(out_base, ".metascope_id.csv"))
 #'
 #' # NOTE: change db_path to the location where your BLAST database is stored!
@@ -594,22 +601,21 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
 #'
 #' Sys.setenv(ENTREZ_KEY = "<your id here>")
 #'
-#'  metascope_blast(metascope_id_path,
-#'               bam_file_path = file.path(file_temp, "bowtie_target.bam"),
-#'               #bam_file_path = file.path(file_temp, "bowtie_target.updated.bam")
-#'               tmp_dir = file_temp,
-#'               out_dir = file_temp,
-#'               sample_name = out_base,
-#'               db_path = db_path,
-#'               num_results = 10,
-#'               num_reads = 5,
-#'               hit_list = 10,
-#'               num_threads = 3,
-#'               db = "ncbi",
-#'               quiet = FALSE,
-#'               NCBI_key = NULL,
-#'               fasta_dir = NULL ,
-#'               accessions_path = NULL)
+#' metascope_blast(metascope_id_path,
+#'                 bam_file_path = file.path(file_temp, "bowtie_target.bam"),
+#'                 tmp_dir = file_temp,
+#'                 out_dir = file_temp,
+#'                 sample_name = out_base,
+#'                 db_path = db,
+#'                 num_results = 10,
+#'                 num_reads = 5,
+#'                 hit_list = 10,
+#'                 num_threads = 3,
+#'                 db = "ncbi",
+#'                 quiet = FALSE,
+#'                 NCBI_key = NULL,
+#'                 fasta_dir = NULL,
+#'                 accessions_path = NULL)
 #'
 #' ## Remove temporary directory
 #' unlink(file_temp, recursive = TRUE)
@@ -754,22 +760,29 @@ metascope_blast <- function(metascope_id_path,
   return(utils::head(metascope_blast_df))
 }
 
-#' Reassign reads from Blast alignment
+#' Reassign reads from MetaScope BLASTn alignment
 #'
-#' This function allows the user to reassign reads who's NCBI BLAST results
-#' contradict results provided by MetaScope to assignments that were BLAST
-#' validated. It returns an updated csv with reads reassigned according to their
-#' BLAST validation.
+#' Using the output from \code{metascope_blast()}, the
+#' \code{blast_reassignment()} function takes the results and alters the
+#' original \code{metascope_id()} output to reassign reads that were invalidated
+#' by the BLAST findings. Currently, the implementation of this function only
+#' reassigns reads to a taxon that was already found in the sample at a higher
+#' abundance.
 #'
-#' @param metascope_blast_df Path to \code{metascope_blast} CSV output file.
-#' @param species_threshold species threshold for validation
-#' Species percentage hit (Blasted reads) threshold to validate a taxa
-#' Threshold >0.5 to be considered  (50%, so this is a proportion, can be 0.2 default)
-#' @param num_hits number of hits 
-#' @param blast_tmp_dir directory with blast results
+#' @param metascope_blast_df Character string. The filepath to a
+#'   \code{metascope_blast} CSV output file.
+#' @param species_threshold Numeric. A number between 0 and 1 indicating
+#'   the minimum proportion of reads needed for a taxon to be considered
+#'   validated from the BLAST results. Default is 0.2, or 20\%.
+#' @param num_hits Integer. The number of hits for which to assess validation.
+#'   Default is 10, i.e., only the top 10 taxa will be assessed.
+#' @param blast_tmp_dir Character string. Filepath of the directory where
+#'   BLAST results were output from the \code{metascope_blast} function.
+#'   Referencing the arguments from \code{metascope_blast}, this would be
+#'   \code{file.path(tmp_dir, "blast")}
 #' @inheritParams metascope_blast
 #'
-#' @returns Returns an updated blast reassignment file
+#' @returns Returns a \code{data.frame} with the reassigned taxa and read counts.
 #'
 #' @export
 
@@ -803,8 +816,8 @@ blast_reassignment <- function(metascope_blast_path, species_threshold, num_hits
             dplyr::summarise("num_reads" = dplyr::n(), .groups="keep") |>
             dplyr::slice_max(order_by = !!dplyr::sym("num_reads"), with_ties = TRUE) |>
             dplyr::left_join(metascope_blast_df[1:num_hits, ],
-                             by = dplyr::join_by(genus == best_hit_genus,
-                                                 species == best_hit_species)) |>
+                             by = dplyr::join_by("genus" == !!dplyr::sym("best_hit_genus"),
+                                                 "species" == !!dplyr::sym("best_hit_species"))) |>
             dplyr::filter(!!dplyr::sym("blast_validated") == TRUE) |>
             dplyr::mutate(reassignment_proportion = !!dplyr::sym("num_reads") / sum(!!dplyr::sym("num_reads")),
                           reassigned_read_count = metascope_blast_df$read_count[i] * !!dplyr::sym("reassignment_proportion"),
@@ -854,11 +867,11 @@ blast_reassignment <- function(metascope_blast_path, species_threshold, num_hits
     output <- plyr::adply(seq_len(nrow(this_blast_summary)), 1,
                           summarize_reassignments, .id = NULL) |>
       as.data.frame() |>
-      dplyr::mutate(id = this_blast_summary$index)
+      dplyr::mutate("id" = this_blast_summary$index)
     return(output)
   }
   to_replace <- plyr::adply(drop_indices, 1, summarize_unval, .id = NULL) |>
-    dplyr::distinct() |> dplyr::arrange(id)
+    dplyr::distinct() |> dplyr::arrange(!!dplyr::sym("id"))
   reassigned_metascope_blast <- metascope_blast_df |> dplyr::select(-"index")
   reassigned_metascope_blast[to_replace$id, all_names] <- to_replace[, all_names] 
   if (length(drop_indices) > 0) {

@@ -22,24 +22,29 @@ blastn_results(
 )
 }
 \arguments{
-\item{results_table}{A data.frame of the Metascope results}
+\item{results_table}{data.frame containing the MetaScope results.}
 
-\item{bam_file}{A sorted bam file and index file, loaded with
-Rsamtools::bamFile}
+\item{bam_file}{\code{Rsamtools::bamFile} instance for the given sample.}
 
-\item{num_results}{A number indicating number of Metascope results to blast}
+\item{num_results}{Integer; maximum number of Metascope results to BLAST.
+Default is 10.}
 
-\item{num_reads_per_result}{A number indicating number of reads to blast per
-result}
+\item{num_reads_per_result}{Integer; number of reads to BLAST per result.
+Defauly is 100.}
 
-\item{hit_list}{A number of how many blast results to fetch for each read}
+\item{hit_list}{Integer; how many BLAST results to fetch for each read.
+Default is 10.}
 
-\item{num_threads}{Number of threads if multithreading}
+\item{num_threads}{Integer; how many threads to use if multithreading.
+Default is 1.}
 
-\item{db_path}{Blast database path}
+\item{db_path}{Character string; filepath for the location of the
+pre-installed BLAST database.}
 
-\item{out_path}{Output directory to save csv files, including base name of
-files}
+\item{out_path}{Character string; Output directory to save CSV output files,
+including base name of files. For example, given a sample "X78256",
+filepath would be \code{file.path(directory_here, "X78256")} with extension
+omitted.}
 
 \item{sample_name}{Character string, sample name for output files.}
 
@@ -48,11 +53,14 @@ is FALSE.}
 
 \item{accessions_path}{Directory where accession files for blast are stored.}
 
-\item{fasta_dir}{inc.}
+\item{fasta_dir}{Character string; Directory where fastas from
+\code{metascope_id} are stored.}
 
 \item{NCBI_key}{(character) NCBI Entrez API key. optional. See
 taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 function will be less prone to errors if you obtain an NCBI key.}
+
+\item{param}{\code{BiocParallel} param for parallelization.}
 }
 \value{
 Creates and exports num_results number of csv files with blast

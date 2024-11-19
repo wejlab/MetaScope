@@ -2,7 +2,7 @@
 % Please edit documentation in R/metascope_blast.R
 \name{blast_reassignment}
 \alias{blast_reassignment}
-\title{Reassign reads from Blast alignment}
+\title{Reassign reads from MetaScope BLASTn alignment}
 \usage{
 blast_reassignment(
   metascope_blast_path,
@@ -14,26 +14,33 @@ blast_reassignment(
 )
 }
 \arguments{
-\item{species_threshold}{species threshold for validation
-Species percentage hit (Blasted reads) threshold to validate a taxa
-Threshold >0.5 to be considered  (50%, so this is a proportion, can be 0.2 default)}
+\item{species_threshold}{Numeric. A number between 0 and 1 indicating
+the minimum proportion of reads needed for a taxon to be considered
+validated from the BLAST results. Default is 0.2, or 20\%.}
 
-\item{num_hits}{number of hits}
+\item{num_hits}{Integer. The number of hits for which to assess validation.
+Default is 10, i.e., only the top 10 taxa will be assessed.}
 
-\item{blast_tmp_dir}{directory with blast results}
+\item{blast_tmp_dir}{Character string. Filepath of the directory where
+BLAST results were output from the \code{metascope_blast} function.
+Referencing the arguments from \code{metascope_blast}, this would be
+\code{file.path(tmp_dir, "blast")}}
 
 \item{out_dir}{Character string, path to output directory.}
 
 \item{sample_name}{Character string, sample name for output files.}
 
-\item{metascope_blast_df}{Path to \code{metascope_blast} CSV output file.}
+\item{metascope_blast_df}{Character string. The filepath to a
+\code{metascope_blast} CSV output file.}
 }
 \value{
-Returns an updated blast reassignment file
+Returns a \code{data.frame} with the reassigned taxa and read counts.
 }
 \description{
-This function allows the user to reassign reads who's NCBI BLAST results
-contradict results provided by MetaScope to assignments that were BLAST
-validated. It returns an updated csv with reads reassigned according to their
-BLAST validation.
+Using the output from \code{metascope_blast()}, the
+\code{blast_reassignment()} function takes the results and alters the
+original \code{metascope_id()} output to reassign reads that were invalidated
+by the BLAST findings. Currently, the implementation of this function only
+reassigns reads to a taxon that was already found in the sample at a higher
+abundance.
 }
