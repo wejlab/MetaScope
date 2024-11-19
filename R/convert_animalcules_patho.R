@@ -31,10 +31,10 @@ convert_animalcules_patho <- function(patho_counts, annot_path,
     as.data.frame()
   rownames(metadata_table) <- metadata_table[, which_annot_col]
   sample_overlap <- base::intersect(colnames(count_table), rownames(metadata_table))
-  if (length(sample_overlap) < length(colnames(count_table))){
-    print(paste("The following samples don't have metadata info:",
-                paste(colnames(count_table)[which(!colnames(count_table) %in% sample_overlap)],
-                      collapse = ",")))
+  if (length(sample_overlap) < length(colnames(count_table))) {
+    no_info <- paste(colnames(count_table)[which(!colnames(count_table) %in% sample_overlap)],
+                     collapse = ",")
+    message("The following samples don't have metadata info:", no_info)
     
     count_table <- count_table[,which(colnames(count_table) %in% sample_overlap)]
   }

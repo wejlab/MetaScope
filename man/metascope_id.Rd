@@ -12,7 +12,7 @@ metascope_id(
   db_feature_table = NULL,
   NCBI_key = NULL,
   out_dir = dirname(input_file),
-  tmp_dir = NULL,
+  tmp_dir = dirname(input_file),
   convEM = 1/10000,
   maxitsEM = 25,
   update_bam = FALSE,

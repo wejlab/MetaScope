@@ -5,10 +5,10 @@
 \title{Adds in taxa if silva database
 Returns MetaScope Table with silva taxa in separate columns}
 \usage{
-add_in_taxa(combined_pre, caching, path_to_write)
+add_in_taxa(metascope_id_in, caching, path_to_write)
 }
 \arguments{
-\item{combined_pre}{MetaScope ID file with silva taxa}
+\item{metascope_id_in}{MetaScope ID file with silva taxa}
 
 \item{caching}{Boolean for if all_silva_headers.rds is already downloaded}
 

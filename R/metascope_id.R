@@ -389,7 +389,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                          db_feature_table = NULL,
                          NCBI_key = NULL,
                          out_dir = dirname(input_file),
-                         tmp_dir = NULL,
+                         tmp_dir = dirname(input_file),
                          convEM = 1 / 10000, maxitsEM = 25,
                          update_bam = FALSE,
                          num_species_plot = NULL,
@@ -411,6 +411,8 @@ metascope_id <- function(input_file, input_type = "csv.gz",
     blast_fastas <- FALSE
     update_bam <- FALSE
   }
+  # Check that tmp_dir is specified
+  if (is.null(tmp_dir)) stop("Please supply a directory for 'tmp_dir' argument.")
   reads <- obtain_reads(input_file, input_type, aligner, blast_fastas, quiet)
   unmapped <- is.na(reads[[1]]$rname)
   if (db == "ncbi") reads[[1]]$rname <- identify_rnames(reads)
@@ -441,11 +443,11 @@ metascope_id <- function(input_file, input_type = "csv.gz",
     taxids[unk_inds] <- accessions[unk_inds]
   } else if (db == "silva") {
     tax_id_all <- stringr::str_split(accessions, ";", n =2)
-    taxids <- sapply(tax_id_all, `[[`, 1)
-    genome_names <- sapply(tax_id_all, `[[`, 2)
+    taxids <- magrittr::extract(tax_id_all, 1)[[1]]
+    genome_names <- magrittr::extract(tax_id_all, 2)[[1]]
     # Fix names
     mapped_rname <- stringr::str_split(mapped_rname, ";", n = 2) %>%
-      sapply(`[[`, 1)
+      magrittr::extract(1)[[1]]
     accessions <- as.character(unique(mapped_rname))
   } else if (db == "other") {
     tax_id_all <- dplyr::tibble(`Feature ID` = accessions) %>%
@@ -509,13 +511,12 @@ metascope_id <- function(input_file, input_type = "csv.gz",
     }
   }
 
-
   if (update_bam) {
     combined_distinct <- results[[2]] |>
       dplyr::mutate(qname_names = read_names[.data$qname],
                     rname_names = unique(reads[[1]]$rname)[.data$rname])
 
-    bam_index_df <- data.frame("index" = c(1:length(reads[[1]]$qname)),
+    bam_index_df <- data.frame("index" = seq_along(reads[[1]]$qname),
                                "qname_names" = reads[[1]]$qname,
                                "rname_names" = as.character(reads[[1]]$rname))
 
@@ -532,7 +533,18 @@ metascope_id <- function(input_file, input_type = "csv.gz",
     Rsamtools::indexBam(files = input_file)
     input_bam <- Rsamtools::BamFile(input_file, index = input_file,
                                     yieldSize = 100000000)
-    Rsamtools::filterBam(input_bam, destination = bam_out, filter = filter_which)
+    if (length(list(filter_which)) != length(list(bam_out))) {
+      message("update_bam unable to filter. Step skipped")
+    } else {
+      Rsamtools::filterBam(input_bam, destination = list(bam_out), filter = list(filter_which))
+      Rsamtools::indexBam(files = bam_out)
+      message("Updated bam file written to ", bam_out)
+      # Delete old bam file
+      old_bam <- file.path(tmp_dir, paste0(out_base, ".bam"))
+      old_bam_bai <- file.path(tmp_dir, paste0(out_base, ".bam.bai"))
+      if (file.exists(old_bam)) file.remove(old_bam)
+      if (file.exists(old_bam_bai)) file.remove(old_bam_bai)
+    }
   }
   # Plotting genome locations
   num_plot <- num_species_plot
@@ -548,5 +560,3 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   } else if (!quiet) message("No coverage plots created")
   return(metascope_id_file)
 }
-
-
