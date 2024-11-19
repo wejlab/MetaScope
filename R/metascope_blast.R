@@ -747,7 +747,7 @@ metascope_blast <- function(metascope_id_path,
   print_file <- file.path(out_dir, paste0(sample_name, ".metascope_blast.csv"))
   
   metascope_blast_df <- data.frame(metascope_id_species, blast_result_metrics_df)
-  utils::write.csv(metascope_blast_df, print_file)
+  utils::write.csv(metascope_blast_df, print_file, row.names = FALSE)
   message("Results written to ", print_file)
   return(utils::head(metascope_blast_df))
 }
@@ -759,8 +759,7 @@ metascope_blast <- function(metascope_id_path,
 #' validated. It returns an updated csv with reads reassigned according to their
 #' BLAST validation.
 #'
-#' @param metascope_blast_df metascope blast dataframe; this is the output of metascope_blast
-#' that was written to a CSV file.
+#' @param metascope_blast_df Path to \code{metascope_blast} CSV output file.
 #' @param species_threshold species threshold for validation
 #' Species percentage hit (Blasted reads) threshold to validate a taxa
 #' Threshold >0.5 to be considered  (50%, so this is a proportion, can be 0.2 default)
@@ -772,12 +771,17 @@ metascope_blast <- function(metascope_id_path,
 #'
 #' @export
 
-blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
+blast_reassignment <- function(metascope_blast_path, species_threshold, num_hits,
                                blast_tmp_dir, out_dir, sample_name) {
   # Create validated column to determine if reads should be reassigned to accession
-  metascope_blast_df <- metascope_blast_df |>
-    dplyr::mutate(blast_validated = (!!dplyr::sym("species_percentage_hit") > species_threshold),
-                  index = seq_len(nrow(metascope_blast_df)))
+  metascope_blast_df <- data.table::fread(metascope_blast_path) |>
+    tibble::as_tibble() |>
+    dplyr::mutate(blast_validated = (!!dplyr::sym("species_percentage_hit") > species_threshold))
+  metascope_blast_df$index <- rownames(metascope_blast_df) |> as.numeric()
+  if ("read_counts" %in% colnames(metascope_blast_df)) {
+    ind <- colnames(metascope_blast_df) == "read_counts"
+    colnames(metascope_blast_df)[ind] <- "read_count"
+  }
   blast_files <- list.files(blast_tmp_dir, full.names = TRUE)
   # If num_hits is small
   num_hits <- min(num_hits, nrow(metascope_blast_df))
@@ -786,8 +790,8 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
     blast_summary <-
       tryCatch(
         {
-          blast_summary <- readr::read_csv(blast_files[i],
-                                           show_col_types = FALSE) |>
+          blast_summary <- data.table::fread(blast_files[i]) |>
+            tibble::as_tibble() |>
             dplyr::group_by(!!dplyr::sym("qseqid")) |>
             dplyr::slice_min(!!dplyr::sym("evalue"), with_ties = TRUE) |>
             # Removing duplicate query num and query species
@@ -861,10 +865,10 @@ blast_reassignment <- function(metascope_blast_df, species_threshold, num_hits,
   # Clean up unused columns
   reassigned_metascope_blast <- reassigned_metascope_blast |>
     dplyr::select(-c("IDs", "TaxonomyIDs", "read_proportions",
-                     "Proportion", "readsEM", "EMProportion", "X")) |>
+                     "Proportion", "readsEM", "EMProportion")) |>
     dplyr::rename('reassigned_read_count' = 'read_count')
   print_file <- file.path(out_dir, paste0(sample_name, ".metascope_blast_reassigned.csv"))
-  utils::write.csv(reassigned_metascope_blast, print_file)
+  data.table::fwrite(reassigned_metascope_blast, print_file, row.names = FALSE)
   message("Results written to ", print_file)
   return(reassigned_metascope_blast)
 }
