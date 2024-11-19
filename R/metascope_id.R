@@ -39,6 +39,12 @@ obtain_reads <- function(input_file, input_type, aligner, blast_fastas = FALSE, 
 identify_rnames <- function(reads, unmapped = NULL) {
   reads_in <- reads[[1]]$rname
   if(!is.null(unmapped)) reads_in <- reads[[1]]$rname[!unmapped]
+  # FOR 2015 - if >50% have 8 pipe symbols
+  if (mean(stringr::str_count(reads_in, "\\|") == 8) > 0.5) {
+    mapped_rname <- stringr::str_split(reads_in, "\\|") |>
+      plyr::laply(function(x) magrittr::extract(x, 8))
+    return(mapped_rname)
+  }
   # https://www.ncbi.nlm.nih.gov/books/NBK21091/table/ch18.T.refseq_accession_numbers_and_mole
   prefixes <- c("AC", "NC", "NG", "NT", "NW", "NZ") %>%
     paste0("_") %>%

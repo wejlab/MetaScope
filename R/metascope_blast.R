@@ -5,6 +5,7 @@
 #' @param metascope_id_in MetaScope ID file with silva taxa
 #' @param caching Boolean for if all_silva_headers.rds is already downloaded
 #' @param path_to_write Path to save all_silva_headers.rds
+#' @keywords internal
 
 add_in_taxa <- function(metascope_id_in, caching, path_to_write) {
   location <- "https://github.com/wejlab/metascope-docs/raw/main/all_silva_headers.rds"
@@ -48,7 +49,7 @@ add_in_taxa <- function(metascope_id_in, caching, path_to_write) {
 #' @param NCBI_key (character) NCBI Entrez API key. optional.
 #' See taxize::use_entrez(). Due to the high number of requests made to NCBI,
 #' this function will be less prone to errors if you obtain an NCBI key.
-#'
+#' @keywords internal
 
 add_in_taxa_ncbi <- function(metascope_id_in, NCBI_key, param) {
   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class",
@@ -120,6 +121,7 @@ get_seqs <- function(id, bam_file, n = 10, bam_seqs) {
 #' @param sorted_bam_file Filepath to sorted bam file
 #'
 #' @return Biostrings format sequences
+#' @keywords internal
 get_multi_seqs <- function(ids_n, bam_file, seq_info_df,
                            metascope_id_tax,
                            sorted_bam_file) {

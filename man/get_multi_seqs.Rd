@@ -24,3 +24,4 @@ Biostrings format sequences
 \description{
 Returns fasta sequences from a bam file with given taxonomy IDs
 }
+\keyword{internal}

@@ -258,8 +258,8 @@ find_strains <- function(intable) {
 #' @examples
 #' #### Download RefSeq genomes
 #'
-#' ## Download all RefSeq reference Shotokuvirae kingdom genomes
-#' download_refseq('Shotokuvirae', reference = TRUE, representative = FALSE,
+#' ## Download all RefSeq reference Bovismacovirus genus genomes
+#' download_refseq('Bovismacovirus', reference = FALSE, representative = FALSE,
 #'                 out_dir = NULL, compress = TRUE, patho_out = FALSE,
 #'                 caching = TRUE)
 #'
