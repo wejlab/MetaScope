@@ -443,11 +443,11 @@ metascope_id <- function(input_file, input_type = "csv.gz",
     taxids[unk_inds] <- accessions[unk_inds]
   } else if (db == "silva") {
     tax_id_all <- stringr::str_split(accessions, ";", n =2)
-    taxids <- sapply(tax_id_all, `[[`, 1)
-    genome_names <- sapply(tax_id_all, `[[`, 2)
+    taxids <- magrittr::extract(tax_id_all, 1)[[1]]
+    genome_names <- magrittr::extract(tax_id_all, 2)[[1]]
     # Fix names
     mapped_rname <- stringr::str_split(mapped_rname, ";", n = 2) %>%
-      sapply(`[[`, 1)
+      magrittr::extract(1)[[1]]
     accessions <- as.character(unique(mapped_rname))
   } else if (db == "other") {
     tax_id_all <- dplyr::tibble(`Feature ID` = accessions) %>%
@@ -516,7 +516,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
       dplyr::mutate(qname_names = read_names[.data$qname],
                     rname_names = unique(reads[[1]]$rname)[.data$rname])
 
-    bam_index_df <- data.frame("index" = c(1:length(reads[[1]]$qname)),
+    bam_index_df <- data.frame("index" = seq_along(reads[[1]]$qname),
                                "qname_names" = reads[[1]]$qname,
                                "rname_names" = as.character(reads[[1]]$rname))
 

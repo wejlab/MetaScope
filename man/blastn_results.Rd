@@ -30,7 +30,7 @@ blastn_results(
 Default is 10.}
 
 \item{num_reads_per_result}{Integer; number of reads to BLAST per result.
-Defauly is 100.}
+Default is 100.}
 
 \item{hit_list}{Integer; how many BLAST results to fetch for each read.
 Default is 10.}

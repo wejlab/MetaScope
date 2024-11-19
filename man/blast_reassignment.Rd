@@ -14,6 +14,9 @@ blast_reassignment(
 )
 }
 \arguments{
+\item{metascope_blast_path}{Character string. The filepath to a
+\code{metascope_blast} CSV output file.}
+
 \item{species_threshold}{Numeric. A number between 0 and 1 indicating
 the minimum proportion of reads needed for a taxon to be considered
 validated from the BLAST results. Default is 0.2, or 20\%.}
@@ -29,9 +32,6 @@ Referencing the arguments from \code{metascope_blast}, this would be
 \item{out_dir}{Character string, path to output directory.}
 
 \item{sample_name}{Character string, sample name for output files.}
-
-\item{metascope_blast_df}{Character string. The filepath to a
-\code{metascope_blast} CSV output file.}
 }
 \value{
 Returns a \code{data.frame} with the reassigned taxa and read counts.

@@ -1,4 +1,5 @@
 BAM
+BLASTn
 Bioc
 BiocFileCache
 BiocParallel
@@ -10,6 +11,7 @@ ENTREZ
 Entrez
 FASTA
 FASTQ
+Filepath
 GGAATTATCGGT
 Gapped
 Github
@@ -74,11 +76,11 @@ epidermidis
 et
 exampleh
 fasta
+fastas
 fastq
 filepath
 github
 gz
-headrs
 https
 indexFile
 io
@@ -99,10 +101,10 @@ num
 outpute
 parallelization
 parallelize
+param
 pathoscope
 phredOffset
 pre
-premade
 qiime
 qnames
 rBlast

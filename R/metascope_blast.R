@@ -273,7 +273,7 @@ blastn_single_result <- function(results_table, bam_file, which_result,
                              bam_seqs = bam_seqs)
     }
     
-    res_path = file.path(out_path, paste0(sprintf("%05d", which_result), "_",
+    res_path <- file.path(out_path, paste0(sprintf("%05d", which_result), "_",
                                           sample_name, ".csv"))
     blastn_seqs(db_path, fasta_path, res_path = res_path, hit_list, num_threads)
     blast_res <- utils::read.csv(res_path, header = FALSE) |>
@@ -288,7 +288,7 @@ blastn_single_result <- function(results_table, bam_file, which_result,
     blast_res
   },
   error = function(e) {
-    cat("Error", conditionMessage(e), "\n")
+    message("Error", conditionMessage(e), "\n")
     this_format <- paste("qseqid sseqid pident length mismatch gapopen",
                          "qstart qend sstart send evalue bitscore staxid")
     all_colnames <- stringr::str_split(this_format, " ")[[1]]
@@ -311,7 +311,7 @@ blastn_single_result <- function(results_table, bam_file, which_result,
 #' @param num_results Integer; maximum number of Metascope results to BLAST.
 #'   Default is 10.
 #' @param num_reads_per_result Integer; number of reads to BLAST per result.
-#'   Defauly is 100.
+#'   Default is 100.
 #' @param hit_list Integer; how many BLAST results to fetch for each read.
 #'   Default is 10.
 #' @param num_threads Integer; how many threads to use if multithreading.
@@ -344,7 +344,7 @@ blastn_results <- function(results_table, bam_file, num_results = 10,
                                 NCBI_key = NCBI_key, quiet = quiet) |>
       plyr::aaply(1, function(x) x[1])
   } else {
-    bam_seqs = NULL
+    bam_seqs <- NULL
   }
   # Grab results
   num_results2 <- min(num_results, nrow(results_table))
@@ -411,8 +411,8 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
       #silva_genome <- gsub(";([a-z0-9])", " \\1", blast_results_table$MetaScope_Genome[1])
       silva_genome <- gsub(" uncultured", ";uncultured", blast_results_table$MetaScope_Genome[1])
       # Creating silva genus and species names
-      silva_genus <- silva_genome |> strsplit(split = "_") |> sapply("[", 1)
-      silva_species <- silva_genome |> strsplit(split = "_") |> sapply("[", 2)
+      silva_genus <- magrittr::extract(strsplit(silva_genome, split = "_"), 1)[[1]]
+      silva_species <- magrittr::extract(strsplit(silva_genome, split = "_"), 2)[[1]]
       blast_results_table_2 <- blast_results_table |>
         dplyr::mutate("MetaScope_genus" = rep(silva_genus, nrow(blast_results_table)),
                       "MetaScope_species" = rep(silva_species, nrow(blast_results_table))) |>
@@ -502,7 +502,7 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
   },
   error = function(e)
   {
-    cat("Error", conditionMessage(e), "/n")
+    message("Error", conditionMessage(e), "/n")
     error_vector <- c(0,0,0,0,0, NA, NA, NA)
     names(error_vector) <- c("uniqueness_score", "species_percentage_hit", "genus_percentage_hit",
                              "species_contaminant_score", "genus_contaminant_score",
@@ -667,19 +667,14 @@ metascope_blast <- function(metascope_id_path,
                                                  collapse = ","),
                      .groups = "drop") |>
     dplyr::arrange(dplyr::desc(!!dplyr::sym("read_count")))
-  
-  utils::write.csv(metascope_id_species,
-                   file = file.path(out_dir,
-                                    paste0(sample_name, ".metascope_species.csv")))
-  message("Saving metascope grouped species to ",
-          file.path(out_dir, paste0(sample_name, ".metascope_species.csv")))
-  
+  print_out_file <- file.path(out_dir, paste0(sample_name, ".metascope_species.csv"))
+  utils::write.csv(metascope_id_species, file = print_out_file)
+  message("Saving metascope grouped species to ", print_out_file)
   # Create fasta directory in tmp directory to save fasta sequences
   fastas_tmp_dir <- file.path(tmp_dir, "fastas")
   if(!dir.exists(fastas_tmp_dir)) dir.create(fastas_tmp_dir,
                                              recursive = TRUE)
   unlink(paste0(fastas_tmp_dir, "/*"), recursive = TRUE)
-  
   message("Generating fasta sequences from bam file")
   # How many taxa
   num_taxa_loop <- min(nrow(metascope_id_species), num_results)
@@ -687,7 +682,6 @@ metascope_blast <- function(metascope_id_path,
   seq_info_df <- as.data.frame(Rsamtools::seqinfo(bam_file)) |>
     tibble::rownames_to_column("seqnames") |>
     dplyr::mutate("original_seqids" = !!dplyr::sym("seqnames"))
-  
   # Obtain NCBI uids from readnames (accessions)
   if (db == "ncbi") {
     all_ids <- identify_rnames(list(list(rname = seq_info_df$seqnames))) |>
@@ -769,7 +763,7 @@ metascope_blast <- function(metascope_id_path,
 #' reassigns reads to a taxon that was already found in the sample at a higher
 #' abundance.
 #'
-#' @param metascope_blast_df Character string. The filepath to a
+#' @param metascope_blast_path Character string. The filepath to a
 #'   \code{metascope_blast} CSV output file.
 #' @param species_threshold Numeric. A number between 0 and 1 indicating
 #'   the minimum proportion of reads needed for a taxon to be considered
@@ -815,7 +809,7 @@ blast_reassignment <- function(metascope_blast_path, species_threshold, num_hits
             dplyr::group_by( !!dplyr::sym("genus"), !!dplyr::sym("species")) |>
             dplyr::summarise("num_reads" = dplyr::n(), .groups="keep") |>
             dplyr::slice_max(order_by = !!dplyr::sym("num_reads"), with_ties = TRUE) |>
-            dplyr::left_join(metascope_blast_df[1:num_hits, ],
+            dplyr::left_join(metascope_blast_df[seq_len(num_hits), ],
                              by = dplyr::join_by("genus" == !!dplyr::sym("best_hit_genus"),
                                                  "species" == !!dplyr::sym("best_hit_species"))) |>
             dplyr::filter(!!dplyr::sym("blast_validated") == TRUE) |>
