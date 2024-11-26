@@ -46,7 +46,7 @@ identify_rnames <- function(reads, unmapped = NULL) {
     return(mapped_rname)
   }
   # https://www.ncbi.nlm.nih.gov/books/NBK21091/table/ch18.T.refseq_accession_numbers_and_mole
-  prefixes <- c("AC", "NC", "NG", "NT", "NW", "NZ") %>%
+  prefixes <- c("AC", "NC", "NG", "NT", "NW", "NZ", "NR") %>%
     paste0("_") %>%
     paste(collapse = "|")
   this_read <- stringr::str_split_i(reads_in, prefixes, -1) |>
