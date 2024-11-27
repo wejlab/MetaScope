@@ -5,10 +5,10 @@
 \title{Adds in taxa if NCBI database
 Returns MetaScope Table with NCBI taxa in separate columns}
 \usage{
-add_in_taxa_ncbi(combined_pre, NCBI_key)
+add_in_taxa_ncbi(metascope_id_in, NCBI_key, param)
 }
 \arguments{
-\item{combined_pre}{MetaScope ID file with NCBI taxa qnames}
+\item{metascope_id_in}{MetaScope ID file with NCBI taxa qnames}
 
 \item{NCBI_key}{(character) NCBI Entrez API key. optional.
 See taxize::use_entrez(). Due to the high number of requests made to NCBI,

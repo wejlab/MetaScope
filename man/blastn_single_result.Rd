@@ -10,7 +10,7 @@ blastn_single_result(
   which_result,
   num_reads = 100,
   hit_list = 10,
-  num_threads = 1,
+  num_threads,
   db_path,
   quiet,
   accessions_path,

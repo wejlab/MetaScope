@@ -2,6 +2,7 @@
 
 export(align_target)
 export(align_target_bowtie)
+export(blast_reassignment)
 export(convert_animalcules)
 export(convert_animalcules_patho)
 export(convert_animalcules_silva)

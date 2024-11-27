@@ -27,7 +27,7 @@ taxize::use_entrez(). Due to the high number of requests made to NCBI, this
 function will be less prone to errors if you obtain an NCBI key.}
 }
 \value{
-a dataframe with best_hit, uniqueness_score, species_percentage_hit
+a vector with best_hit, uniqueness_score, species_percentage_hit
   genus_percentage_hit, species_contaminant_score, and
   genus_contaminant_score
 }
