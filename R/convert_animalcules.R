@@ -85,31 +85,47 @@ read_in_id <- function(path_id_counts, end_string, which_annot_col) {
 }
 
 # Get input taxon phylogeny
-class_taxon <- function(taxon, NCBI_key, num_tries) {
+# class_taxon <- function(taxon, NCBI_key, num_tries) {
+#   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
+#                    "family", "genus", "species", "strain")
+#   na_table <- data.frame(name = "Unknown", rank = taxon_ranks, id = 0)
+#   if (is.na(taxon)) return(na_table)
+#   success <- FALSE
+#   attempt <- 0
+#   e <- "NCBI request not granted. Re-attempting request."
+#   while (!success ) {
+#     try({
+#       attempt <- attempt + 1
+#       if (attempt <= num_tries) {
+#         tryCatch({
+#           classification_table <- taxize::classification(
+#             taxon, db = "ncbi", key = NCBI_key, max_tries = 5)[[1]]},
+#           error = function(w) stop(e)
+#         )
+#       }
+#       if (attempt > num_tries) {
+#         message("UID ", taxon, " not found. Continuing search for next UID.")
+#         return(na_table)
+#       }
+#       success <- TRUE
+#     })
+#   }
+#   return(classification_table)
+# }
+
+class_taxon <- function(taxon, accession) {
   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class", "order",
                    "family", "genus", "species", "strain")
   na_table <- data.frame(name = "Unknown", rank = taxon_ranks, id = 0)
   if (is.na(taxon)) return(na_table)
-  success <- FALSE
-  attempt <- 0
-  e <- "NCBI request not granted. Re-attempting request."
-  while (!success ) {
-    try({
-      attempt <- attempt + 1
-      if (attempt <= num_tries) {
-        tryCatch({
-          classification_table <- taxize::classification(
-            taxon, db = "ncbi", key = NCBI_key, max_tries = 5)[[1]]},
-          error = function(w) stop(e)
-        )
-      }
-      if (attempt > num_tries) {
-        message("UID ", taxon, " not found. Continuing search for next UID.")
-        return(na_table)
-      }
-      success <- TRUE
-    })
-  }
+  
+  classification_table <- taxonomizr::getTaxonomy(taxon,accession) |> 
+    as.data.frame()
+  
+  classification_table <- classification_table |>
+    tidyr::pivot_longer(cols = colnames(classification_table), names_to = "rank", values_to = "name") |>
+    dplyr::relocate(rank, .after = name)
+  classification_table$id <- c(rep(NA, nrow(classification_table) - 1), taxon)
   return(classification_table)
 }
 

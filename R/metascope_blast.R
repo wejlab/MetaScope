@@ -46,24 +46,46 @@ add_in_taxa <- function(metascope_id_in, caching, path_to_write) {
 #' Returns MetaScope Table with NCBI taxa in separate columns
 
 #' @param metascope_id_in MetaScope ID file with NCBI taxa qnames
-#' @param NCBI_key (character) NCBI Entrez API key. optional.
-#' See taxize::use_entrez(). Due to the high number of requests made to NCBI,
-#' this function will be less prone to errors if you obtain an NCBI key.
+#' @param accession_path (character) Path to accession.sql file.
 #' @keywords internal
 
-add_in_taxa_ncbi <- function(metascope_id_in, NCBI_key, param) {
+# add_in_taxa_ncbi <- function(metascope_id_in, NCBI_key, param) {
+#   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class",
+#                    "order", "family", "genus", "species")
+#   all_ncbi <- plyr::llply(metascope_id_in$TaxonomyID, .fun = class_taxon,
+#                           NCBI_key = NCBI_key, .progress = "text",
+#                           num_tries = 3)
+#   # fix unknowns
+#   unk_tab <- data.frame(name = "unknown", rank = taxon_ranks, id = 0)
+#   all_ncbi <- lapply(all_ncbi, function(x) if (all(is.na(x))) unk_tab else x)
+#   # Create table
+#   taxonomy_table <- BiocParallel::bplapply(all_ncbi, mk_table,
+#                                            taxon_ranks = taxon_ranks,
+#                                            BPPARAM = BPPARAM) |>
+#     dplyr::bind_rows() |> as.data.frame() |>
+#     magrittr::set_colnames(taxon_ranks) |>
+#     dplyr::mutate(TaxonomyID = metascope_id_in$TaxonomyID) |>
+#     dplyr::relocate("TaxonomyID") |>
+#     dplyr::distinct(!!dplyr::sym("TaxonomyID"), .keep_all = TRUE) |>
+#     dplyr::left_join(metascope_id_in, by = c("TaxonomyID")) |>
+#     dplyr::relocate("genus", "species", .after = "family") |>
+#     dplyr::relocate("read_count", "Proportion", "readsEM", "EMProportion", .after = "species") |>
+#     dplyr::select(-"Genome")
+#   return(taxonomy_table)
+# }
+
+add_in_taxa_ncbi <- function(metascope_id_in, accession, param) {
   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class",
                    "order", "family", "genus", "species")
   all_ncbi <- plyr::llply(metascope_id_in$TaxonomyID, .fun = class_taxon,
-                          NCBI_key = NCBI_key, .progress = "text",
-                          num_tries = 3)
+                          accession = accession, .progress = "text")
   # fix unknowns
   unk_tab <- data.frame(name = "unknown", rank = taxon_ranks, id = 0)
   all_ncbi <- lapply(all_ncbi, function(x) if (all(is.na(x))) unk_tab else x)
   # Create table
   taxonomy_table <- BiocParallel::bplapply(all_ncbi, mk_table,
                                            taxon_ranks = taxon_ranks,
-                                           BPPARAM = param) |>
+                                           BPPARAM = BPPARAM) |>
     dplyr::bind_rows() |> as.data.frame() |>
     magrittr::set_colnames(taxon_ranks) |>
     dplyr::mutate(TaxonomyID = metascope_id_in$TaxonomyID) |>
@@ -125,36 +147,35 @@ get_seqs <- function(id, bam_file, n = 10, bam_seqs) {
 get_multi_seqs <- function(ids_n, bam_file, seq_info_df,
                            metascope_id_tax,
                            sorted_bam_file) {
-  id <- ids_n[1]
+  ids <- ids_n[1]
   requireNamespace("GenomicRanges")
   requireNamespace("IRanges")
   allGenomes <- seq_info_df |>
-    dplyr::filter(grepl(id, !!dplyr::sym("seqnames"), fixed = TRUE)) |>
+    dplyr::filter(!!dplyr::sym("seqnames") %in% ids) |>
     dplyr::pull("original_seqids")
-  # Sample one of the Genomes that match
-  Genome <- sample(allGenomes, 1)
   # Define BAM file with smaller yield size
   YS <- 1000
   bf <- Rsamtools::BamFile(sorted_bam_file, yieldSize = YS)
-  
-  alt_n <- metascope_id_tax |>
-    dplyr::filter(!!dplyr::sym("TaxonomyID") == id) |> dplyr::pull("read_count")
-  n_seqs <- ifelse(test = is.na(as.numeric(ids_n[[1]][2])),
-                   yes = min(alt_n, 100),
-                   no = as.numeric(ids_n[[1]][2]))
+  open(bf)
+  param <- Rsamtools::ScanBamParam(what = c("rname", "seq"),
+                                   which = GenomicRanges::GRanges(
+                                     allGenomes,
+                                     IRanges::IRanges(1, 1e+07)))
+  max_n <- Rsamtools::countBam(bf, param = param)$records
+  close(bf)
+  n_seqs <- min(as.integer(ids_n[2]), sum(max_n))
   
   YIELD <- function(bf) {
-    param <- Rsamtools::ScanBamParam(what = c("rname", "seq"),
-                                     which = GenomicRanges::GRanges(
-                                       Genome,
-                                       IRanges::IRanges(1, 1e+07)))
-    value <- Rsamtools::scanBam(bf, param = param)[[1]]
-    return(value)
+    value <- Rsamtools::scanBam(bf, param = param)
+    flattened_value <- list()
+    flattened_value$rname <- lapply(value, function(x) x$rname)
+    flattened_value$seq <- lapply(value, function(x) x$seq |> as.character())
+    return(flattened_value)
   }
   MAP <- function(value) {
     if(length(value$rname) == 0) return(dplyr::tibble(NULL))
     y <- dplyr::tibble("UID" = value$rname |> unlist(),
-                       "Sequence" = as.character(value$seq))
+                       "Sequence" = value$seq |> unlist())
     return(y)
   }
   REDUCE <- function(x, y) {
@@ -173,14 +194,13 @@ get_multi_seqs <- function(ids_n, bam_file, seq_info_df,
     while(nrow(result) < n_end) {
       data <- YIELD(X)
       result <- REDUCE(result, MAP(data))
-      #print(nrow(result))
-      #print(n_end)
+      print(result)
     }
     return(result)
   }
   
   seqs <- reduceByYield_multiseqs(bf, YIELD, MAP, REDUCE, n_end = n_seqs)
-  seqs <- seqs[sample(nrow(seqs), n_seqs), ]
+  #seqs <- seqs[sample(nrow(seqs), n_seqs), ]
   
   final_seqs <- list(rname = seqs$UID, seq = Biostrings::DNAStringSet(seqs$Sequence))
   return(final_seqs)
@@ -332,7 +352,7 @@ blastn_single_result <- function(results_table, bam_file, which_result,
 
 blastn_results <- function(results_table, bam_file, num_results = 10,
                            num_reads_per_result = 100, hit_list = 10,
-                           num_threads = 1, db_path, out_path,
+                           num_threads = 1, db_path, out_path, db = NULL,
                            sample_name = NULL, quiet = quiet,
                            accessions_path, fasta_dir = NULL,
                            NCBI_key = NULL, param) {
@@ -359,7 +379,7 @@ blastn_results <- function(results_table, bam_file, num_results = 10,
                                    paste0(sprintf("%05d", i), "_", sample_name, ".csv")),
                      row.names = FALSE)
   }
-  BiocParallel::bplapply(seq_len(num_results2), run_res, BPPARAM = param)
+  BiocParallel::bplapply(seq_len(num_results2), run_res, BPPARAM = BPPARAM)
 }
 
 #' Calculates result metrics from a blast results table
@@ -454,17 +474,17 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
       dplyr::summarise("num_reads" = dplyr::n()) |>
       dplyr::slice_max(!!dplyr::sym("num_reads"), with_ties = FALSE)
     
-    best_hit_strain <- blast_results_table_2 |>
-      tidyr::separate("sseqid", c(NA, "gi", NA, NA, NA), sep = "\\|")  |>
-      dplyr::group_by(!!dplyr::sym("gi")) |>
-      dplyr::summarise("num_reads" = dplyr::n()) |>
-      dplyr::slice_max(!!dplyr::sym("num_reads"), with_ties = TRUE)
-    if (nrow(best_hit_strain) > 1 | db == "silva") {
-      best_strain <- NA
-    } else if (nrow(best_hit_strain) == 1) {
-      res <- taxize::genbank2uid(best_hit_strain$gi, NCBI_key = NCBI_key)
-      best_strain <- attr(res[[1]], "name")
-    }
+    #best_hit_strain <- blast_results_table_2 |>
+    #  tidyr::separate("sseqid", c(NA, "gi", NA, NA, NA), sep = "\\|")  |>
+    #  dplyr::group_by(!!dplyr::sym("gi")) |>
+    #  dplyr::summarise("num_reads" = dplyr::n()) |>
+    #  dplyr::slice_max(!!dplyr::sym("num_reads"), with_ties = TRUE)
+    #if (nrow(best_hit_strain) > 1 | db == "silva") {
+    #  best_strain <- NA
+    #} else if (nrow(best_hit_strain) == 1) {
+    #  res <- taxonomizr::getTaxonomy(best_hit_strain$gi, sqlFile = accessions_path)
+    #  best_strain <- attr(res[[1]], "name")
+    #}
     
     uniqueness_score <- blast_results_table_2 |>
       dplyr::group_by(!!dplyr::sym("query_species")) |>
@@ -493,20 +513,19 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
     
     all_results <- c(uniqueness_score, species_percentage_hit, genus_percentage_hit,
                      species_contaminant_score, genus_contaminant_score,
-                     best_hit_genus$query_genus, best_hit_species$query_species,
-                     best_strain)
+                     best_hit_genus$query_genus, best_hit_species$query_species)
     names(all_results) <- c("uniqueness_score", "species_percentage_hit", "genus_percentage_hit",
                             "species_contaminant_score", "genus_contaminant_score",
-                            "best_hit_genus", "best_hit_species", "best_hit_strain")
+                            "best_hit_genus", "best_hit_species")
     return(all_results)
   },
   error = function(e)
   {
     message("Error", conditionMessage(e), "/n")
-    error_vector <- c(0,0,0,0,0, NA, NA, NA)
+    error_vector <- c(0,0,0,0,0, NA, NA)
     names(error_vector) <- c("uniqueness_score", "species_percentage_hit", "genus_percentage_hit",
                              "species_contaminant_score", "genus_contaminant_score",
-                             "best_hit_genus", "best_hit_species", "best_hit_strain")
+                             "best_hit_genus", "best_hit_species")
     
     return(error_vector)
   }
@@ -561,9 +580,6 @@ blast_result_metrics <- function(blast_results_table_path, accessions_path, db =
 #'   stating "No alias or index file found".
 #' @param quiet Logical, whether to print out more informative messages. Default
 #'   is FALSE.
-#' @param NCBI_key (character) NCBI Entrez API key. optional. See
-#'   taxize::use_entrez(). Due to the high number of requests made to NCBI, this
-#'   function will be less prone to errors if you obtain an NCBI key.
 #' @param db Currently accepts one of \code{c("ncbi", "silva", "other")}
 #' Default is \code{"ncbi"}, appropriate for samples aligned against indices
 #' compiled from NCBI whole genome databases. Alternatively, usage of an
@@ -628,10 +644,10 @@ metascope_blast <- function(metascope_id_path,
                             tmp_dir, out_dir, sample_name, fasta_dir = NULL,
                             num_results = 10, num_reads = 100, hit_list = 10,
                             num_threads = 1, db_path, quiet = FALSE,
-                            NCBI_key = NULL, db = NULL, accessions_path = NULL) {
+                            db = NULL, accessions_path = NULL) {
   # Parallelization settings
   if (!is.numeric(num_threads)) num_threads <- 1
-  param <- BiocParallel::MulticoreParam(workers = num_threads)
+  BPPARAM <- BiocParallel::MulticoreParam(workers = num_threads)
   
   # Sort and index bam file
   sorted_bam_file_path <- file.path(tmp_dir, paste0(sample_name, "_sorted"))
@@ -647,17 +663,17 @@ metascope_blast <- function(metascope_id_path,
   
   # Group metascope id by species and create metascope species id
   if (db == "silva") {
-    metascope_id_tax <- add_in_taxa(metascope_id_in, caching = FALSE,
+    metascope_id_tax <- add_in_taxa(metascope_id_in, caching = FALSE,           # TODO Add initialization steps to install required databases
                                     path_to_write = tmp_dir)
   } else if (db == "ncbi") {
-    metascope_id_tax <- add_in_taxa_ncbi(metascope_id_in, param = param)
+    metascope_id_tax <- add_in_taxa_ncbi(metascope_id_in, accession = accessions_path, param = param)
   }
   
   metascope_id_species <- metascope_id_tax |> dplyr::mutate("id" = dplyr::row_number()) |>
     dplyr::group_by(!!dplyr::sym("superkingdom"), !!dplyr::sym("kingdom"), !!dplyr::sym("phylum"),
                     !!dplyr::sym("class"),
                     !!dplyr::sym("order"), !!dplyr::sym("family"), !!dplyr::sym("genus"), !!dplyr::sym("species")) |>
-    dplyr::summarise("read_count" = sum(!!dplyr::sym("read_count")),
+    dplyr::summarise("read_counts" = sum(!!dplyr::sym("read_count")),
                      "Proportion" = sum(!!dplyr::sym("Proportion")),
                      "readsEM" = sum(!!dplyr::sym("readsEM")),
                      "EMProportion" = sum(!!dplyr::sym("EMProportion")),
@@ -666,7 +682,7 @@ metascope_blast <- function(metascope_id_path,
                      "read_proportions" = paste0(!!dplyr::sym("read_count")/sum(!!dplyr::sym("read_count")),
                                                  collapse = ","),
                      .groups = "drop") |>
-    dplyr::arrange(dplyr::desc(!!dplyr::sym("read_count")))
+    dplyr::arrange(dplyr::desc(!!dplyr::sym("read_counts")))
   print_out_file <- file.path(out_dir, paste0(sample_name, ".metascope_species.csv"))
   utils::write.csv(metascope_id_species, file = print_out_file)
   message("Saving metascope grouped species to ", print_out_file)
@@ -685,16 +701,20 @@ metascope_blast <- function(metascope_id_path,
   # Obtain NCBI uids from readnames (accessions)
   if (db == "ncbi") {
     all_ids <- identify_rnames(list(list(rname = seq_info_df$seqnames))) |>
-      taxize::genbank2uid(key = NCBI_key) |>
+      taxonomizr::accessionToTaxa(accessions_path) |>
       lapply(function(x) x[[1]]) |> unlist()
     seq_info_df$seqnames <- all_ids
+  }
+  if (db == "silva") {
+    seq_info_df <- seq_info_df |>
+      dplyr::mutate(seqnames = sub(';.*$','', seqnames))
   }
   # Iterate over 
   write_fastas <- function(i) {
     taxids <- strsplit(metascope_id_species$TaxonomyIDs[i], split = ",")[[1]]
     read_proportions <- strsplit(metascope_id_species$read_proportions[i],
                                  split = ",")[[1]]
-    reads_to_sample <- ceiling(as.numeric(read_proportions) * num_reads)
+    reads_to_sample <- round(as.numeric(read_proportions) * num_reads, digits = 0)
     if (length(reads_to_sample) > num_reads) {
       taxids <- taxids[seq_len(num_reads)]
       reads_to_sample <- reads_to_sample[seq_len(num_reads)]
@@ -704,14 +724,14 @@ metascope_blast <- function(metascope_id_path,
     seqs_list <- BiocParallel::bplapply(ids_n, get_multi_seqs, bam_file = bam_file,
                                         seq_info_df = seq_info_df,
                                         metascope_id_tax = metascope_id_tax,
-                                        sorted_bam_file = sorted_bam_file, BPPARAM = param)
+                                        sorted_bam_file = sorted_bam_file, BPPARAM = BPPARAM)
     seqs <- do.call(c, seqs_list)
     Biostrings::writeXStringSet(
       seqs$seq, filepath = file.path(fastas_tmp_dir, paste0(sprintf("%05d", i), ".fa")))
   }
   
   # Parallelize the writing of fastas
-  out <- BiocParallel::bplapply(seq_len(num_taxa_loop), write_fastas, BPPARAM = param)
+  out <- BiocParallel::bplapply(seq_len(num_taxa_loop), write_fastas, BPPARAM = BPPARAM)
   
   # Create blast directory in tmp directory to save blast results in
   blast_tmp_dir <- file.path(tmp_dir, "blast")
@@ -719,16 +739,16 @@ metascope_blast <- function(metascope_id_path,
   unlink(paste0(blast_tmp_dir, "/*"), recursive = TRUE)
   
   # Create accessions database
-  if (is.null(accessions_path)) {
-    accessions_path <- file.path(tmp_dir, 'accessionTaxa.sql')
-    taxonomizr::prepareDatabase(accessions_path)
-  }
+  #if (is.null(accessions_path)) {
+  #  accessions_path <- file.path(tmp_dir, 'accessionTaxa.sql')
+  #  taxonomizr::prepareDatabase(accessions_path)
+  #}
   
   # Run rBlast on all metascope microbes
   message("Running BLASTN on all sequences")
   blastn_results(results_table = metascope_id_species, bam_file = bam_file,
                  num_results = num_results, num_reads_per_result = num_reads,
-                 hit_list = hit_list, num_threads = num_threads,
+                 hit_list = hit_list, num_threads = num_threads, db = db,
                  db_path = db_path, out_path = blast_tmp_dir,
                  sample_name = sample_name, quiet = TRUE,
                  accessions_path = accessions_path, fasta_dir = fastas_tmp_dir,
