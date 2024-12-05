@@ -37,7 +37,7 @@ Imports:
     S4Vectors,
     stringr,
     SummarizedExperiment,
-    taxize,
+    taxonomizr,
     tibble,
     tidyr,
     tools
@@ -55,7 +55,6 @@ Suggests:
     Rsubread,
     spelling,
     sys,
-    taxonomizr,
     testthat,
     usethis
 Enhances:
@@ -67,4 +66,4 @@ biocViews: MicrobiomeData, ReproducibleResearch, SequencingData
 Encoding: UTF-8
 Language: en-US
 LazyData: FALSE
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2

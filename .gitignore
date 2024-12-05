@@ -57,6 +57,9 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
+# Tests
+tests/
+
 # Other
 .rproj
 .rhistory
