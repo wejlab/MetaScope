@@ -74,7 +74,7 @@ add_in_taxa <- function(metascope_id_in, caching, path_to_write) {
 #   return(taxonomy_table)
 # }
 
-add_in_taxa_ncbi <- function(metascope_id_in, accession, param) {
+add_in_taxa_ncbi <- function(metascope_id_in, accession, BPPARAM) {
   taxon_ranks <- c("superkingdom", "kingdom", "phylum", "class",
                    "order", "family", "genus", "species")
   all_ncbi <- plyr::llply(metascope_id_in$TaxonomyID, .fun = class_taxon,
