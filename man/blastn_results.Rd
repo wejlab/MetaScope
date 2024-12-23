@@ -13,6 +13,7 @@ blastn_results(
   num_threads = 1,
   db_path,
   out_path,
+  db = NULL,
   sample_name = NULL,
   quiet = quiet,
   accessions_path,
@@ -46,6 +47,12 @@ including base name of files. For example, given a sample "X78256",
 filepath would be \code{file.path(directory_here, "X78256")} with extension
 omitted.}
 
+\item{db}{Currently accepts one of \code{c("ncbi", "silva", "other")}
+Default is \code{"ncbi"}, appropriate for samples aligned against indices
+compiled from NCBI whole genome databases. Alternatively, usage of an
+alternate database (like Greengenes2) should be specified with
+\code{"other"}.}
+
 \item{sample_name}{Character string, sample name for output files.}
 
 \item{quiet}{Logical, whether to print out more informative messages. Default
@@ -55,10 +62,6 @@ is FALSE.}
 
 \item{fasta_dir}{Character string; Directory where fastas from
 \code{metascope_id} are stored.}
-
-\item{NCBI_key}{(character) NCBI Entrez API key. optional. See
-taxize::use_entrez(). Due to the high number of requests made to NCBI, this
-function will be less prone to errors if you obtain an NCBI key.}
 
 \item{param}{\code{BiocParallel} param for parallelization.}
 }

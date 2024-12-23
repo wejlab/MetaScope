@@ -17,7 +17,6 @@ metascope_blast(
   num_threads = 1,
   db_path,
   quiet = FALSE,
-  NCBI_key = NULL,
   db = NULL,
   accessions_path = NULL
 )
@@ -63,10 +62,6 @@ stating "No alias or index file found".}
 
 \item{quiet}{Logical, whether to print out more informative messages. Default
 is FALSE.}
-
-\item{NCBI_key}{(character) NCBI Entrez API key. optional. See
-taxize::use_entrez(). Due to the high number of requests made to NCBI, this
-function will be less prone to errors if you obtain an NCBI key.}
 
 \item{db}{Currently accepts one of \code{c("ncbi", "silva", "other")}
 Default is \code{"ncbi"}, appropriate for samples aligned against indices

@@ -10,7 +10,7 @@ metascope_id(
   aligner = "bowtie2",
   db = "ncbi",
   db_feature_table = NULL,
-  NCBI_key = NULL,
+  accession_path = NULL,
   out_dir = dirname(input_file),
   tmp_dir = dirname(input_file),
   convEM = 1/10000,
@@ -41,11 +41,6 @@ alternate database (like Greengenes2) should be specified with
 \item{db_feature_table}{If \code{db = "other"}, a data.frame must be supplied
 with two columns, "Feature ID" matching the names of the alignment indices,
 and a second \code{character} column supplying the taxon identifying information.}
-
-\item{NCBI_key}{(character) NCBI Entrez API key. optional. See
-taxize::use_entrez(). Due to the high number of requests made to NCBI, this
-function will be less prone to errors if you obtain an NCBI key. You may
-enter the string as an input or set it as ENTREZ_KEY in .Renviron.}
 
 \item{out_dir}{The directory to which the .csv output file will be output.
 Defaults to \code{dirname(input_file)}.}
@@ -79,6 +74,9 @@ Default is \code{100}.}
 Default is \code{50}.}
 
 \item{quiet}{Turns off most messages. Default is \code{TRUE}.}
+
+\item{accessions_path}{(character) NCBI accessions sql path. See
+taxonimzr::prepareDatabase().}
 }
 \value{
 This function returns a .csv file with annotated read counts to

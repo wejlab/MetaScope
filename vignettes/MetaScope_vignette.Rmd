@@ -71,15 +71,6 @@ suppressPackageStartupMessages({
 })
 ```
 
-## Entrez key
-
-We highly recommend grabbing an Entrez key using the function `taxize::use_entrez()`. Then set your key as a global environment variable like so:
-
-```{R ncbi_key, eval = FALSE}
-NCBI_key <- "<Your key here>"
-options("ENTREZ_KEY" = NCBI_key)
-```
-
 # Data
 
 The mock data provided in the package consists of simulated sequencing data generated from the `SAMtools` `wgsim` function (see `extdata_explanations.Rmd` in `inst/script` to see exact commands). The `wgsim` function is a tool which allows for the generation of FASTQ reads from a reference genome (FASTA). The mock data (`reads.fastq`) contains 1500 reads, of which 1000 reads are derived from the *Staphylococcus aureus* RF122 strain and 500 reads are derived from the *Staphylococcus epidermidis* RP62A strain. In this data set, we assume that the *S. aureus* RF122 reads are the reads of interest, and the *S. epidermidis* RP62A reads are known contaminant reads which should be removed during the analysis. Ideally, the microbial composition report (.csv) produced at the end of the analysis should contain only reads assigned to the *S. aureus* RF122 strain.
@@ -118,9 +109,61 @@ Typically, the targets of the analysis are microbes (that is, viruses, bacteria,
 
 The `download_refseq()` function automatically extracts custom reference genome libraries in a FASTA file for microbial or host genomes. The user must first indicate a taxon for which to download the genomes, such as 'bacteria' or 'primates'. A table of possible entries can be viewed by accessing the `MetaScope:::taxonomy_table` object. The user may then specify whether they wish to download only the RefSeq reference genomes, or both the reference and representative genomes. The compress option then allows users to specify whether to compress the output FASTA file; this is done by default.
 
+## Creating Taxonomy Database
+
+It is critical to include a taxonomy database for genomes we may suspect are in our sample. In this scenario, we know which genomes and strains we will be testing, so we can generate a small sample of taxonomizrs taxonomy database.  
+
+```{R taxonomy_db, eval = TRUE, warning = FALSE, message = FALSE}
+namesText<-c(
+ "1\t|\troot\t|\t\t|\tscientific name\t|",
+ "2\t|\tBacteria\t|\tBacteria <prokaryotes>\t|\tscientific name\t|",
+ "158878\t|\tStaphylococcus aureus subsp. aureus Mu50\t|\t|\tscientific name\t|",
+ "418127\t|\tStaphylococcus aureus subsp. aureus Mu3\t|\t|\tscientific name\t|",
+ "426430\t|\tStaphylococcus aureus subsp. aureus str. Newman\t|\t|\tscientific name\t|",
+ "158879\t|\tStaphylococcus aureus subsp. aureus N315\t|\t|\tscientific name\t|",
+ "273036\t|\tStaphylococcus aureus RF122\t|\t|\tscientific name\t|",
+ "523796\t|\tStaphylococcus aureus subsp. aureus ST398\t|\t|\tscientific name\t|",
+ "176279\t|\tStaphylococcus epidermidis RP62A\t|\t|\tscientific name\t|",
+ "1280\t|\tStaphylococcus aureus\t|\t|\tscientific name\t|",
+ "1282\t|\tStaphylococcus epidermidis\t|\t|\tscientific name\t|",
+ "1279\t|\tStaphylococcus\t|\t|\tscientific name\t|",
+ "90964\t|\tStaphylococcaceae\t|\t|\tscientific name\t|", 
+ "1385\t|\tBacillales\t|\t|\tscientific name\t|",
+ "91061\t|\tBacilli\t|\t|\tscientific name\t|", 
+ "1239\t|\tBacillota\t|\t|\tscientific name\t|",
+ "1783272\t|\tBacillati\t|\t|\tscientific name\t|"
+)
+
+nodesText<-c(
+  "1\t|\t1\t|\tno rank\t|\t\t|\t8\t|\t0\t|\t1\t|\t0\t|\t0\t|\t0\t|\t0\t|\t0\t|\t\t|",
+  "2\t|\t131567\t|\tsuperkingdom\t|\t\t|\t0\t|\t0\t|\t11\t|\t0\t|\t0\t|\t0\t|\t0\t|\t0\t|\t\t|",
+  "158878\t|\t1280\t|\tstrain",
+  "418127\t|\t1280\t|\tstrain",
+  "426430\t|\t1280\t|\tstrain",
+  "158879\t|\t1280\t|\tstrain",
+  "273036\t|\t1280\t|\tstrain",
+  "523796\t|\t1280\t|\tstrain",
+  "176279\t|\t1282\t|\tstrain",
+  "1280\t|\t1279\t|\tspecies",
+  "1282\t|\t1279\t|\tspecies",
+  "1279\t|\t90964\t|\tgenus",
+  "90964\t|\t1385\t|\tfamily", 
+  "1385\t|\t91061\t|\torder",
+  "91061\t|\t1239\t|\tclass", 
+  "1239\t|\t1783272\t|\tphylum",
+  "1783272\t|\t2\t|\tkingdom",
+  "131567\t|\t1\t|\tno rank"
+)
+
+tmp_accession<-tempfile()
+taxonomizr::read.names.sql(textConnection(namesText),tmp_accession, overwrite = TRUE)
+taxonomizr::read.nodes.sql(textConnection(nodesText),tmp_accession, overwrite = TRUE)
+```
+
 ## Downloading target genomes
 
 Even though in this scenario we know exactly from where the reads in the mock data (`reads.fastq`) originate, in most cases we may only have a general idea of read origins. Therefore, in the following code, we will download the genome of the *Staphylococcus aureus* RF122 strain along with the genomes of a few other closely related *Staphylococcus aureus* strains from the NCBI RefSeq database. These genomes together will act as our target genome library.
+
 
 ```{R target_lib, eval = TRUE, warning = FALSE, message = FALSE}
 target_ref_temp <- tempfile()
@@ -130,10 +173,11 @@ all_species <- c("Staphylococcus aureus subsp. aureus Mu50",
                  "Staphylococcus aureus subsp. aureus Mu3",
                  "Staphylococcus aureus subsp. aureus str. Newman",
                  "Staphylococcus aureus subsp. aureus N315",
-                 "Staphylococcus aureus RF122", "Staphylococcus aureus subsp. aureus ST398")
+                 "Staphylococcus aureus RF122", 
+                 "Staphylococcus aureus subsp. aureus ST398")
 sapply(all_species, download_refseq, 
        reference = FALSE, representative = FALSE, compress = TRUE,
-       out_dir = target_ref_temp, caching = TRUE)
+       out_dir = target_ref_temp, caching = TRUE, accession_path = tmp_accession)
 ```
 
 ## Downloading filter genomes
