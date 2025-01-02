@@ -1,0 +1,191 @@
+---
+title: "Example MetaScope Script"
+author: 
+- name: Aubrey Odom
+  affiliation: 
+  - Program in Bioinformatics, Boston University, Boston, MA
+  email: aodom@bu.edu
+date: '`r format(Sys.Date(), "%B %e, %Y")`'
+package: MetaScope
+output: 
+  BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{Introdution to MetaScope}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+# Introduction
+The following is an example script utilizing the Bowtie 2 sub-workflow. The demultiplex step is omitted.
+
+```{R}
+library(MetaScope)
+```
+
+# Creation of indices
+
+```{R, eval = FALSE}
+nThreads <- 8
+loc <- "/restricted/projectnb/pathoscope/reflib/2023_refseq_bowtie"
+
+targets <- tolower(c("bacteria"))
+filters <- c('homo sapiens', 'mus musculus')
+inVec <- c(targets, filters)
+
+# make directories
+mk_all_dir <- function(ind) {
+    ind_ <- stringr::str_replace_all(ind, c(" " = "_"))
+    if (!dir.exists(file.path(loc, ind_))) dir.create(file.path(loc, ind_))
+    }
+sapply(inVec, mk_all_dir)
+
+# Download reference and representative genomes
+sapply(inVec, 
+       function(x) download_refseq(x, reference = TRUE,
+                                   representative = TRUE,
+                                   compress = TRUE,
+                                   patho_out = FALSE,
+                                   # Same directory as created above
+                                   out_dir = file.path(
+                                   loc, stringr::str_replace_all(x, c(" " = "_")))))
+
+# Make indices
+for (ind in inVec) {
+  ind_ <- stringr::str_replace_all(ind, c(" " = "_"))
+  # Create the reference library index files in the destination directory
+  if (ind == "fungi") {
+      mk_bowtie_index(ref_dir = file.path(loc, ind_), lib_dir = file.path(loc, "all_indices"), 
+                  lib_name = ind_,
+                  bowtie2_build_options = "--large-index",
+                  threads = nThreads, overwrite = TRUE)
+  } else {
+      mk_bowtie_index(ref_dir = file.path(loc, ind_), lib_dir = file.path(loc, "all_indices"), 
+                      lib_name = paste0(ind_, "rep"), threads = nThreads, overwrite = TRUE)
+  }
+}
+
+
+```
+
+# Command-line pre-processing (BASH script)
+
+Note, the variable `SGE_TASK_ID` refers to an index integer set via a parallel processing job submission system for a computing resource.
+
+```{bash, eval = FALSE}
+threads=8
+
+dataDir=/restricted/projectnb/pathoscope/work/aubrey/metascope_benchmarking/miossec_data
+dataDir=/restricted/projectnb/pathoscope/work/aubrey/metascope_benchmarking/miossec_data/species_10/abundance_100000/dominance_1
+
+### MAKE WORKING DIR
+workingDir=${SGE_TASK_ID}_tmp_miossec
+rm -rf $TMPDIR/$workingDir
+mkdir $TMPDIR/$workingDir
+
+# Specify input files
+input_line=$(sed "${SGE_TASK_ID}q;d" /restricted/projectnb/pathoscope/work/aubrey/metascope_benchmarking/miossec_data/dat_manifest.txt) 
+IFS=$'\t'
+read -r sampleName readPath1 readPath2 <<< "$input_line"
+
+### TRIM the reads
+# CHANGE CROP AND HEADCROP DEPENDING ON MultiQC ANALYSIS
+#java -jar ~/pathoscope/code/other/Trimmomatic-0.36/trimmomatic-0.36.jar PE \
+#    -phred33 -threads $threads $reads1 $reads2 \
+#    $TMPDIR/$workingDir/reads1.paired.fastq.gz \
+#    $TMPDIR/$workingDir/reads1.unpaired.fastq.gz \
+#    $TMPDIR/$workingDir/reads2.paired.fastq.gz \
+#    $TMPDIR/$workingDir/reads2.unpaired.fastq.gz \
+#    SLIDINGWINDOW:4:20 LEADING:3 TRAILING:3 MINLEN:36 \
+#    CROP:225 HEADCROP:30
+
+### Run MetaScope
+indexDir="/restricted/projectnb/pathoscope/reflib/2023_refseq_bowtie/all_indices"
+expTag=$sampleName
+outDir="/restricted/projectnb/pathoscope/work/aubrey/metascope_benchmarking/refseq2023_output"
+tmpDir="$TMPDIR/$workingDir/"
+
+# Choose filter and targets to download
+target="bacteriarep,fungi,viruses"
+filter="human_T2T,mus_musculus"
+
+# This is where samtools and R are loaded if necessary
+module load samtools
+module load R
+
+# Change "run_MetaScope.R" to name of R script saved elsewhere
+Rscript --vanilla --max-ppsize=500000 run_MetaScope.R \
+${readPath1} ${readPath2} ${indexDir} ${expTag} ${outDir} ${tmpDir} ${threads} \
+${target} ${filter}
+
+rm -rf $TMPDIR/$workingDir
+
+```
+
+# R script
+
+```{R, eval = FALSE}
+# Take in arguments from bash script
+args <- commandArgs(trailingOnly = TRUE)
+
+readPath1 <- args[1]
+readPath2 <- args[2]
+indexDir <- args[3]
+expTag <- args[4]
+outDir <- args[5]
+tmpDir <- args[6]
+threads <- args[7]
+targets <- stringr::str_split(args[8], ",")[[1]]
+filters <- stringr::str_split(args[9], ",")[[1]]
+
+# Time this!
+now <- Sys.time()
+
+# Load MetaScope
+library(MetaScope)
+
+# Align to targets
+do_this <- function(x) stringr::str_replace_all(x, c(" " = "_"))
+targets_ <- do_this(targets) 
+filters_ <- do_this(filters)
+
+# Identify bt2 params
+data(bt2_regular_params)
+bt2_params <- bt2_regular_params
+
+target_map <- align_target_bowtie(read1 = readPath1,
+                                  read2 = readPath2,
+                                  lib_dir = indexDir,
+                                  libs =  targets_,
+                                  align_dir = tmpDir,
+                                  align_file = expTag,
+                                  overwrite = TRUE,
+                                  threads = threads,
+                                  bowtie2_options = paste(bt2_params, "-f"),
+                                  quiet = FALSE)
+
+# Align to filters
+output <- paste(paste0(tmpDir, expTag), "filtered", sep = ".")
+final_map <- filter_host_bowtie(reads_bam = target_map,
+                                lib_dir = indexDir,
+                                libs = filters_,
+                                make_bam = FALSE,
+                                output = output,
+                                threads = threads,
+                                overwrite = TRUE,
+                                quiet = FALSE,
+                                bowtie2_options = bt2_params)
+
+# MetaScope ID
+
+# your_ENTREZ_KEY <- <Your key here>
+Sys.setenv(ENTREZ_KEY = your_ENTREZ_KEY)
+metascope_id(final_map, input_type = "csv.gz", aligner = "bowtie2",
+             NCBI_key = your_ENTREZ_KEY,
+             num_species_plot = 15,
+             quiet = FALSE,
+             out_dir = outDir)
+
+message(capture.output(Sys.time() - now))
+```

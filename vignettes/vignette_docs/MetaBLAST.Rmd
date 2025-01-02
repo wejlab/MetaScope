@@ -1,0 +1,30 @@
+---
+title: "Using MetaBLAST"
+author: 
+- name: Aubrey Odom
+  affiliation: 
+  - Section of Preventative Medicine and Epidemiology, Boston University School of Medicine, Boston, MA
+  email: aodom@bu.edu
+- name: Sean Lu
+  affiliation:
+  - Rutgers New Jersey Medical School, Newark, NJ
+date: '`r format(Sys.Date(), "%B %e, %Y")`'
+package: MetaScope
+output: 
+  BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{Using MetaBLAST}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+This vignette will detail the mechanics behind MetaBLAST software and how it can be used.
+
+- MetaBLAST metrics
+- How is BLAST integrated. also add BLAST discussion to the documentation of the function(s)
+
+- This would walk through the reasoning for the MetaBLAST module and expected outputs with visuals.
+- Metrics
+- Sean help write this
