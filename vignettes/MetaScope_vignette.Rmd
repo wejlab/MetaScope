@@ -18,7 +18,7 @@ package: MetaScope
 output: 
   BiocStyle::html_document
 vignette: >
-  \%VignetteIndexEntry{"Introduction to MetaScope"}
+  %\VignetteIndexEntry{"Introduction to MetaScope"}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
@@ -71,15 +71,6 @@ suppressPackageStartupMessages({
 })
 ```
 
-## Entrez key
-
-We highly recommend grabbing an Entrez key using the function `taxize::use_entrez()`. Then set your key as a global environment variable like so:
-
-```{R ncbi_key, eval = FALSE}
-NCBI_key <- "<Your key here>"
-options("ENTREZ_KEY" = NCBI_key)
-```
-
 # Data
 
 The mock data provided in the package consists of simulated sequencing data generated from the `SAMtools` `wgsim` function (see `extdata_explanations.Rmd` in `inst/script` to see exact commands). The `wgsim` function is a tool which allows for the generation of FASTQ reads from a reference genome (FASTA). The mock data (`reads.fastq`) contains 1500 reads, of which 1000 reads are derived from the *Staphylococcus aureus* RF122 strain and 500 reads are derived from the *Staphylococcus epidermidis* RP62A strain. In this data set, we assume that the *S. aureus* RF122 reads are the reads of interest, and the *S. epidermidis* RP62A reads are known contaminant reads which should be removed during the analysis. Ideally, the microbial composition report (.csv) produced at the end of the analysis should contain only reads assigned to the *S. aureus* RF122 strain.
@@ -118,9 +109,212 @@ Typically, the targets of the analysis are microbes (that is, viruses, bacteria,
 
 The `download_refseq()` function automatically extracts custom reference genome libraries in a FASTA file for microbial or host genomes. The user must first indicate a taxon for which to download the genomes, such as 'bacteria' or 'primates'. A table of possible entries can be viewed by accessing the `MetaScope:::taxonomy_table` object. The user may then specify whether they wish to download only the RefSeq reference genomes, or both the reference and representative genomes. The compress option then allows users to specify whether to compress the output FASTA file; this is done by default.
 
+## Creating Taxonomy Database
+
+It is critical to include a taxonomy database for genomes we may suspect are in our sample. In the case of this vignette, we know in advance precisely which genomes and strains we will be testing. Therefore, we will generate a small subdatabase of taxonomizr references.
+
+For an overview of how to make a typical database for all host and filter genomes in your sample, please see the [example script](https://wejlab.github.io/metascope-docs/articles/docs/Example_Script.html) on our website.
+
+```{R taxonomy_db, eval = TRUE, warning = FALSE, message = FALSE}
+namesText<-c(
+ "1\t|\troot\t|\t\t|\tscientific name\t|",
+ "2\t|\tBacteria\t|\tBacteria <prokaryotes>\t|\tscientific name\t|",
+ "158878\t|\tStaphylococcus aureus subsp. aureus Mu50\t|\t|\tscientific name\t|",
+ "418127\t|\tStaphylococcus aureus subsp. aureus Mu3\t|\t|\tscientific name\t|",
+ "426430\t|\tStaphylococcus aureus subsp. aureus str. Newman\t|\t|\tscientific name\t|",
+ "158879\t|\tStaphylococcus aureus subsp. aureus N315\t|\t|\tscientific name\t|",
+ "273036\t|\tStaphylococcus aureus RF122\t|\t|\tscientific name\t|",
+ "523796\t|\tStaphylococcus aureus subsp. aureus ST398\t|\t|\tscientific name\t|",
+ "176279\t|\tStaphylococcus epidermidis RP62A\t|\t|\tscientific name\t|",
+ "1280\t|\tStaphylococcus aureus\t|\t|\tscientific name\t|",
+ "1282\t|\tStaphylococcus epidermidis\t|\t|\tscientific name\t|",
+ "1279\t|\tStaphylococcus\t|\t|\tscientific name\t|",
+ "90964\t|\tStaphylococcaceae\t|\t|\tscientific name\t|", 
+ "1385\t|\tBacillales\t|\t|\tscientific name\t|",
+ "91061\t|\tBacilli\t|\t|\tscientific name\t|", 
+ "1239\t|\tBacillota\t|\t|\tscientific name\t|",
+ "1783272\t|\tBacillati\t|\t|\tscientific name\t|"
+)
+
+nodesText<-c(
+  "1\t|\t1\t|\tno rank\t|\t\t|\t8\t|\t0\t|\t1\t|\t0\t|\t0\t|\t0\t|\t0\t|\t0\t|\t\t|",
+  "2\t|\t131567\t|\tsuperkingdom\t|\t\t|\t0\t|\t0\t|\t11\t|\t0\t|\t0\t|\t0\t|\t0\t|\t0\t|\t\t|",
+  "158878\t|\t1280\t|\tstrain",
+  "418127\t|\t1280\t|\tstrain",
+  "426430\t|\t1280\t|\tstrain",
+  "158879\t|\t1280\t|\tstrain",
+  "273036\t|\t1280\t|\tstrain",
+  "523796\t|\t1280\t|\tstrain",
+  "176279\t|\t1282\t|\tstrain",
+  "1280\t|\t1279\t|\tspecies",
+  "1282\t|\t1279\t|\tspecies",
+  "1279\t|\t90964\t|\tgenus",
+  "90964\t|\t1385\t|\tfamily", 
+  "1385\t|\t91061\t|\torder",
+  "91061\t|\t1239\t|\tclass", 
+  "1239\t|\t1783272\t|\tphylum",
+  "1783272\t|\t2\t|\tkingdom",
+  "131567\t|\t1\t|\tno rank"
+)
+
+taxa <- c(
+  "NA\taccession\ttaxid\tNA",
+  "NA\tNC_007622.1\t273036\tNA",
+  "NA\tNC_009782.1\t418127\tNA",
+  "NA\tNZ_CTYB01000001.1\t418127\tNA",
+  "NA\tNZ_CTYB01000002.1\t418127\tNA",
+  "NA\tNZ_CTYB01000003.1\t418127\tNA",
+  "NA\tNZ_CTYB01000004.1\t418127\tNA",
+  "NA\tNZ_CTYB01000005.1\t418127\tNA",
+  "NA\tNZ_CTYB01000006.1\t418127\tNA",
+  "NA\tNZ_CTYB01000007.1\t418127\tNA",
+  "NA\tNZ_CTYB01000008.1\t418127\tNA",
+  "NA\tNZ_CTYB01000009.1\t418127\tNA",
+  "NA\tNZ_CTYB01000010.1\t418127\tNA",
+  "NA\tNZ_CTYB01000011.1\t418127\tNA",
+  "NA\tNZ_CTYB01000012.1\t418127\tNA",
+  "NA\tNZ_CTYB01000013.1\t418127\tNA",
+  "NA\tNZ_CTYB01000014.1\t418127\tNA",
+  "NA\tNZ_CTYB01000015.1\t418127\tNA",
+  "NA\tNZ_CTYB01000016.1\t418127\tNA",
+  "NA\tNZ_CTYB01000017.1\t418127\tNA",
+  "NA\tNZ_CTYB01000018.1\t418127\tNA",
+  "NA\tNZ_CTYB01000019.1\t418127\tNA",
+  "NA\tNZ_CTYB01000020.1\t418127\tNA",
+  "NA\tNZ_CTYB01000021.1\t418127\tNA",
+  "NA\tNZ_CTYB01000022.1\t418127\tNA",
+  "NA\tNZ_CTYB01000023.1\t418127\tNA",
+  "NA\tNZ_CTYB01000024.1\t418127\tNA",
+  "NA\tNZ_CTYB01000025.1\t418127\tNA",
+  "NA\tNZ_CTYB01000026.1\t418127\tNA",
+  "NA\tNZ_CTYB01000027.1\t418127\tNA",
+  "NA\tNZ_CTYB01000028.1\t418127\tNA",
+  "NA\tNZ_CTYB01000029.1\t418127\tNA",
+  "NA\tNZ_CTYB01000030.1\t418127\tNA",
+  "NA\tNZ_CTYB01000031.1\t418127\tNA",
+  "NA\tNZ_CTYB01000032.1\t418127\tNA",
+  "NA\tNZ_CTYB01000033.1\t418127\tNA",
+  "NA\tNZ_CTYB01000034.1\t418127\tNA",
+  "NA\tNZ_CTYB01000035.1\t418127\tNA",
+  "NA\tNZ_CTYB01000037.1\t418127\tNA",
+  "NA\tNZ_CTYB01000038.1\t418127\tNA",
+  "NA\tNZ_CTYB01000039.1\t418127\tNA",
+  "NA\tNZ_CTYB01000040.1\t418127\tNA",
+  "NA\tNZ_CTYB01000041.1\t418127\tNA",
+  "NA\tNZ_CTYB01000042.1\t418127\tNA",
+  "NA\tNZ_CTYB01000043.1\t418127\tNA",
+  "NA\tNZ_CTYB01000044.1\t418127\tNA",
+  "NA\tNZ_CTYB01000045.1\t418127\tNA",
+  "NA\tNZ_CTYB01000047.1\t418127\tNA",
+  "NA\tNZ_CTYB01000048.1\t418127\tNA",
+  "NA\tNZ_CTYB01000049.1\t418127\tNA",
+  "NA\tNZ_CTYB01000051.1\t418127\tNA",
+  "NA\tNZ_CTYB01000052.1\t418127\tNA",
+  "NA\tNZ_CTYB01000053.1\t418127\tNA",
+  "NA\tNZ_CTYB01000054.1\t418127\tNA",
+  "NA\tNZ_CTYB01000055.1\t418127\tNA",
+  "NA\tNZ_CTYB01000056.1\t418127\tNA",
+  "NA\tNZ_CTYB01000057.1\t418127\tNA",
+  "NA\tNZ_CTYB01000058.1\t418127\tNA",
+  "NA\tNZ_CTYB01000059.1\t418127\tNA",
+  "NA\tNZ_CTYB01000060.1\t418127\tNA",
+  "NA\tNZ_CTYB01000062.1\t418127\tNA",
+  "NA\tNZ_CTYB01000063.1\t418127\tNA",
+  "NA\tNZ_CTYB01000065.1\t418127\tNA",
+  "NA\tNZ_CTYB01000066.1\t418127\tNA",
+  "NA\tNZ_CTYB01000068.1\t418127\tNA",
+  "NA\tNZ_CTYB01000069.1\t418127\tNA",
+  "NA\tNZ_CTYB01000070.1\t418127\tNA",
+  "NA\tNZ_CTYB01000071.1\t418127\tNA",
+  "NA\tNZ_CTYB01000075.1\t418127\tNA",
+  "NA\tNZ_CTYB01000077.1\t418127\tNA",
+  "NA\tNZ_CTYB01000078.1\t418127\tNA",
+  "NA\tNZ_CTYB01000079.1\t418127\tNA",
+  "NA\tNZ_CTYB01000081.1\t418127\tNA",
+  "NA\tNZ_CTYB01000083.1\t418127\tNA",
+  "NA\tNZ_CTYB01000085.1\t418127\tNA",
+  "NA\tNZ_CTYB01000089.1\t418127\tNA",
+  "NA\tNZ_CTYB01000090.1\t418127\tNA",
+  "NA\tNZ_CTYB01000096.1\t418127\tNA",
+  "NA\tNZ_CTYB01000099.1\t418127\tNA",
+  "NA\tNZ_CTYB01000101.1\t418127\tNA",
+  "NA\tNZ_CTYB01000110.1\t418127\tNA",
+  "NA\tNZ_CTYB01000112.1\t418127\tNA",
+  "NA\tNZ_CTYB01000113.1\t418127\tNA",
+  "NA\tNZ_CTYB01000114.1\t418127\tNA",
+  "NA\tNZ_CTYB01000115.1\t418127\tNA",
+  "NA\tNC_002758.2\t158878\tNA",
+  "NA\tNC_002745.2\t158878\tNA",
+  "NA\tNC_003140.1\t158878\tNA",
+  "NA\tNC_017333.1\t523796\tNA",
+  "NA\tNC_017334.1\t523796\tNA",
+  "NA\tNZ_LAWV01000001.1\t523796\tNA",
+  "NA\tNZ_LAWV01000010.1\t523796\tNA",
+  "NA\tNZ_LAWV01000011.1\t523796\tNA",
+  "NA\tNZ_LAWV01000012.1\t523796\tNA",
+  "NA\tNZ_LAWV01000013.1\t523796\tNA",
+  "NA\tNZ_LAWV01000014.1\t523796\tNA",
+  "NA\tNZ_LAWV01000015.1\t523796\tNA",
+  "NA\tNZ_LAWV01000016.1\t523796\tNA",
+  "NA\tNZ_LAWV01000017.1\t523796\tNA",
+  "NA\tNZ_LAWV01000018.1\t523796\tNA",
+  "NA\tNZ_LAWV01000019.1\t523796\tNA",
+  "NA\tNZ_LAWV01000002.1\t523796\tNA",
+  "NA\tNZ_LAWV01000020.1\t523796\tNA",
+  "NA\tNZ_LAWV01000021.1\t523796\tNA",
+  "NA\tNZ_LAWV01000022.1\t523796\tNA",
+  "NA\tNZ_LAWV01000023.1\t523796\tNA",
+  "NA\tNZ_LAWV01000025.1\t523796\tNA",
+  "NA\tNZ_LAWV01000003.1\t523796\tNA",
+  "NA\tNZ_LAWV01000030.1\t523796\tNA",
+  "NA\tNZ_LAWV01000004.1\t523796\tNA",
+  "NA\tNZ_LAWV01000042.1\t523796\tNA",
+  "NA\tNZ_LAWV01000043.1\t523796\tNA",
+  "NA\tNZ_LAWV01000005.1\t523796\tNA",
+  "NA\tNZ_LAWV01000006.1\t523796\tNA",
+  "NA\tNZ_LAWV01000007.1\t523796\tNA",
+  "NA\tNZ_LAWV01000008.1\t523796\tNA",
+  "NA\tNZ_LAWV01000009.1\t523796\tNA",
+  "NA\tNZ_CP021178.1\t523796\tNA",
+  "NA\tNC_009641.1\t426430\tNA",
+  "NA\tNZ_CP023390.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000001.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000002.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000003.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000004.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000005.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000006.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000007.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000008.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000009.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000010.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000011.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000012.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000013.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000014.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000015.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000016.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000017.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000018.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000020.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000021.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000022.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000028.1\t426430\tNA",
+  "NA\tNZ_JBBIAE010000032.1\t426430\tNA"
+)
+
+inFile <- tempfile()
+writeLines(taxa,inFile)
+tmp_accession<-tempfile()
+taxonomizr::read.names.sql(textConnection(namesText),tmp_accession, overwrite = TRUE)
+taxonomizr::read.nodes.sql(textConnection(nodesText),tmp_accession, overwrite = TRUE)
+taxonomizr::read.accession2taxid(inFile,tmp_accession,vocal=TRUE, overwrite = TRUE)
+```
+
 ## Downloading target genomes
 
 Even though in this scenario we know exactly from where the reads in the mock data (`reads.fastq`) originate, in most cases we may only have a general idea of read origins. Therefore, in the following code, we will download the genome of the *Staphylococcus aureus* RF122 strain along with the genomes of a few other closely related *Staphylococcus aureus* strains from the NCBI RefSeq database. These genomes together will act as our target genome library.
+
 
 ```{R target_lib, eval = TRUE, warning = FALSE, message = FALSE}
 target_ref_temp <- tempfile()
@@ -130,10 +324,11 @@ all_species <- c("Staphylococcus aureus subsp. aureus Mu50",
                  "Staphylococcus aureus subsp. aureus Mu3",
                  "Staphylococcus aureus subsp. aureus str. Newman",
                  "Staphylococcus aureus subsp. aureus N315",
-                 "Staphylococcus aureus RF122", "Staphylococcus aureus subsp. aureus ST398")
+                 "Staphylococcus aureus RF122", 
+                 "Staphylococcus aureus subsp. aureus ST398")
 sapply(all_species, download_refseq, 
        reference = FALSE, representative = FALSE, compress = TRUE,
-       out_dir = target_ref_temp, caching = TRUE)
+       out_dir = target_ref_temp, caching = TRUE, accession_path = tmp_accession)
 ```
 
 ## Downloading filter genomes
@@ -149,7 +344,8 @@ download_refseq(
   taxon = "Staphylococcus epidermidis RP62A",
   representative = FALSE, reference = FALSE,
   compress = TRUE, out_dir = filter_ref_temp,
-  caching = TRUE)
+  caching = TRUE,
+  accession_path = tmp_accession)
 ```
 
 ## Creating indices using a given aligner
@@ -315,7 +511,8 @@ output <- metascope_id(
   input_type = "bam",
   # change input_type to "csv.gz" when not creating a BAM
   aligner = "bowtie2",
-  num_species_plot = 0
+  num_species_plot = 0,
+  accession_path = tmp_accession
 )
 
 knitr::kable(output,

@@ -2,20 +2,20 @@
 % Please edit documentation in R/metascope_blast.R
 \name{add_in_taxa_ncbi}
 \alias{add_in_taxa_ncbi}
-\title{Adds in taxa if NCBI database
-Returns MetaScope Table with NCBI taxa in separate columns}
+\title{Adds in taxa if input used NCBI database}
 \usage{
-add_in_taxa_ncbi(metascope_id_in, NCBI_key, param)
+add_in_taxa_ncbi(metascope_id_in, accession, BPPARAM)
 }
 \arguments{
 \item{metascope_id_in}{MetaScope ID file with NCBI taxa qnames}
 
-\item{NCBI_key}{(character) NCBI Entrez API key. optional.
-See taxize::use_entrez(). Due to the high number of requests made to NCBI,
-this function will be less prone to errors if you obtain an NCBI key.}
+\item{BPPARAM}{An optional BiocParallelParam instance determining the
+parallel back-end to be used during evaluation.}
+}
+\value{
+data.frame or tibble of taxonomy information
 }
 \description{
-Adds in taxa if NCBI database
 Returns MetaScope Table with NCBI taxa in separate columns
 }
 \keyword{internal}

@@ -4,27 +4,18 @@
 \alias{blast_result_metrics}
 \title{Calculates result metrics from a blast results table}
 \usage{
-blast_result_metrics(
-  blast_results_table_path,
-  accessions_path,
-  db = NULL,
-  NCBI_key = NULL
-)
+blast_result_metrics(blast_results_table_path, accession_path, db = NULL)
 }
 \arguments{
 \item{blast_results_table_path}{path for blast results csv file}
 
-\item{accessions_path}{Directory where accession files for blast are stored.}
+\item{accession_path}{(character) Filepath to NCBI accessions SQL
+database. See \code{taxonomzr::prepareDatabase()}.}
 
-\item{db}{Currently accepts one of \code{c("ncbi", "silva", "other")}
-Default is \code{"ncbi"}, appropriate for samples aligned against indices
-compiled from NCBI whole genome databases. Alternatively, usage of an
-alternate database (like Greengenes2) should be specified with
-\code{"other"}.}
-
-\item{NCBI_key}{(character) NCBI Entrez API key. optional. See
-taxize::use_entrez(). Due to the high number of requests made to NCBI, this
-function will be less prone to errors if you obtain an NCBI key.}
+\item{db}{Currently accepts one of \code{c("ncbi", "silva", "other")} Default
+is \code{"ncbi"}, appropriate for samples aligned against indices compiled
+from NCBI whole genome databases. Alternatively, usage of an alternate
+database (like Greengenes2) should be specified with \code{"other"}.}
 }
 \value{
 a vector with best_hit, uniqueness_score, species_percentage_hit

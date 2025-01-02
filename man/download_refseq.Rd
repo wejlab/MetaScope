@@ -12,7 +12,8 @@ download_refseq(
   patho_out = FALSE,
   out_dir = NULL,
   caching = FALSE,
-  quiet = TRUE
+  quiet = TRUE,
+  accession_path = NULL
 )
 }
 \arguments{
@@ -42,6 +43,9 @@ directory.}
 Default is \code{FALSE}.}
 
 \item{quiet}{Turns off most messages. Default is \code{TRUE}.}
+
+\item{accessions_path}{(character) Filepath to NCBI accessions SQL
+database. See \code{taxonomzr::prepareDatabase()}.}
 }
 \value{
 Returns a .fasta or .fasta.gz file of the desired RefSeq genomes.

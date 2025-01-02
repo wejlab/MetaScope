@@ -246,6 +246,8 @@ find_strains <- function(intable) {
 #'   directory.
 #' @param caching Whether to use BiocFileCache when downloading genomes.
 #'   Default is \code{FALSE}.
+#' @param accessions_path (character) Filepath to NCBI accessions SQL
+#'   database. See \code{taxonomzr::prepareDatabase()}.
 #' @param quiet Turns off most messages. Default is \code{TRUE}.
 #'
 #' @return Returns a .fasta or .fasta.gz file of the desired RefSeq genomes.
@@ -267,31 +269,20 @@ find_strains <- function(intable) {
 download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
                             compress = TRUE, patho_out = FALSE,
                             out_dir = NULL, caching = FALSE,
-                            quiet = TRUE) {
+                            quiet = TRUE, accession_path = NULL) {
   if (is.null(out_dir)) {
     out_dir <- tempfile()
     dir.create(out_dir)
   }
-  if (!quiet) message("Finding ", taxon)
-  # Get input taxon rank
-  success <- FALSE
-  attempt <- 0
-  while (!success ) {
-    try({
-      attempt <- attempt + 1
-      tryCatch({
-        classification_table <- taxize::classification(
-          taxize::get_uid(taxon, messages = FALSE)[[1]], db = "ncbi")[[1]] %>% 
-          find_strains()},
-        warning = function(w) stop("NCBI request not granted")
-      )
-      Sys.sleep(1)
-      
-      success <- TRUE
-    })
-    if (attempt == 3) stop("Process halted. Your input is not a valid taxon")
+  if (is.null(accession_path)) {
+    stop("Process halted. Requires an taxonomizr accession_path")
   }
-  rank_input <- classification_table$rank[nrow(classification_table)]
+  taxon_id <- taxonomizr::getId(taxon, sqlFile = accession_path)
+  classification_table <- taxonomizr::getRawTaxonomy(taxon_id, accession_path)
+  classification_table <- classification_table[[1]] |> as.data.frame() |>
+    tibble::rownames_to_column(var = "rank")
+  colnames(classification_table) <- c("rank", "name")
+  rank_input <- classification_table$rank[1]
   parent_kingdom <- id_kingdom_rank(classification_table, taxon, rank_input, quiet)
   refseq_table <- download_parentkingdom(parent_kingdom, quiet)
   # Get NCBI scientific names of children species or strains

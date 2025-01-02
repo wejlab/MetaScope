@@ -73,8 +73,6 @@ navbar:
       menu:
       - text: "Introduction to MetaScope"
         href: articles/MetaScope_vignette.html
-      - text: "Condensed MetaScope Tutorial"
-        href: articles/MetaScopeTutorial.html
       - text: "Usage with SILVA 16S Database"
         href: articles/docs/SILVA.html
       - text: "Example MetaScope Script"

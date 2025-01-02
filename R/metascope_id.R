@@ -56,48 +56,6 @@ identify_rnames <- function(reads, unmapped = NULL) {
   return(mapped_rname)
 }
 
-find_accessions <- function(accessions, NCBI_key, quiet) {
-  # Convert accessions to taxids and get genome names
-  if (!quiet) message("Obtaining taxonomy and genome names")
-  # If URI length is greater than 2500 characters then split accession list
-  URI_length <- nchar(paste(accessions, collapse = "+"))
-  if (URI_length > 2500) {
-    chunks <- split(accessions, ceiling(seq_along(accessions) / 100))
-    tax_id_all <- c()
-    if (!quiet) message("Accession list broken into ", length(chunks),
-                        " chunks")
-    for (i in seq_along(chunks)) {
-      success <- FALSE
-      attempt <- 0
-      # Attempt to get taxid up to three times for each chunk
-      while (!success) {
-        try({
-          attempt <- attempt + 1
-          if (attempt > 1 && !quiet) message(
-            "Attempt #", attempt, " Chunk #", i)
-          tax_id_chunk <- taxize::genbank2uid(id = chunks[[i]],
-                                              key = NCBI_key)
-          Sys.sleep(1)
-          tax_id_all <- c(tax_id_all, tax_id_chunk)
-          success <- TRUE
-        })
-      }
-    }
-  } else tax_id_all <- taxize::genbank2uid(id = accessions, key = NCBI_key)
-  return(tax_id_all)
-}
-
-missing_acc_finder <- function(accessions, NCBI_key = NULL) {
-  na_ind <- which(is.na(accessions))
-  if(length(na_ind) != 0) {
-    result <- accessions[na_ind] %>%
-      find_accessions(quiet = TRUE, NCBI_key = NCBI_key) %>%
-      plyr::aaply(1, function(x) x[1]) %>% unname()
-    accessions[na_ind] <- result
-  }
-  return(accessions)
-}
-
 get_alignscore <- function(aligner, cigar_strings, count_matches, scores,
                            qwidths) {
   #Subread alignment scores: CIGAR string matches - edit score
@@ -313,10 +271,8 @@ locations <- function(which_taxid, which_genome,
 #' @param db_feature_table If \code{db = "other"}, a data.frame must be supplied
 #' with two columns, "Feature ID" matching the names of the alignment indices,
 #' and a second \code{character} column supplying the taxon identifying information.
-#' @param NCBI_key (character) NCBI Entrez API key. optional. See
-#'   taxize::use_entrez(). Due to the high number of requests made to NCBI, this
-#'   function will be less prone to errors if you obtain an NCBI key. You may
-#'   enter the string as an input or set it as ENTREZ_KEY in .Renviron.
+#' @param accession_path (character) Filepath to NCBI accessions SQL database. See
+#'   \code{taxonomzr::prepareDatabase()}.
 #' @param out_dir The directory to which the .csv output file will be output.
 #'   Defaults to \code{dirname(input_file)}.
 #' @param convEM The convergence parameter of the EM algorithm. Default set at
@@ -387,8 +343,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                          aligner = "bowtie2",
                          db = "ncbi",
                          db_feature_table = NULL,
-                         NCBI_key = NULL,
-                         out_dir = dirname(input_file),
+                         accession_path = NULL,
                          tmp_dir = dirname(input_file),
                          convEM = 1 / 10000, maxitsEM = 25,
                          update_bam = FALSE,
@@ -431,11 +386,12 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   read_names <- unique(mapped_qname)
   accessions <- as.character(unique(mapped_rname))
   if (db == "ncbi") {
-    tax_id_all <- find_accessions(accessions, NCBI_key, quiet = quiet)
-    taxids <- vapply(tax_id_all, function(x) x[1], character(1)) %>%
-      missing_acc_finder(NCBI_key)
-    genome_names <- vapply(tax_id_all, function(x) attr(x, "name"),
-                           character(1))
+    if (is.null(accession_path)) stop("Please provide a valid accession_path argument")
+    taxids <- taxonomizr::accessionToTaxa(accessions, sqlFile = accession_path)
+    genome_names <- apply(taxonomizr::getTaxonomy(taxids, sqlFile = accession_path, 
+                                                  desiredTaxa = c("superkingdom", "phylum", "class", 
+                                                                  "order", "family", "genus", "species", "strain")), 
+                          1,function(x) paste0(x, collapse = ";"))
     # Accession ids for any unknown genomes (likely removed from db)
     unk_inds <- which(is.na(taxids))
     genome_names[unk_inds] <- paste("unknown genome; accession ID is",
@@ -443,11 +399,11 @@ metascope_id <- function(input_file, input_type = "csv.gz",
     taxids[unk_inds] <- accessions[unk_inds]
   } else if (db == "silva") {
     tax_id_all <- stringr::str_split(accessions, ";", n =2)
-    taxids <- magrittr::extract(tax_id_all, 1)[[1]]
-    genome_names <- magrittr::extract(tax_id_all, 2)[[1]]
+    taxids <- sapply(tax_id_all, `[[`, 1)
+    genome_names <- sapply(tax_id_all, `[[`, 2)
     # Fix names
     mapped_rname <- stringr::str_split(mapped_rname, ";", n = 2) %>%
-      magrittr::extract(1)[[1]]
+      sapply(`[[`, 1)
     accessions <- as.character(unique(mapped_rname))
   } else if (db == "other") {
     tax_id_all <- dplyr::tibble(`Feature ID` = accessions) %>%
@@ -466,7 +422,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   qname_inds <- match(mapped_qname, read_names)
   rname_inds <- match(mapped_rname, accessions)
   rname_tax_inds <- taxid_inds[rname_inds] #accession to taxid
-  # Order based on read names
+  # Order based on read names 
   rname_tax_inds <- rname_tax_inds[order(qname_inds)]
   cigar_strings <- mapped_cigar[order(qname_inds)]
   qwidths <- mapped_qwidth[order(qname_inds)]
@@ -512,13 +468,24 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   }
 
   if (update_bam) {
-    combined_distinct <- results[[2]] |>
-      dplyr::mutate(qname_names = read_names[.data$qname],
-                    rname_names = unique(reads[[1]]$rname)[.data$rname])
+    # Convert accessions back into taxids. Some taxids may be from different accessions
+    # This step may produce false alignments to accessions of the same taxid
+    accessions_taxids <- tidyr::tibble(rname_names = accessions, taxids, rname = match(taxids, unique(taxids)))
+    combined_distinct <- results[[2]]
+    combined_distinct <- combined_distinct |>
+      dplyr::right_join(accessions_taxids, combined_distinct, by = "rname", relationship = "many-to-many") |>
+      dplyr::mutate(qname_names = read_names[.data$qname])
 
-    bam_index_df <- data.frame("index" = seq_along(reads[[1]]$qname),
-                               "qname_names" = reads[[1]]$qname,
-                               "rname_names" = as.character(reads[[1]]$rname))
+    if (db == "ncbi") {
+      bam_index_df <- data.frame("original_bam_index" = seq_along(reads[[1]]$qname),
+                                 "qname_names" = reads[[1]]$qname,
+                                 "rname_names" = as.character(reads[[1]]$rname))
+    }
+    if (db == "silva"){
+      bam_index_df <- data.frame("original_bam_index" = seq_along(reads[[1]]$qname),
+                                 "qname_names" = reads[[1]]$qname,
+                                 "rname_names" = sub(';.*$','', as.character(reads[[1]]$rname)))
+    }
 
     combined_bam_index <- dplyr::right_join(bam_index_df, combined_distinct,
                                             by = (c("qname_names", "rname_names"))) |>
@@ -527,7 +494,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
       dplyr::filter(.data$first_qname_rname == TRUE)
 
     filter_which <- rep(FALSE, nrow(bam_index_df))
-    filter_which[combined_bam_index$index.x] <- TRUE
+    filter_which[combined_bam_index$original_bam_index] <- TRUE
 
     bam_out <- file.path(tmp_dir, paste0(out_base, ".updated.bam"))
     Rsamtools::indexBam(files = input_file)

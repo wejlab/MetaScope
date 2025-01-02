@@ -154,11 +154,11 @@ transform_cols <- function(x) {
 #'
 #' # Convert samples to MAE
 #' outMAE <- convert_animalcules_silva(meta_counts = out_files,
-#'                               annot_path = annot_dat,
-#'                               which_annot_col = "Sample",
-#'                               end_string = ".metascope_id.csv",
-#'                               qiime_biom_out = FALSE,
-#'                               caching = TRUE)
+#'                                     annot_path = annot_dat,
+#'                                     which_annot_col = "Sample",
+#'                                     end_string = ".metascope_id.csv",
+#'                                     qiime_biom_out = FALSE,
+#'                                     caching = TRUE)
 #'
 #' unlink(tempfolder, recursive = TRUE)
 #' 

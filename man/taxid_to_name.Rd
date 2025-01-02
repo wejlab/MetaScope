@@ -4,12 +4,13 @@
 \alias{taxid_to_name}
 \title{Converts NCBI taxonomy ID to scientific name}
 \usage{
-taxid_to_name(taxids, accessions_path)
+taxid_to_name(taxids, accession_path)
 }
 \arguments{
 \item{taxids}{List of NCBI taxids to convert to scientific name}
 
-\item{accessions_path}{Path to accessionsTaxa.sql}
+\item{accession_path}{(character) Filepath to NCBI accessions SQL
+database. See \code{taxonomzr::prepareDatabase()}.}
 }
 \value{
 Returns a dataframe of blast results for a metascope result

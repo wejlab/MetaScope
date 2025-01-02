@@ -2,7 +2,7 @@ Type: Package
 Package: MetaScope
 Title: Tools and functions for preprocessing 16S and metagenomic
     sequencing microbiome data
-Version: 1.7.0
+Version: 1.7.1
 Authors@R: c(
     person("Aubrey", "Odom", , "aodom@bu.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-7113-7598")),
@@ -37,7 +37,7 @@ Imports:
     S4Vectors,
     stringr,
     SummarizedExperiment,
-    taxize,
+    taxonomizr,
     tibble,
     tidyr,
     tools
@@ -55,7 +55,6 @@ Suggests:
     Rsubread,
     spelling,
     sys,
-    taxonomizr,
     testthat,
     usethis
 Enhances:
@@ -67,4 +66,4 @@ biocViews: MicrobiomeData, ReproducibleResearch, SequencingData
 Encoding: UTF-8
 Language: en-US
 LazyData: FALSE
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2

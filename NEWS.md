@@ -2,6 +2,7 @@
 
 ## Major changes
 * Changed name of `demultiplex()` to `meta_demultiplex()`
+* All dependencies on taxize have now been removed as the package has been deprecated on CRAN for the foreseeable future. We have now shifted our dependency for NCBI lookups to the `taxonomizr` database. The vignette and example script on our website have been updated to reflect this.
 
 # MetaScope 1.3.7 (Bioc 3.19)
 

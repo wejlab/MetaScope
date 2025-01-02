@@ -13,7 +13,7 @@ blastn_single_result(
   num_threads,
   db_path,
   quiet,
-  accessions_path,
+  accession_path,
   bam_seqs,
   out_path,
   sample_name,
@@ -39,7 +39,8 @@ Rsamtools::bamFile}
 \item{quiet}{Logical, whether to print out more informative messages. Default
 is FALSE.}
 
-\item{accessions_path}{Directory where accession files for blast are stored.}
+\item{accession_path}{(character) Filepath to NCBI accessions SQL
+database. See \code{taxonomzr::prepareDatabase()}.}
 
 \item{bam_seqs}{A list of the sequence IDs from the bam file}
 
