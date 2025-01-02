@@ -246,6 +246,8 @@ find_strains <- function(intable) {
 #'   directory.
 #' @param caching Whether to use BiocFileCache when downloading genomes.
 #'   Default is \code{FALSE}.
+#' @param accessions_path (character) Filepath to NCBI accessions SQL
+#'   database. See \code{taxonomzr::prepareDatabase()}.
 #' @param quiet Turns off most messages. Default is \code{TRUE}.
 #'
 #' @return Returns a .fasta or .fasta.gz file of the desired RefSeq genomes.
@@ -263,47 +265,6 @@ find_strains <- function(intable) {
 #'                 out_dir = NULL, compress = TRUE, patho_out = FALSE,
 #'                 caching = TRUE)
 #'
-
-# download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
-#                             compress = TRUE, patho_out = FALSE,
-#                             out_dir = NULL, caching = FALSE,
-#                             quiet = TRUE) {
-#   if (is.null(out_dir)) {
-#     out_dir <- tempfile()
-#     dir.create(out_dir)
-#   }
-#   if (!quiet) message("Finding ", taxon)
-#   # Get input taxon rank
-#   success <- FALSE
-#   attempt <- 0
-#   while (!success ) {
-#     try({
-#       attempt <- attempt + 1
-#       tryCatch({
-#         classification_table <- taxize::classification(
-#           taxize::get_uid(taxon, messages = FALSE)[[1]], db = "ncbi")[[1]] %>% 
-#           find_strains()},
-#         warning = function(w) stop("NCBI request not granted")
-#       )
-#       Sys.sleep(1)
-#       
-#       success <- TRUE
-#     })
-#     if (attempt == 3) stop("Process halted. Your input is not a valid taxon")
-#   }
-#   rank_input <- classification_table$rank[nrow(classification_table)]
-#   parent_kingdom <- id_kingdom_rank(classification_table, taxon, rank_input, quiet)
-#   refseq_table <- download_parentkingdom(parent_kingdom, quiet)
-#   # Get NCBI scientific names of children species or strains
-#   taxonomy_table <- get0("taxonomy_table", envir = asNamespace("MetaScope"))
-#   if (rank_input == "no rank") base::stop("No rank detected")
-#   children_list <- get_children(taxon, rank_input, tax_dat = taxonomy_table)
-#   species_table <- get_speciestab(children_list, refseq_table, taxon,
-#                                   representative, reference, quiet)
-#   combined_fasta <- download_genomes(species_table, taxon, patho_out,
-#                                      compress, out_dir, caching, quiet)
-#   return(combined_fasta)
-# }
 
 download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
                             compress = TRUE, patho_out = FALSE,

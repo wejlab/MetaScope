@@ -124,7 +124,7 @@ class_taxon <- function(taxon, accession) {
   
   classification_table <- classification_table |>
     tidyr::pivot_longer(cols = colnames(classification_table), names_to = "rank", values_to = "name") |>
-    dplyr::relocate(rank, .after = name)
+    dplyr::relocate(rank, .after = "name")
   classification_table$id <- c(rep(NA, nrow(classification_table) - 1), taxon)
   return(classification_table)
 }

@@ -18,7 +18,7 @@ package: MetaScope
 output: 
   BiocStyle::html_document
 vignette: >
-  \%VignetteIndexEntry{"Introduction to MetaScope"}
+  %\VignetteIndexEntry{"Introduction to MetaScope"}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
@@ -111,7 +111,9 @@ The `download_refseq()` function automatically extracts custom reference genome 
 
 ## Creating Taxonomy Database
 
-It is critical to include a taxonomy database for genomes we may suspect are in our sample. In this scenario, we know which genomes and strains we will be testing, so we can generate a small sample of taxonomizrs taxonomy database.  
+It is critical to include a taxonomy database for genomes we may suspect are in our sample. In the case of this vignette, we know in advance precisely which genomes and strains we will be testing. Therefore, we will generate a small subdatabase of taxonomizr references.
+
+For an overview of how to make a typical database for all host and filter genomes in your sample, please see the [example script](https://wejlab.github.io/metascope-docs/articles/docs/Example_Script.html) on our website.
 
 ```{R taxonomy_db, eval = TRUE, warning = FALSE, message = FALSE}
 namesText<-c(
@@ -340,9 +342,10 @@ dir.create(filter_ref_temp)
 
 download_refseq(
   taxon = "Staphylococcus epidermidis RP62A",
-  representative = FALSE, reference = TRUE,
+  representative = FALSE, reference = FALSE,
   compress = TRUE, out_dir = filter_ref_temp,
-  caching = TRUE, accession_path = tmp_accession)
+  caching = TRUE,
+  accession_path = tmp_accession)
 ```
 
 ## Creating indices using a given aligner

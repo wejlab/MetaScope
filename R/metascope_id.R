@@ -271,8 +271,8 @@ locations <- function(which_taxid, which_genome,
 #' @param db_feature_table If \code{db = "other"}, a data.frame must be supplied
 #' with two columns, "Feature ID" matching the names of the alignment indices,
 #' and a second \code{character} column supplying the taxon identifying information.
-#' @param accessions_path (character) NCBI accessions sql path. See
-#'   taxonimzr::prepareDatabase().
+#' @param accession_path (character) Filepath to NCBI accessions SQL database. See
+#'   \code{taxonomzr::prepareDatabase()}.
 #' @param out_dir The directory to which the .csv output file will be output.
 #'   Defaults to \code{dirname(input_file)}.
 #' @param convEM The convergence parameter of the EM algorithm. Default set at
@@ -344,7 +344,6 @@ metascope_id <- function(input_file, input_type = "csv.gz",
                          db = "ncbi",
                          db_feature_table = NULL,
                          accession_path = NULL,
-                         out_dir = dirname(input_file),
                          tmp_dir = dirname(input_file),
                          convEM = 1 / 10000, maxitsEM = 25,
                          update_bam = FALSE,
@@ -387,6 +386,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   read_names <- unique(mapped_qname)
   accessions <- as.character(unique(mapped_rname))
   if (db == "ncbi") {
+    if (is.null(accession_path)) stop("Please provide a valid accession_path argument")
     taxids <- taxonomizr::accessionToTaxa(accessions, sqlFile = accession_path)
     genome_names <- apply(taxonomizr::getTaxonomy(taxids, sqlFile = accession_path, 
                                                   desiredTaxa = c("superkingdom", "phylum", "class", 

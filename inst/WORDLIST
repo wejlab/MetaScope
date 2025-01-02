@@ -7,7 +7,6 @@ Biostrings
 Bowtie
 DNAStringSet
 Demultiplexing
-ENTREZ
 Entrez
 FASTA
 FASTQ
@@ -29,7 +28,6 @@ MetaFilter
 MetaID
 MetaRef
 MetaScope's
-Metagenomics
 Metascope
 MultiAssay
 MultiAssayExperiment
@@ -40,11 +38,8 @@ ORCID
 PathoScope
 Pre
 QIIME
-RStudio
 Rbowtie
 RefSeq
-Renviron
-Representive
 Rsamtools
 Rsubread
 SampleName
@@ -65,7 +60,6 @@ bowtie
 bp
 bt
 buildindex
-commandline
 convEM
 csv
 demultiplex
@@ -79,11 +73,7 @@ fasta
 fastas
 fastq
 filepath
-github
 gz
-https
-indexFile
-io
 maxMismatches
 metagenomes
 metagenomic
@@ -108,9 +98,7 @@ pre
 qiime
 qnames
 rBlast
-rRNA
 rds
-readFile
 refseq
 reheader
 reheaders
@@ -121,13 +109,15 @@ sampleNames
 samtools
 silva
 sql
+subdatabase
 subread
 taxid
 taxids
 taxize
+taxonomizr
 threshhold
+tibble
 tmp
 tsv
 unmapped
-wejlab
 yieldSize

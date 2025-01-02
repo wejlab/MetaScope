@@ -14,6 +14,9 @@ add_in_taxa(metascope_id_in, caching, path_to_write)
 
 \item{path_to_write}{Path to save all_silva_headers.rds}
 }
+\value{
+Data.frame of taxonomy information
+}
 \description{
 Adds in taxa if silva database
 Returns MetaScope Table with silva taxa in separate columns

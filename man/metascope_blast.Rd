@@ -18,7 +18,7 @@ metascope_blast(
   db_path,
   quiet = FALSE,
   db = NULL,
-  accessions_path = NULL
+  accession_path = NULL
 )
 }
 \arguments{
@@ -63,13 +63,13 @@ stating "No alias or index file found".}
 \item{quiet}{Logical, whether to print out more informative messages. Default
 is FALSE.}
 
-\item{db}{Currently accepts one of \code{c("ncbi", "silva", "other")}
-Default is \code{"ncbi"}, appropriate for samples aligned against indices
-compiled from NCBI whole genome databases. Alternatively, usage of an
-alternate database (like Greengenes2) should be specified with
-\code{"other"}.}
+\item{db}{Currently accepts one of \code{c("ncbi", "silva", "other")} Default
+is \code{"ncbi"}, appropriate for samples aligned against indices compiled
+from NCBI whole genome databases. Alternatively, usage of an alternate
+database (like Greengenes2) should be specified with \code{"other"}.}
 
-\item{accessions_path}{Directory where accession files for blast are stored.}
+\item{accession_path}{(character) Filepath to NCBI accessions SQL
+database. See \code{taxonomzr::prepareDatabase()}.}
 }
 \value{
 This function writes an updated csv file with metrics.
@@ -130,9 +130,8 @@ metascope_blast(metascope_id_path,
                 num_threads = 3,
                 db = "ncbi",
                 quiet = FALSE,
-                NCBI_key = NULL,
                 fasta_dir = NULL,
-                accessions_path = NULL)
+                accession_path = NULL)
 
 ## Remove temporary directory
 unlink(file_temp, recursive = TRUE)

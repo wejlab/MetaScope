@@ -11,7 +11,6 @@ metascope_id(
   db = "ncbi",
   db_feature_table = NULL,
   accession_path = NULL,
-  out_dir = dirname(input_file),
   tmp_dir = dirname(input_file),
   convEM = 1/10000,
   maxitsEM = 25,
@@ -42,8 +41,8 @@ alternate database (like Greengenes2) should be specified with
 with two columns, "Feature ID" matching the names of the alignment indices,
 and a second \code{character} column supplying the taxon identifying information.}
 
-\item{out_dir}{The directory to which the .csv output file will be output.
-Defaults to \code{dirname(input_file)}.}
+\item{accession_path}{(character) Filepath to NCBI accessions SQL database. See
+\code{taxonomzr::prepareDatabase()}.}
 
 \item{tmp_dir}{Path to a directory to which bam and updated bam files can be saved.
 Required.}
@@ -75,8 +74,8 @@ Default is \code{50}.}
 
 \item{quiet}{Turns off most messages. Default is \code{TRUE}.}
 
-\item{accessions_path}{(character) NCBI accessions sql path. See
-taxonimzr::prepareDatabase().}
+\item{out_dir}{The directory to which the .csv output file will be output.
+Defaults to \code{dirname(input_file)}.}
 }
 \value{
 This function returns a .csv file with annotated read counts to
