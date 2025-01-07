@@ -19,7 +19,7 @@ blastn_results(
   accessions_path,
   fasta_dir = NULL,
   NCBI_key = NULL,
-  param
+  BPPARAM
 )
 }
 \arguments{

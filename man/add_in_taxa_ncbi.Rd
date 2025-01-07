@@ -5,7 +5,7 @@
 \title{Adds in taxa if NCBI database
 Returns MetaScope Table with NCBI taxa in separate columns}
 \usage{
-add_in_taxa_ncbi(metascope_id_in, accession, param)
+add_in_taxa_ncbi(metascope_id_in, accession, BPPARAM)
 }
 \arguments{
 \item{metascope_id_in}{MetaScope ID file with NCBI taxa qnames}

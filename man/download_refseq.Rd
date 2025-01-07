@@ -12,7 +12,8 @@ download_refseq(
   patho_out = FALSE,
   out_dir = NULL,
   caching = FALSE,
-  quiet = TRUE
+  quiet = TRUE,
+  accession_path = NULL
 )
 }
 \arguments{
