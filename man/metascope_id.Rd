@@ -12,6 +12,7 @@ metascope_id(
   db_feature_table = NULL,
   accession_path = NULL,
   tmp_dir = dirname(input_file),
+  out_dir = dirname(input_file),
   convEM = 1/10000,
   maxitsEM = 25,
   update_bam = FALSE,
@@ -47,6 +48,9 @@ and a second \code{character} column supplying the taxon identifying information
 \item{tmp_dir}{Path to a directory to which bam and updated bam files can be saved.
 Required.}
 
+\item{out_dir}{The directory to which the .csv output file will be output.
+Defaults to \code{dirname(input_file)}.}
+
 \item{convEM}{The convergence parameter of the EM algorithm. Default set at
 \code{1/10000}.}
 
@@ -73,9 +77,6 @@ Default is \code{100}.}
 Default is \code{50}.}
 
 \item{quiet}{Turns off most messages. Default is \code{TRUE}.}
-
-\item{out_dir}{The directory to which the .csv output file will be output.
-Defaults to \code{dirname(input_file)}.}
 }
 \value{
 This function returns a .csv file with annotated read counts to

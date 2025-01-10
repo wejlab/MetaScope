@@ -3,6 +3,7 @@ BLASTn
 Bioc
 BiocFileCache
 BiocParallel
+BiocParallelParam
 Biostrings
 Bowtie
 DNAStringSet
@@ -45,7 +46,6 @@ Rsubread
 SampleName
 Subread
 UID
-accessionsTaxa
 al
 amplicon
 bam
@@ -91,13 +91,13 @@ num
 outpute
 parallelization
 parallelize
-param
 pathoscope
 phredOffset
 pre
+premade
 qiime
 qnames
-rBlast
+rRNA
 rds
 refseq
 reheader
@@ -108,7 +108,6 @@ sampleName
 sampleNames
 samtools
 silva
-sql
 subdatabase
 subread
 taxid

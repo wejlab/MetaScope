@@ -246,7 +246,7 @@ find_strains <- function(intable) {
 #'   directory.
 #' @param caching Whether to use BiocFileCache when downloading genomes.
 #'   Default is \code{FALSE}.
-#' @param accessions_path (character) Filepath to NCBI accessions SQL
+#' @param accession_path (character) Filepath to NCBI accessions SQL
 #'   database. See \code{taxonomzr::prepareDatabase()}.
 #' @param quiet Turns off most messages. Default is \code{TRUE}.
 #'
