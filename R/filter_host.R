@@ -207,11 +207,49 @@ remove_matches <- function(reads_bam, read_names, output, YS, threads,
 #' filter_ref_temp <- tempfile()
 #' dir.create(filter_ref_temp)
 #'
+#'#' # Create temporary taxonomizr accession
+#' namesText<-c(
+#'   "1\t|\troot\t|\t\t|\tscientific name\t|",
+#'   "2\t|\tBacteria\t|\tBacteria <prokaryotes>\t|\tscientific name\t|",
+#'   "418127\t|\tStaphylococcus aureus subsp. aureus Mu3\t|\t|\tscientific name\t|",
+#'   "273036\t|\tStaphylococcus aureus RF122\t|\t|\tscientific name\t|",
+#'   "426430\t|\tStaphylococcus aureus subsp. aureus str. Newman\t|\t|\tscientific name\t|",
+#'   "1280\t|\tStaphylococcus aureus\t|\t|\tscientific name\t|",
+#'   "1279\t|\tStaphylococcus\t|\t|\tscientific name\t|",
+#'   "90964\t|\tStaphylococcaceae\t|\t|\tscientific name\t|",
+#'   "1385\t|\tBacillales\t|\t|\tscientific name\t|",
+#'   "91061\t|\tBacilli\t|\t|\tscientific name\t|",
+#'   "1239\t|\tBacillota\t|\t|\tscientific name\t|",
+#'   "1783272\t|\tBacillati\t|\t|\tscientific name\t|"
+#' )
+#'
+#' nodesText<-c(
+#'   "1\t|\t1\t|\tno rank\t|\t\t|\t8\t|\t0\t|\t1\t|\t0\t|\t0\t|\t0\t|\t0\t|\t0\t|\t\t|",
+#'   "2\t|\t131567\t|\tsuperkingdom\t|\t\t|\t0\t|\t0\t|\t11\t|\t0\t|\t0\t|\t0\t|\t0\t|\t0\t|\t\t|",
+#'   "418127\t|\t1280\t|\tstrain",
+#'   "273036\t|\t1280\t|\tstrain",
+#'   "426430\t|\t1280\t|\tstrain",
+#'   "1280\t|\t1279\t|\tspecies",
+#'   "1279\t|\t90964\t|\tgenus",
+#'   "90964\t|\t1385\t|\tfamily",
+#'   "1385\t|\t91061\t|\torder",
+#'   "91061\t|\t1239\t|\tclass",
+#'   "1239\t|\t1783272\t|\tphylum",
+#'   "1783272\t|\t2\t|\tkingdom",
+#'   "131567\t|\t1\t|\tno rank"
+#' )
+#'
+#' tmp_accession<-tempfile()
+#' taxonomizr::read.names.sql(textConnection(namesText),tmp_accession, overwrite = TRUE)
+#' taxonomizr::read.nodes.sql(textConnection(nodesText),tmp_accession, overwrite = TRUE)
+#'
+#'
 #' ## Download filter genome
 #' all_species <- c("Staphylococcus aureus subsp. aureus str. Newman")
 #' all_ref <- vapply(all_species, MetaScope::download_refseq,
 #'                   reference = FALSE, representative = FALSE, compress = TRUE,
 #'                   out_dir = filter_ref_temp, caching = FALSE,
+#'                   accession_path = tmp_accession,
 #'                   FUN.VALUE = character(1))
 #' ind_out <- vapply(all_ref, mk_subread_index, FUN.VALUE = character(1))
 #'
@@ -236,6 +274,7 @@ remove_matches <- function(reads_bam, read_names, output, YS, threads,
 #'
 #' ## Remove temporary directory
 #' unlink(filter_ref_temp, recursive = TRUE)
+#' unlink(tmp_accession, recursive = TRUE)
 #' }
 #'
 
@@ -348,13 +387,45 @@ filter_host <- function(reads_bam, lib_dir = NULL, libs, make_bam = FALSE,
 #' filter_ref_temp <- tempfile()
 #' dir.create(filter_ref_temp)
 #'
+#' #' ## Create temporary taxonomizr accession
+#' namesText<-c(
+#' "3052462\t|\tOrthoebolavirus zairense\t|\t|\tscientific name\t|",
+#' "3044781\t|\tOrthoebolavirus\t|\t|\tscientific name\t|",
+#' "11266\t|\tFiloviridae\t|\t|\tscientific name\t|",
+#' "11157\t|\tMononegavirales\t|\t|\tscientific name\t|",
+#' "2497574\t|\tMonjiviricetes\t|\t|\tscientific name\t|",
+#' "2497570\t|\tHaploviricotina\t|\t|\tscientific name\t|",
+#' "2497569\t|\tNegarnaviricota\t|\t|\tscientific name\t|",
+#' "2732396\t|\tOrthornavirae\t|\t|\tscientific name\t|",
+#' "2559587\t|\tRiboviria\t|\t|\tscientific name\t|",
+#' "10239\t|\tViruses\t|\t|\tscientific name\t|")
+#'
+#' nodesText<-c(
+#'   "3052462\t|\t3044781\t|\tspecies",
+#'   "3044781\t|\t11266\t|\tgenus",
+#'   "11266\t|\t11157\t|\tfamily",
+#'   "11157\t|\t2497574\t|\torder",
+#'   "2497574\t|\t2497570\t|\tclass",
+#'   "2497570\t|\t2497569\t|\tsubphylum",
+#'   "2497569\t|\t2732396\t|\tsphylum",
+#'   "2732396\t|\t2559587\t|\tkingdom",
+#'   "2559587\t|\t10239\t|\tclade",
+#'   "10239\t|\t1\t|\tsuperkingdom",
+#'   "1\t|\t1\t|\tno rank")
+#'
+#' tmp_accession<-tempfile()
+#' taxonomizr::read.names.sql(textConnection(namesText),tmp_accession, overwrite = TRUE)
+#' taxonomizr::read.nodes.sql(textConnection(nodesText),tmp_accession, overwrite = TRUE)
+#'
+#'
 #' ## Download reference genome
 #' MetaScope::download_refseq("Orthoebolavirus zairense",
 #'                            reference = FALSE,
 #'                            representative = FALSE,
 #'                            compress = TRUE,
 #'                            out_dir = filter_ref_temp,
-#'                            caching = TRUE)
+#'                            caching = TRUE,
+#'                            accession_path = tmp_accession)
 #'
 #' ## Create temp directory to store the indices
 #' index_temp <- tempfile()
@@ -391,7 +462,7 @@ filter_host <- function(reads_bam, lib_dir = NULL, libs, make_bam = FALSE,
 #' unlink(filter_ref_temp, recursive = TRUE)
 #' unlink(index_temp, recursive = TRUE)
 #' unlink(output_temp, recursive = TRUE)
-#'
+#' unlink(tmp_accession, recursive = TRUE)
 
 filter_host_bowtie <- function(reads_bam, lib_dir, libs, make_bam = FALSE,
                                output = paste(

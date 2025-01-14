@@ -1,4 +1,4 @@
-#download_indices.R
+# download_accessions.R
 #' Download indexes required for MetaScope ID and MetaBlast
 #'
 #' This function will automatically download the NCBI accessions database, the
@@ -12,13 +12,13 @@
 #' @param silva_taxonomy_database Download silva taxonomy database? Defaults to
 #' \code{TRUE}.
 #' @param silva_taxonomy_name  Name of silva headers file. Defaults
-#' to the one hosted in MetaScope, \code{""all_silva_headers.rds"}.
+#' to the one hosted in MetaScope, \code{"all_silva_headers.rds"}.
 #' @param NCBI_accessions_name Name to save silva taxonomy database
 #' @param blast_16S_database Download NCBI 16S Blast database? Defaults to
 #' \code{TRUE}.
 #' @param blast_16S_name Name to save NCBI 16S Blast database
 
-download_indices <- function(ind_dir,
+download_accessions <- function(ind_dir,
                              NCBI_accessions_database = TRUE,
                              NCBI_accessions_name = "accessionTaxa.sql",
                              silva_taxonomy_database = TRUE,

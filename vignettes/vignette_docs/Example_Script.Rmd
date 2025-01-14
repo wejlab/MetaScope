@@ -30,6 +30,16 @@ library(MetaScope)
 nThreads <- 8
 loc <- "/restricted/projectnb/pathoscope/reflib/2023_refseq_bowtie"
 
+download_indices(file.path(loc, "indices"),
+                 NCBI_accessions_database = TRUE,
+                 NCBI_accessions_name = "accessionTaxa.sql",
+                 silva_taxonomy_database = TRUE,
+                 silva_taxonomy_name = "all_silva_headers.rds",
+                 blast_16S_database = TRUE,
+                 blast_16S_name = "16S_ribosomal_RNA"))
+
+
+
 targets <- tolower(c("bacteria"))
 filters <- c('homo sapiens', 'mus musculus')
 inVec <- c(targets, filters)
@@ -49,7 +59,8 @@ sapply(inVec,
                                    patho_out = FALSE,
                                    # Same directory as created above
                                    out_dir = file.path(
-                                   loc, stringr::str_replace_all(x, c(" " = "_")))))
+                                   loc, stringr::str_replace_all(x, c(" " = "_"))),
+                                   accession_path = file.path(loc, "indices", "accessionTaxa.sql")))
 
 # Make indices
 for (ind in inVec) {
@@ -179,10 +190,8 @@ final_map <- filter_host_bowtie(reads_bam = target_map,
 
 # MetaScope ID
 
-# your_ENTREZ_KEY <- <Your key here>
-Sys.setenv(ENTREZ_KEY = your_ENTREZ_KEY)
 metascope_id(final_map, input_type = "csv.gz", aligner = "bowtie2",
-             NCBI_key = your_ENTREZ_KEY,
+             accession_path = file.path(loc, "indices", "accessionTaxa.sql"),
              num_species_plot = 15,
              quiet = FALSE,
              out_dir = outDir)

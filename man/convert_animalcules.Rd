@@ -12,8 +12,7 @@ convert_animalcules(
   end_string = ".metascope_id.csv",
   qiime_biom_out = FALSE,
   path_to_write = ".",
-  NCBI_key = NULL,
-  num_tries = 3
+  accession_path = NULL
 )
 }
 \arguments{
@@ -46,11 +45,8 @@ information. Default is \code{FALSE}.}
 files be written? Should be a character string of the folder path. Default is
 '.', i.e. the current working directory.}
 
-\item{NCBI_key}{(character) NCBI Entrez API key. optional. See
-taxize::use_entrez(). Due to the high number of requests made to NCBI, this
-function will be less prone to errors if you obtain an NCBI key.}
-
-\item{num_tries}{(numeric) Number of attempts to get UID.}
+\item{accession_path}{(character) Path to taxonomizr accessions. See
+\code{taxonomizr::prepareDatabase()}.}
 }
 \value{
 Returns a MultiAssay Experiment file of combined sample counts data
@@ -103,14 +99,73 @@ dplyr::tibble(Sample = samp_names, RSV = c("pos", "neg", "pos"),
   utils::write.csv(file = annot_dat,
                    row.names = FALSE)
 
+# Create temporary taxonomizr accession
+namesText<-c(
+  "1\t|\troot\t|\t\t|\tscientific name\t|",
+  "2\t|\tBacteria\t|\tBacteria <prokaryotes>\t|\tscientific name\t|",
+  "418127\t|\tStaphylococcus aureus subsp. aureus Mu3\t|\t|\tscientific name\t|",
+  "273036\t|\tStaphylococcus aureus RF122\t|\t|\tscientific name\t|",
+  "1280\t|\tStaphylococcus aureus\t|\t|\tscientific name\t|",
+  "1279\t|\tStaphylococcus\t|\t|\tscientific name\t|",
+  "90964\t|\tStaphylococcaceae\t|\t|\tscientific name\t|",
+  "1385\t|\tBacillales\t|\t|\tscientific name\t|",
+  "91061\t|\tBacilli\t|\t|\tscientific name\t|",
+  "1239\t|\tBacillota\t|\t|\tscientific name\t|",
+  "1783272\t|\tBacillati\t|\t|\tscientific name\t|",
+  "11234\t|\tMeasles morbillivirus\t|\t|\tscientific name\t|",
+  "3052345\t|\tMorbillivirus hominis\t|\t|\tscientific name\t|",
+  "11229\t|\tMorbillivirus\t|\t|\tscientific name\t|",
+  "2560076\t|\tOrthoparamyxovirinae\t|\t|\tscientific name\t|",
+  "11158\t|\tParamyxoviridae\t|\t|\tscientific name\t|",
+  "11157\t|\tMononegavirales\t|\t|\tscientific name\t|",
+  "2497574\t|\tMonjiviricetes\t|\t|\tscientific name\t|",
+  "2497570\t|\tHaploviricotina\t|\t|\tscientific name\t|",
+  "2497569\t|\tNegarnaviricota\t|\t|\tscientific name\t|",
+  "2732396\t|\tOrthornavirae\t|\t|\tscientific name\t|",
+  "2559587\t|\tRiboviria\t|\t|\tscientific name\t|",
+  "10239\t|\tViruses\t|\t|\tscientific name\t|"
+)
+
+nodesText<-c(
+  "1\t|\t1\t|\tno rank\t|\t\t|\t8\t|\t0\t|\t1\t|\t0\t|\t0\t|\t0\t|\t0\t|\t0\t|\t\t|",
+  "2\t|\t131567\t|\tsuperkingdom\t|\t\t|\t0\t|\t0\t|\t11\t|\t0\t|\t0\t|\t0\t|\t0\t|\t0\t|\t\t|",
+  "418127\t|\t1280\t|\tstrain",
+  "273036\t|\t1280\t|\tstrain",
+  "1280\t|\t1279\t|\tspecies",
+  "1279\t|\t90964\t|\tgenus",
+  "90964\t|\t1385\t|\tfamily",
+  "1385\t|\t91061\t|\torder",
+  "91061\t|\t1239\t|\tclass",
+  "1239\t|\t1783272\t|\tphylum",
+  "1783272\t|\t2\t|\tkingdom",
+  "131567\t|\t1\t|\tno rank",
+  "11234\t|\t3052345\t|\tno rank",
+  "3052345\t|\t11229\t|\tspecies",
+  "11229\t|\t2560076\t|\tgenus",
+  "2560076\t|\t11158\t|\tsubfamily",
+  "11158\t|\t11157\t|\tfamily",
+  "11157\t|\t2497574\t|\torder",
+  "2497574\t|\t2497570\t|\tclass",
+  "2497570\t|\t2497569\t|\tsubphylum",
+  "2497569\t|\t2732396\t|\tphylum",
+  "2732396\t|\t2559587\t|\tkingdom",
+  "2559587\t|\t10239\t|\tclade",
+  "10239\t|\t1\t|\tsuperkingdom"
+)
+
+tmp_accession<-tempfile()
+taxonomizr::read.names.sql(textConnection(namesText),tmp_accession, overwrite = TRUE)
+taxonomizr::read.nodes.sql(textConnection(nodesText),tmp_accession, overwrite = TRUE)
+
+
 # Convert samples to MAE
 outMAE <- convert_animalcules(meta_counts = out_files,
                               annot_path = annot_dat,
                               which_annot_col = "Sample",
                               end_string = ".metascope_id.csv",
                               qiime_biom_out = FALSE,
-                              NCBI_key = NULL)
+                              accession_path = tmp_accession)
 
 unlink(tempfolder, recursive = TRUE)
-
+unlink(tmp_accession, recursive = TRUE)
 }

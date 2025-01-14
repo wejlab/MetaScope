@@ -264,6 +264,7 @@ taxa <- c(
   "NA\tNZ_LAWV01000021.1\t523796\tNA",
   "NA\tNZ_LAWV01000022.1\t523796\tNA",
   "NA\tNZ_LAWV01000023.1\t523796\tNA",
+  "NA\tNZ_LAWV01000024.1\t523796\tNA",
   "NA\tNZ_LAWV01000025.1\t523796\tNA",
   "NA\tNZ_LAWV01000003.1\t523796\tNA",
   "NA\tNZ_LAWV01000030.1\t523796\tNA",
@@ -442,21 +443,9 @@ param <-
 
 aln <- Rsamtools::scanBam(bamFile, param = param)
 accession_all <- aln[[1]]$rname
-unique_accession_all <- unique(accession_all)
-accession_all_inds <- match(accession_all, unique_accession_all)
-unique_accession_genome_name <- suppressMessages(
-  taxize::genbank2uid(unique_accession_all,
-                      batch_size = length(unique_accession_all))) %>%
-  vapply(function(x) attr(x, "name"), character(1))
-
-genome_name_all <- unique_accession_genome_name[accession_all_inds] %>%
-  gsub(',.*', '', .) %>%
-  gsub("(ST398).*", "\\1", .) %>%
-  gsub("(N315).*", "\\1", .) %>%
-  gsub("(Newman).*", "\\1", .) %>%
-  gsub("(Mu3).*", "\\1", .) %>%
-  gsub("(Mu50).*", "\\1", .) %>%
-  gsub("(RF122).*", "\\1", .)
+genome_name_all <- accession_all |> 
+  taxonomizr::accessionToTaxa(tmp_accession) |>
+  taxonomizr::getTaxonomy(sqlFile = tmp_accession, desiredTaxa = "strain")
 read_count_table <- sort(table(genome_name_all), decreasing = TRUE)
 knitr::kable(
   read_count_table,
@@ -476,23 +465,9 @@ param <-
 
 aln <- Rsamtools::scanBam(bamFile, param = param)
 accession_all <- aln[[1]]$rname
-unique_accession_all <- unique(accession_all)
-accession_all_inds <- match(accession_all, unique_accession_all)
-unique_accession_taxid <-
-  suppressMessages(
-    taxize::genbank2uid(unique_accession_all,
-                        batch_size = length(unique_accession_all)))
-unique_accession_genome_name <-
-  vapply(unique_accession_taxid, function(x)
-    attr(x, "name"), character(1))
-genome_name_all <- unique_accession_genome_name[accession_all_inds]
-genome_name_all <- gsub(',.*', '', genome_name_all)
-genome_name_all <- gsub("(ST398).*", "\\1", genome_name_all)
-genome_name_all <- gsub("(N315).*", "\\1", genome_name_all)
-genome_name_all <- gsub("(Newman).*", "\\1", genome_name_all)
-genome_name_all <- gsub("(Mu3).*", "\\1", genome_name_all)
-genome_name_all <- gsub("(Mu50).*", "\\1", genome_name_all)
-genome_name_all <- gsub("(RF122).*", "\\1", genome_name_all)
+genome_name_all <- accession_all |> 
+  taxonomizr::accessionToTaxa(tmp_accession) |>
+  taxonomizr::getTaxonomy(sqlFile = tmp_accession, desiredTaxa = "strain")
 read_count_table <- sort(table(genome_name_all), decreasing = TRUE)
 knitr::kable(
   read_count_table,

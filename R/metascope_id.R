@@ -56,6 +56,18 @@ identify_rnames <- function(reads, unmapped = NULL) {
   return(mapped_rname)
 }
 
+
+find_accessions <- function(accessions, accession_path, quiet) {
+  # Convert accessions to taxids and get genome names
+  if (!quiet) message("Obtaining taxonomy and genome names")
+  taxids <- taxonomizr::accessionToTaxa(accessions, sqlFile = accession_path)
+  genome_names <- apply(taxonomizr::getTaxonomy(taxids, sqlFile = accession_path,
+                                                desiredTaxa = c("superkingdom", "phylum", "class",
+                                                                "order", "family", "genus", "species", "strain")),
+                        1,function(x) paste0(x, collapse = ";"))
+  return(genome_names)
+}
+
 get_alignscore <- function(aligner, cigar_strings, count_matches, scores,
                            qwidths) {
   #Subread alignment scores: CIGAR string matches - edit score
@@ -389,9 +401,9 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   if (db == "ncbi") {
     if (is.null(accession_path)) stop("Please provide a valid accession_path argument")
     taxids <- taxonomizr::accessionToTaxa(accessions, sqlFile = accession_path)
-    genome_names <- apply(taxonomizr::getTaxonomy(taxids, sqlFile = accession_path, 
-                                                  desiredTaxa = c("superkingdom", "phylum", "class", 
-                                                                  "order", "family", "genus", "species", "strain")), 
+    genome_names <- apply(taxonomizr::getTaxonomy(taxids, sqlFile = accession_path,
+                                                  desiredTaxa = c("superkingdom", "phylum", "class",
+                                                                  "order", "family", "genus", "species", "strain")),
                           1,function(x) paste0(x, collapse = ";"))
     # Accession ids for any unknown genomes (likely removed from db)
     unk_inds <- which(is.na(taxids))
@@ -423,7 +435,7 @@ metascope_id <- function(input_file, input_type = "csv.gz",
   qname_inds <- match(mapped_qname, read_names)
   rname_inds <- match(mapped_rname, accessions)
   rname_tax_inds <- taxid_inds[rname_inds] #accession to taxid
-  # Order based on read names 
+  # Order based on read names
   rname_tax_inds <- rname_tax_inds[order(qname_inds)]
   cigar_strings <- mapped_cigar[order(qname_inds)]
   qwidths <- mapped_qwidth[order(qname_inds)]
