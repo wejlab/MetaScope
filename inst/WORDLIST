@@ -8,7 +8,6 @@ Biostrings
 Bowtie
 DNAStringSet
 Demultiplexing
-Entrez
 FASTA
 FASTQ
 Filepath
@@ -65,7 +64,6 @@ csv
 demultiplex
 demultiplexed
 demultiplexing
-entrez
 epidermidis
 et
 exampleh

@@ -81,11 +81,49 @@ created more efficiently and is still compatible with \code{metascope_id()}.
 filter_ref_temp <- tempfile()
 dir.create(filter_ref_temp)
 
+#' # Create temporary taxonomizr accession
+namesText<-c(
+  "1\t|\troot\t|\t\t|\tscientific name\t|",
+  "2\t|\tBacteria\t|\tBacteria <prokaryotes>\t|\tscientific name\t|",
+  "418127\t|\tStaphylococcus aureus subsp. aureus Mu3\t|\t|\tscientific name\t|",
+  "273036\t|\tStaphylococcus aureus RF122\t|\t|\tscientific name\t|",
+  "426430\t|\tStaphylococcus aureus subsp. aureus str. Newman\t|\t|\tscientific name\t|",
+  "1280\t|\tStaphylococcus aureus\t|\t|\tscientific name\t|",
+  "1279\t|\tStaphylococcus\t|\t|\tscientific name\t|",
+  "90964\t|\tStaphylococcaceae\t|\t|\tscientific name\t|",
+  "1385\t|\tBacillales\t|\t|\tscientific name\t|",
+  "91061\t|\tBacilli\t|\t|\tscientific name\t|",
+  "1239\t|\tBacillota\t|\t|\tscientific name\t|",
+  "1783272\t|\tBacillati\t|\t|\tscientific name\t|"
+)
+
+nodesText<-c(
+  "1\t|\t1\t|\tno rank\t|\t\t|\t8\t|\t0\t|\t1\t|\t0\t|\t0\t|\t0\t|\t0\t|\t0\t|\t\t|",
+  "2\t|\t131567\t|\tsuperkingdom\t|\t\t|\t0\t|\t0\t|\t11\t|\t0\t|\t0\t|\t0\t|\t0\t|\t0\t|\t\t|",
+  "418127\t|\t1280\t|\tstrain",
+  "273036\t|\t1280\t|\tstrain",
+  "426430\t|\t1280\t|\tstrain",
+  "1280\t|\t1279\t|\tspecies",
+  "1279\t|\t90964\t|\tgenus",
+  "90964\t|\t1385\t|\tfamily",
+  "1385\t|\t91061\t|\torder",
+  "91061\t|\t1239\t|\tclass",
+  "1239\t|\t1783272\t|\tphylum",
+  "1783272\t|\t2\t|\tkingdom",
+  "131567\t|\t1\t|\tno rank"
+)
+
+tmp_accession<-tempfile()
+taxonomizr::read.names.sql(textConnection(namesText),tmp_accession, overwrite = TRUE)
+taxonomizr::read.nodes.sql(textConnection(nodesText),tmp_accession, overwrite = TRUE)
+
+
 ## Download filter genome
 all_species <- c("Staphylococcus aureus subsp. aureus str. Newman")
 all_ref <- vapply(all_species, MetaScope::download_refseq,
                   reference = FALSE, representative = FALSE, compress = TRUE,
                   out_dir = filter_ref_temp, caching = FALSE,
+                  accession_path = tmp_accession,
                   FUN.VALUE = character(1))
 ind_out <- vapply(all_ref, mk_subread_index, FUN.VALUE = character(1))
 
@@ -110,6 +148,7 @@ filtered_map <- filter_host(
 
 ## Remove temporary directory
 unlink(filter_ref_temp, recursive = TRUE)
+unlink(tmp_accession, recursive = TRUE)
 }
 
 }

@@ -62,14 +62,45 @@ library into one output file. If desired, output can be passed to
 target_ref_temp <- tempfile()
 dir.create(target_ref_temp)
 
-## Download genome
 tax <- "Ovine atadenovirus D"
+
+#' ## Create temporary taxonomizr accession
+namesText<-c(
+"130327\t|\tOvine atadenovirus D\t|\t|\tscientific name\t|",
+"100953\t|\tAtadenovirus\t|\t|\tscientific name\t|",
+"10508\t|\tAdenoviridae\t|\t|\tscientific name\t|",
+"2732559\t|\tRowavirales\t|\t|\tscientific name\t|",
+"2732529\t|\tTectiliviricetes\t|\t|\tscientific name\t|",
+"2732008\t|\tPreplasmiviricota\t|\t|\tscientific name\t|",
+"2732005\t|\tBamfordvirae\t|\t|\tscientific name\t|",
+"2732004\t|\tVaridnaviria\t|\t|\tscientific name\t|",
+"10239\t|\tViruses\t|\t|\tscientific name\t|")
+
+nodesText<-c(
+  "130327\t|\t100953\t|\tspecies",
+  "100953\t|\t10508\t|\tgenus",
+  "10508\t|\t2732559\t|\tfamily",
+  "2732559\t|\t2732529\t|\torder",
+  "2732529\t|\t2732008\t|\tclass",
+  "2732008\t|\t2732005\t|\tphylum",
+  "2732005\t|\t2732004\t|\tkingdom",
+  "2732004\t|\t10239\t|\tclade",
+  "10239\t|\t1\t|\tsuperkingdom",
+  "1\t|\t1\t|\tno rank")
+
+tmp_accession<-tempfile()
+taxonomizr::read.names.sql(textConnection(namesText),tmp_accession, overwrite = TRUE)
+taxonomizr::read.nodes.sql(textConnection(nodesText),tmp_accession, overwrite = TRUE)
+
+
+## Download genome
 all_ref <- MetaScope::download_refseq(tax,
                                       reference = FALSE,
                                       representative = FALSE,
                                       compress = TRUE,
                                       out_dir = target_ref_temp,
-                                      caching = TRUE)
+                                      caching = TRUE,
+                                      accession_path = tmp_accession)
 
 ## Create subread index
 ind_out <- mk_subread_index(all_ref)
@@ -96,6 +127,6 @@ target_map <- align_target(refPath,
 
 ## Remove temporary folder
 unlink(target_ref_temp, recursive = TRUE)
+unlink(tmp_accession, recursive = TRUE)
 }
-
 }
