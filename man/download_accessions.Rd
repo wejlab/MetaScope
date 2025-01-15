@@ -2,7 +2,7 @@
 % Please edit documentation in R/download_accessions.R
 \name{download_accessions}
 \alias{download_accessions}
-\title{Download indexes required for MetaScope ID and MetaBlast}
+\title{Download accessions DB required for MetaID and MetaBLAST modules}
 \usage{
 download_accessions(
   ind_dir,
@@ -15,26 +15,50 @@ download_accessions(
 )
 }
 \arguments{
-\item{ind_dir}{Character path to directory where indices should be saved}
+\item{ind_dir}{Character string. Directory filepath where indices should be
+saved. Required.}
 
-\item{NCBI_accessions_database}{Download taxonomizr NCBI accessions database?
+\item{NCBI_accessions_database}{Logical. Download taxonomizr NCBI accessions
+database? Defaults to \code{TRUE}.}
+
+\item{NCBI_accessions_name}{Character string. Filename (with extension) to
+save taxonomizr NCBI accessions database. Defaults to
+\code{"accessionTaxa.sql"}.}
+
+\item{silva_taxonomy_database}{Logical. Download SILVA taxonomy database?
 Defaults to \code{TRUE}.}
 
-\item{NCBI_accessions_name}{Name to save silva taxonomy database}
-
-\item{silva_taxonomy_database}{Download silva taxonomy database? Defaults to
-\code{TRUE}.}
-
-\item{silva_taxonomy_name}{Name of silva headers file. Defaults
-to the one hosted in MetaScope, \code{"all_silva_headers.rds"}.}
+\item{silva_taxonomy_name}{Character string. Filename (with extension) to
+save SILVA taxonomy database. Defaults to the file supplied with the
+package, \code{"all_silva_headers.rds"}.}
 
 \item{blast_16S_database}{Download NCBI 16S Blast database? Defaults to
 \code{TRUE}.}
 
-\item{blast_16S_name}{Name to save NCBI 16S Blast database}
+\item{blast_16S_name}{Character string. Filename (WITHOUT extension) to save
+SILVA taxonomy database. Defaults to \code{"16S_ribosomal_RNA"}.}
+}
+\value{
+Exports database(s) with names and to location specified by the user.
 }
 \description{
-This function will automatically download the NCBI accessions database, the
-SILVA taxonomy database, and the NCBI Blast 16S database and prepare it for
-MetaScope ID and MetaBlast
+This is a necessary step for all samples utilizing NCBI and SILVA databases
+in the MetaScope pipeline. As specified by the user,
+\code{download_accessions} will automatically download the NCBI accessions
+database, the SILVA taxonomy database, and or the NCBI Blast 16S database and
+prepare consolidated databases for downstream use with the MetaID and
+MetaBLAST modules. This package relies on the \code{taxonomizr} package.
+}
+\examples{
+\dontrun{
+  download_accessions(
+    ind_dir = "C:/Users/JohnSmith/Research",
+    NCBI_accessions_database = TRUE,
+    NCBI_accessions_name = "accessionTaxa.sql",
+    silva_taxonomy_database = TRUE,
+    silva_taxonomy_name = "all_silva_headers.rds",
+    blast_16S_database = TRUE,
+    blast_16S_name = "16S_ribosomal_RNA")
+}
+
 }

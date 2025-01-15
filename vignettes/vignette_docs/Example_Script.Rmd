@@ -30,15 +30,16 @@ library(MetaScope)
 nThreads <- 8
 loc <- "/restricted/projectnb/pathoscope/reflib/2023_refseq_bowtie"
 
-download_indices(file.path(loc, "indices"),
-                 NCBI_accessions_database = TRUE,
-                 NCBI_accessions_name = "accessionTaxa.sql",
-                 silva_taxonomy_database = TRUE,
-                 silva_taxonomy_name = "all_silva_headers.rds",
-                 blast_16S_database = TRUE,
-                 blast_16S_name = "16S_ribosomal_RNA"))
-
-
+# Download taxonomy database
+  # This should be done ONCE before running any samples
+  # The same downloaded database can be used for all samples
+download_accessions(file.path(loc, "indices"),
+                    NCBI_accessions_database = TRUE,
+                    NCBI_accessions_name = "accessionTaxa.sql",
+                    silva_taxonomy_database = TRUE,
+                    silva_taxonomy_name = "all_silva_headers.rds",
+                    blast_16S_database = TRUE,
+                    blast_16S_name = "16S_ribosomal_RNA"))
 
 targets <- tolower(c("bacteria"))
 filters <- c('homo sapiens', 'mus musculus')
