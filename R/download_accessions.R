@@ -16,7 +16,7 @@ getExtension <- function(file){
 #' @param ind_dir Character string. Directory filepath where indices should be
 #'   saved. Required.
 #' @param tmp_dir Character path to directory for storing temp files. (Useful
-#' to avoid redownloading) Defaults to \code{file_path(ind_dir, "tmp")}
+#' to avoid redownloading) Defaults to \code{file.path(ind_dir, "tmp")}
 #' @param remove_tmp_dir Delete tmp_dir after downloads are complete? Defaults
 #' to \code{TRUE}
 #' @param NCBI_accessions_database Logical. Download taxonomizr NCBI accessions
@@ -43,7 +43,7 @@ getExtension <- function(file){
 #' \dontrun{
 #'   download_accessions(
 #'     ind_dir = "C:/Users/JohnSmith/Research",
-#'     tmp_dir = file_path(ind_dir, "tmp"),
+#'     tmp_dir = file.path(ind_dir, "tmp"),
 #'     remove_tmp_dir = TRUE,
 #'     NCBI_accessions_database = TRUE,
 #'     NCBI_accessions_name = "accessionTaxa.sql",
@@ -55,7 +55,7 @@ getExtension <- function(file){
 #'
 
 download_accessions <- function(ind_dir,
-                                tmp_dir = file_path(ind_dir, "tmp"),
+                                tmp_dir = file.path(ind_dir, "tmp"),
                                 remove_tmp_dir = TRUE,
                                 NCBI_accessions_database = TRUE,
                                 NCBI_accessions_name = "accessionTaxa",
