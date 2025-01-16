@@ -109,11 +109,28 @@ Typically, the targets of the analysis are microbes (that is, viruses, bacteria,
 
 The `download_refseq()` function automatically extracts custom reference genome libraries in a FASTA file for microbial or host genomes. The user must first indicate a taxon for which to download the genomes, such as 'bacteria' or 'primates'. A table of possible entries can be viewed by accessing the `MetaScope:::taxonomy_table` object. The user may then specify whether they wish to download only the RefSeq reference genomes, or both the reference and representative genomes. The compress option then allows users to specify whether to compress the output FASTA file; this is done by default.
 
-## Creating Taxonomy Database
+## Creating a Taxonomy Database
 
-It is critical to include a taxonomy database for genomes we may suspect are in our sample. In the case of this vignette, we know in advance precisely which genomes and strains we will be testing. Therefore, we will generate a small subdatabase of taxonomizr references.
+A reference of taxonomy reference identifiers (e.g. NCBI accessions) is critical for fully identifying microbes with the MetaScope pipeline. This step should be completed ONCE, PRIOR TO RUNNING ANY AND ALL SAMPLES with the `download_accessions()` function. For an example of how to make a typical database for all host and filter genomes in your sample, please see the [example script](https://wejlab.github.io/metascope-docs/articles/docs/Example_Script.html) on our website.
 
-For an overview of how to make a typical database for all host and filter genomes in your sample, please see the [example script](https://wejlab.github.io/metascope-docs/articles/docs/Example_Script.html) on our website.
+If using the SILVA 16S database, NCBI nucleotide or RefSeq database, or NCBI BLAST 16S database, you can use `download_accessions()` with the following arguments:
+
+```{R eval = FALSE}
+download_accessions(
+  ind_dir = "C:/Users/JohnSmith/ResearchIndices",
+  # For NCBI RefSeq or nucleotide database
+  NCBI_accessions_database = TRUE,
+  NCBI_accessions_name = "accessionTaxa.sql",
+  # For SILVA 16S database
+  silva_taxonomy_database = TRUE,
+  silva_taxonomy_name = "all_silva_headers.rds",
+  # For BLAST 16S database
+  blast_16S_database = TRUE,
+  blast_16S_name = "16S_ribosomal_RNA"
+)
+```
+
+However, for this vignette, we know in advance precisely which genomes and strains we will be testing. Therefore, we will generate a small subdatabase of taxonomizr references. We do not need to use `download_accessions()` in this case.
 
 ```{R taxonomy_db, eval = TRUE, warning = FALSE, message = FALSE}
 namesText<-c(
@@ -264,6 +281,7 @@ taxa <- c(
   "NA\tNZ_LAWV01000021.1\t523796\tNA",
   "NA\tNZ_LAWV01000022.1\t523796\tNA",
   "NA\tNZ_LAWV01000023.1\t523796\tNA",
+  "NA\tNZ_LAWV01000024.1\t523796\tNA",
   "NA\tNZ_LAWV01000025.1\t523796\tNA",
   "NA\tNZ_LAWV01000003.1\t523796\tNA",
   "NA\tNZ_LAWV01000030.1\t523796\tNA",
@@ -442,21 +460,9 @@ param <-
 
 aln <- Rsamtools::scanBam(bamFile, param = param)
 accession_all <- aln[[1]]$rname
-unique_accession_all <- unique(accession_all)
-accession_all_inds <- match(accession_all, unique_accession_all)
-unique_accession_genome_name <- suppressMessages(
-  taxize::genbank2uid(unique_accession_all,
-                      batch_size = length(unique_accession_all))) %>%
-  vapply(function(x) attr(x, "name"), character(1))
-
-genome_name_all <- unique_accession_genome_name[accession_all_inds] %>%
-  gsub(',.*', '', .) %>%
-  gsub("(ST398).*", "\\1", .) %>%
-  gsub("(N315).*", "\\1", .) %>%
-  gsub("(Newman).*", "\\1", .) %>%
-  gsub("(Mu3).*", "\\1", .) %>%
-  gsub("(Mu50).*", "\\1", .) %>%
-  gsub("(RF122).*", "\\1", .)
+genome_name_all <- accession_all |> 
+  taxonomizr::accessionToTaxa(tmp_accession) |>
+  taxonomizr::getTaxonomy(sqlFile = tmp_accession, desiredTaxa = "strain")
 read_count_table <- sort(table(genome_name_all), decreasing = TRUE)
 knitr::kable(
   read_count_table,
@@ -476,23 +482,9 @@ param <-
 
 aln <- Rsamtools::scanBam(bamFile, param = param)
 accession_all <- aln[[1]]$rname
-unique_accession_all <- unique(accession_all)
-accession_all_inds <- match(accession_all, unique_accession_all)
-unique_accession_taxid <-
-  suppressMessages(
-    taxize::genbank2uid(unique_accession_all,
-                        batch_size = length(unique_accession_all)))
-unique_accession_genome_name <-
-  vapply(unique_accession_taxid, function(x)
-    attr(x, "name"), character(1))
-genome_name_all <- unique_accession_genome_name[accession_all_inds]
-genome_name_all <- gsub(',.*', '', genome_name_all)
-genome_name_all <- gsub("(ST398).*", "\\1", genome_name_all)
-genome_name_all <- gsub("(N315).*", "\\1", genome_name_all)
-genome_name_all <- gsub("(Newman).*", "\\1", genome_name_all)
-genome_name_all <- gsub("(Mu3).*", "\\1", genome_name_all)
-genome_name_all <- gsub("(Mu50).*", "\\1", genome_name_all)
-genome_name_all <- gsub("(RF122).*", "\\1", genome_name_all)
+genome_name_all <- accession_all |> 
+  taxonomizr::accessionToTaxa(tmp_accession) |>
+  taxonomizr::getTaxonomy(sqlFile = tmp_accession, desiredTaxa = "strain")
 read_count_table <- sort(table(genome_name_all), decreasing = TRUE)
 knitr::kable(
   read_count_table,

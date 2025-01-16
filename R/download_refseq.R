@@ -260,11 +260,38 @@ find_strains <- function(intable) {
 #' @examples
 #' #### Download RefSeq genomes
 #'
+#' ## Create temporary taxonomizr accession
+#' namesText<-c(
+#' "2169575\t|\tBovismacovirus\t|\t|\tscientific name\t|",
+#' "2169574\t|\tSmacoviridae\t|\t|\tscientific name\t|",
+#' "2732537\t|\tCremevirales\t|\t|\tscientific name\t|",
+#' "2732423\t|\tArfiviricetes\t|\t|\tscientific name\t|",
+#' "2732416\t|\tCressdnaviricota\t|\t|\tscientific name\t|",
+#' "2732092\t|\tShotokuvirae\t|\t|\tscientific name\t|",
+#' "2731342\t|\tMonodnaviria\t|\t|\tscientific name\t|",
+#' "10239\t|\tViruses\t|\t|\tscientific name\t|")
+#'
+#' nodesText<-c(
+#'   "2169575\t|\t2169574\t|\tgenus",
+#'   "2169574\t|\t2732537\t|\tfamily",
+#'   "2732537\t|\t2732423\t|\torder",
+#'   "2732423\t|\t2732416\t|\tclass",
+#'   "2732416\t|\t2732092\t|\tphylum",
+#'   "2732092\t|\t2731342\t|\tkingdom",
+#'   "2731342\t|\t10239\t|\tclade",
+#'   "10239\t|\t1\t|\tsuperkingdom",
+#'   "1\t|\t1\t|\tno rank")
+#'
+#' tmp_accession<-tempfile()
+#' taxonomizr::read.names.sql(textConnection(namesText),tmp_accession, overwrite = TRUE)
+#' taxonomizr::read.nodes.sql(textConnection(nodesText),tmp_accession, overwrite = TRUE)
+#'
 #' ## Download all RefSeq reference Bovismacovirus genus genomes
 #' download_refseq('Bovismacovirus', reference = FALSE, representative = FALSE,
 #'                 out_dir = NULL, compress = TRUE, patho_out = FALSE,
-#'                 caching = TRUE)
+#'                 caching = TRUE, accession_path = tmp_accession)
 #'
+#' unlink(tmp_accession, recursive = TRUE)
 
 download_refseq <- function(taxon, reference = TRUE, representative = FALSE,
                             compress = TRUE, patho_out = FALSE,
