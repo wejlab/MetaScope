@@ -99,6 +99,9 @@ library/.bam files use NCBI accession names for reference names (rnames in
 file_temp <- tempfile()
 dir.create(file_temp)
 
+## Get temporary accessions database
+tmp_accession <- system.file("extdata", "example_accessions.sql", package = "MetaScope")
+
 #### Subread aligned bam file
 
 ## Create object with path to filtered subread csv.gz file
@@ -109,7 +112,7 @@ file.copy(bamPath, file_temp)
 ## Run metascope id with the aligner option set to subread
 metascope_id(input_file = file.path(file_temp, filt_file),
              aligner = "subread", num_species_plot = 0,
-             input_type = "csv.gz")
+             input_type = "csv.gz", accession_path = tmp_accession)
 
 #### Bowtie 2 aligned .csv.gz file
 
@@ -120,7 +123,8 @@ file.copy(bamPath, file_temp)
 
 ## Run metascope id with the aligner option set to bowtie2
 metascope_id(file.path(file_temp, bowtie_file), aligner = "bowtie2",
-             num_species_plot = 0, input_type = "csv.gz")
+             num_species_plot = 0, input_type = "csv.gz",
+             accession_path = tmp_accession)
 
 ## Remove temporary directory
 unlink(file_temp, recursive = TRUE)

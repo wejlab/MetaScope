@@ -116,7 +116,7 @@ metascope_id_path <- file.path(file_temp, paste0(out_base, ".metascope_id.csv"))
 # NOTE: change db_path to the location where your BLAST database is stored!
 db <- "/restricted/projectnb/pathoscope/data/blastdb/nt/nt"
 
-Sys.setenv(ENTREZ_KEY = "<your id here>")
+tmp_accession <- system.file("extdata", "example_accessions.sql", package = "MetaScope"
 
 metascope_blast(metascope_id_path,
                 bam_file_path = file.path(file_temp, "bowtie_target.bam"),
@@ -131,7 +131,7 @@ metascope_blast(metascope_id_path,
                 db = "ncbi",
                 quiet = FALSE,
                 fasta_dir = NULL,
-                accession_path = NULL)
+                accession_path = tmp_accession)
 
 ## Remove temporary directory
 unlink(file_temp, recursive = TRUE)

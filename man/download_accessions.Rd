@@ -2,14 +2,16 @@
 % Please edit documentation in R/download_accessions.R
 \name{download_accessions}
 \alias{download_accessions}
-\title{Download accessions DB required for MetaID and MetaBLAST modules}
+\title{Download indexes required for MetaScope ID and MetaBlast modules}
 \usage{
 download_accessions(
   ind_dir,
+  tmp_dir = file.path(ind_dir, "tmp"),
+  remove_tmp_dir = TRUE,
   NCBI_accessions_database = TRUE,
-  NCBI_accessions_name = "accessionTaxa.sql",
+  NCBI_accessions_name = "accessionTaxa",
   silva_taxonomy_database = TRUE,
-  silva_taxonomy_name = "all_silva_headers.rds",
+  silva_taxonomy_name = "all_silva_headers",
   blast_16S_database = TRUE,
   blast_16S_name = "16S_ribosomal_RNA"
 )
@@ -18,24 +20,31 @@ download_accessions(
 \item{ind_dir}{Character string. Directory filepath where indices should be
 saved. Required.}
 
+\item{tmp_dir}{Character path to directory for storing temp files. (Useful
+to avoid redownloading) Defaults to \code{file.path(ind_dir, "tmp")}}
+
+\item{remove_tmp_dir}{Delete tmp_dir after downloads are complete? Defaults
+to \code{TRUE}}
+
 \item{NCBI_accessions_database}{Logical. Download taxonomizr NCBI accessions
 database? Defaults to \code{TRUE}.}
 
-\item{NCBI_accessions_name}{Character string. Filename (with extension) to
-save taxonomizr NCBI accessions database. Defaults to
+\item{NCBI_accessions_name}{Character string. Filename (with or without
+extension) to save taxonomizr NCBI accessions database. Defaults to
 \code{"accessionTaxa.sql"}.}
 
 \item{silva_taxonomy_database}{Logical. Download SILVA taxonomy database?
 Defaults to \code{TRUE}.}
 
-\item{silva_taxonomy_name}{Character string. Filename (with extension) to
-save SILVA taxonomy database. Defaults to the file supplied with the
-package, \code{"all_silva_headers.rds"}.}
+\item{silva_taxonomy_name}{Character string. Filename (with or without
+extension) to save SILVA taxonomy database.
+Defaults to the file supplied with the package,
+\code{"all_silva_headers.rds"}.}
 
 \item{blast_16S_database}{Download NCBI 16S Blast database? Defaults to
 \code{TRUE}.}
 
-\item{blast_16S_name}{Character string. Filename (WITHOUT extension) to save
+\item{blast_16S_name}{Character string. Filename (without extension) to save
 SILVA taxonomy database. Defaults to \code{"16S_ribosomal_RNA"}.}
 }
 \value{
@@ -53,6 +62,8 @@ MetaBLAST modules. This package relies on the \code{taxonomizr} package.
 \dontrun{
   download_accessions(
     ind_dir = "C:/Users/JohnSmith/Research",
+    tmp_dir = file.path(ind_dir, "tmp"),
+    remove_tmp_dir = TRUE,
     NCBI_accessions_database = TRUE,
     NCBI_accessions_name = "accessionTaxa.sql",
     silva_taxonomy_database = TRUE,

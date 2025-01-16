@@ -37,12 +37,13 @@ indexes, with _1, _2, etc at the end of the ref_lib basename.
 ## Create a temporary directory to store the reference library
 ref_temp <- tempfile()
 dir.create(ref_temp)
+tmp_accession <- system.file("extdata", "example_accessions.sql", package = "MetaScope")
 
 ## Download reference genome
 out_fasta <- download_refseq('Orthoebolavirus zairense', reference = FALSE,
                              representative = FALSE, out_dir = ref_temp,
                              compress = TRUE, patho_out = FALSE,
-                             caching = TRUE)
+                             caching = TRUE, accession_path = tmp_accession)
 
 ## Make subread index of reference library
 mk_subread_index(out_fasta)
