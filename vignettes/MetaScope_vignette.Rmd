@@ -109,11 +109,30 @@ Typically, the targets of the analysis are microbes (that is, viruses, bacteria,
 
 The `download_refseq()` function automatically extracts custom reference genome libraries in a FASTA file for microbial or host genomes. The user must first indicate a taxon for which to download the genomes, such as 'bacteria' or 'primates'. A table of possible entries can be viewed by accessing the `MetaScope:::taxonomy_table` object. The user may then specify whether they wish to download only the RefSeq reference genomes, or both the reference and representative genomes. The compress option then allows users to specify whether to compress the output FASTA file; this is done by default.
 
-## Creating Taxonomy Database
+## Creating a Taxonomy Database
 
-It is critical to include a taxonomy database for genomes we may suspect are in our sample. In the case of this vignette, we know in advance precisely which genomes and strains we will be testing. Therefore, we will generate a small subdatabase of taxonomizr references.
+A reference of taxonomy reference identifiers (e.g. NCBI accessions) is critical for fully identifying microbes with the MetaScope pipeline. This step should be completed ONCE, PRIOR TO RUNNING ANY AND ALL SAMPLES with the `download_accessions()` function. For an example of how to make a typical database for all host and filter genomes in your sample, please see the [example script](https://wejlab.github.io/metascope-docs/articles/docs/Example_Script.html) on our website.
 
-For an overview of how to make a typical database for all host and filter genomes in your sample, please see the [example script](https://wejlab.github.io/metascope-docs/articles/docs/Example_Script.html) on our website.
+If using the SILVA 16S database, NCBI nucleotide or RefSeq database, or NCBI BLAST 16S database, you can use `download_accessions()` with the following arguments:
+
+```{R eval = FALSE}
+download_accessions(
+  ind_dir = "C:/Users/JohnSmith/ResearchIndices",
+  tmp_dir = file_path(ind_dir, "tmp"),
+  remove_tmp_dir = TRUE, 
+  # For NCBI RefSeq or nucleotide database
+  NCBI_accessions_database = TRUE,
+  NCBI_accessions_name = "accessionTaxa.sql",
+  # For SILVA 16S database
+  silva_taxonomy_database = TRUE,
+  silva_taxonomy_name = "all_silva_headers.rds",
+  # For BLAST 16S database
+  blast_16S_database = TRUE,
+  blast_16S_name = "16S_ribosomal_RNA"
+)
+```
+
+However, for this vignette, we know in advance precisely which genomes and strains we will be testing. Therefore, we will generate a small subdatabase of taxonomizr references. We do not need to use `download_accessions()` in this case.
 
 ```{R taxonomy_db, eval = TRUE, warning = FALSE, message = FALSE}
 tmp_accession <- system.file("extdata","example_accessions.sql", package = "MetaScope")
