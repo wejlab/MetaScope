@@ -75,40 +75,7 @@ by copying files to a new location before running the function.
 target_ref_temp <- tempfile()
 dir.create(target_ref_temp)
 
-namesText<-c(
-  "3052345\t|\tMorbillivirus hominis\t|\t|\tscientific name\t|",
-  "11229\t|\tMorbillivirus\t|\t|\tscientific name\t|",
-  "2560076\t|\tOrthoparamyxovirinae\t|\t|\tscientific name\t|",
-  "11158\t|\tParamyxoviridae\t|\t|\tscientific name\t|",
-  "11157\t|\tMononegavirales\t|\t|\tscientific name\t|",
-  "2497574\t|\tMonjiviricetes\t|\t|\tscientific name\t|",
-  "2497570\t|\tHaploviricotina\t|\t|\tscientific name\t|",
-  "2497569\t|\tNegarnaviricota\t|\t|\tscientific name\t|",
-  "2732396\t|\tOrthornavirae\t|\t|\tscientific name\t|",
-  "2559587\t|\tRiboviria\t|\t|\tscientific name\t|",
-  "10239\t|\tViruses\t|\t|\tscientific name\t|"
-)
-
-
-nodesText<-c(
-  "1\t|\t1\t|\tno rank\t|\t\t|\t8\t|\t0\t|\t1\t|\t0\t|\t0\t|\t0\t|\t0\t|\t0\t|\t\t|",
-  "11234\t|\t3052345\t|\tno rank",
-  "3052345\t|\t11229\t|\tspecies",
-  "11229\t|\t2560076\t|\tgenus",
-  "2560076\t|\t11158\t|\tsubfamily",
-  "11158\t|\t11157\t|\tfamily",
-  "11157\t|\t2497574\t|\torder",
-  "2497574\t|\t2497570\t|\tclass",
-  "2497570\t|\t2497569\t|\tsubphylum",
-  "2497569\t|\t2732396\t|\tphylum",
-  "2732396\t|\t2559587\t|\tkingdom",
-  "2559587\t|\t10239\t|\tclade",
-  "10239\t|\t1\t|\tsuperkingdom"
-)
-
-tmp_accession<-tempfile()
-taxonomizr::read.names.sql(textConnection(namesText),tmp_accession, overwrite = TRUE)
-taxonomizr::read.nodes.sql(textConnection(nodesText),tmp_accession, overwrite = TRUE)
+tmp_accession <- system.file("extdata", "example_accessions.sql", package = "MetaScope")
 
 ## Dowload reference genome
 MetaScope::download_refseq("Morbillivirus hominis",
@@ -156,6 +123,5 @@ target_map <-
 unlink(target_ref_temp, recursive = TRUE)
 unlink(index_temp, recursive = TRUE)
 unlink(output_temp, recursive = TRUE)
-unlink(tmp_accession, recursive = TRUE)
 }
 }

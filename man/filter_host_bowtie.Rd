@@ -88,36 +88,8 @@ The default parameters are the same that PathoScope 2.0 uses.
 filter_ref_temp <- tempfile()
 dir.create(filter_ref_temp)
 
-#' ## Create temporary taxonomizr accession
-namesText<-c(
-"3052462\t|\tOrthoebolavirus zairense\t|\t|\tscientific name\t|",
-"3044781\t|\tOrthoebolavirus\t|\t|\tscientific name\t|",
-"11266\t|\tFiloviridae\t|\t|\tscientific name\t|",
-"11157\t|\tMononegavirales\t|\t|\tscientific name\t|",
-"2497574\t|\tMonjiviricetes\t|\t|\tscientific name\t|",
-"2497570\t|\tHaploviricotina\t|\t|\tscientific name\t|",
-"2497569\t|\tNegarnaviricota\t|\t|\tscientific name\t|",
-"2732396\t|\tOrthornavirae\t|\t|\tscientific name\t|",
-"2559587\t|\tRiboviria\t|\t|\tscientific name\t|",
-"10239\t|\tViruses\t|\t|\tscientific name\t|")
-
-nodesText<-c(
-  "3052462\t|\t3044781\t|\tspecies",
-  "3044781\t|\t11266\t|\tgenus",
-  "11266\t|\t11157\t|\tfamily",
-  "11157\t|\t2497574\t|\torder",
-  "2497574\t|\t2497570\t|\tclass",
-  "2497570\t|\t2497569\t|\tsubphylum",
-  "2497569\t|\t2732396\t|\tsphylum",
-  "2732396\t|\t2559587\t|\tkingdom",
-  "2559587\t|\t10239\t|\tclade",
-  "10239\t|\t1\t|\tsuperkingdom",
-  "1\t|\t1\t|\tno rank")
-
-tmp_accession<-tempfile()
-taxonomizr::read.names.sql(textConnection(namesText),tmp_accession, overwrite = TRUE)
-taxonomizr::read.nodes.sql(textConnection(nodesText),tmp_accession, overwrite = TRUE)
-
+## Create temporary taxonomizr accession
+tmp_accession <- system.file("extdata", "example_accessions.sql", package = "MetaScope")
 
 ## Download reference genome
 MetaScope::download_refseq("Orthoebolavirus zairense",
@@ -163,5 +135,4 @@ filter_out <-
 unlink(filter_ref_temp, recursive = TRUE)
 unlink(index_temp, recursive = TRUE)
 unlink(output_temp, recursive = TRUE)
-unlink(tmp_accession, recursive = TRUE)
 }

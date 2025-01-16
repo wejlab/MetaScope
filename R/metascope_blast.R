@@ -566,7 +566,7 @@ blast_result_metrics <- function(blast_results_table_path, accession_path, db = 
 #' @param fasta_dir Directory where fasta files for blast will be stored.
 #' @param accession_path (character) Filepath to NCBI accessions SQL
 #'   database. See \code{taxonomzr::prepareDatabase()}.
-#' 
+#'
 #' @returns This function writes an updated csv file with metrics.
 #'
 #' @export
@@ -594,7 +594,7 @@ blast_result_metrics <- function(blast_results_table_path, accession_path, db = 
 #' # NOTE: change db_path to the location where your BLAST database is stored!
 #' db <- "/restricted/projectnb/pathoscope/data/blastdb/nt/nt"
 #'
-#' Sys.setenv(ENTREZ_KEY = "<your id here>")
+#' tmp_accession <- system.file("extdata", "example_accessions.sql", package = "MetaScope"
 #'
 #' metascope_blast(metascope_id_path,
 #'                 bam_file_path = file.path(file_temp, "bowtie_target.bam"),
@@ -609,7 +609,7 @@ blast_result_metrics <- function(blast_results_table_path, accession_path, db = 
 #'                 db = "ncbi",
 #'                 quiet = FALSE,
 #'                 fasta_dir = NULL,
-#'                 accession_path = NULL)
+#'                 accession_path = tmp_accession)
 #'
 #' ## Remove temporary directory
 #' unlink(file_temp, recursive = TRUE)

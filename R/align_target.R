@@ -222,34 +222,8 @@ merge_bam_files <- function(bam_files, destination,
 #'
 #' tax <- "Ovine atadenovirus D"
 #'
-#' #' ## Create temporary taxonomizr accession
-#' namesText<-c(
-#' "130327\t|\tOvine atadenovirus D\t|\t|\tscientific name\t|",
-#' "100953\t|\tAtadenovirus\t|\t|\tscientific name\t|",
-#' "10508\t|\tAdenoviridae\t|\t|\tscientific name\t|",
-#' "2732559\t|\tRowavirales\t|\t|\tscientific name\t|",
-#' "2732529\t|\tTectiliviricetes\t|\t|\tscientific name\t|",
-#' "2732008\t|\tPreplasmiviricota\t|\t|\tscientific name\t|",
-#' "2732005\t|\tBamfordvirae\t|\t|\tscientific name\t|",
-#' "2732004\t|\tVaridnaviria\t|\t|\tscientific name\t|",
-#' "10239\t|\tViruses\t|\t|\tscientific name\t|")
-#'
-#' nodesText<-c(
-#'   "130327\t|\t100953\t|\tspecies",
-#'   "100953\t|\t10508\t|\tgenus",
-#'   "10508\t|\t2732559\t|\tfamily",
-#'   "2732559\t|\t2732529\t|\torder",
-#'   "2732529\t|\t2732008\t|\tclass",
-#'   "2732008\t|\t2732005\t|\tphylum",
-#'   "2732005\t|\t2732004\t|\tkingdom",
-#'   "2732004\t|\t10239\t|\tclade",
-#'   "10239\t|\t1\t|\tsuperkingdom",
-#'   "1\t|\t1\t|\tno rank")
-#'
-#' tmp_accession<-tempfile()
-#' taxonomizr::read.names.sql(textConnection(namesText),tmp_accession, overwrite = TRUE)
-#' taxonomizr::read.nodes.sql(textConnection(nodesText),tmp_accession, overwrite = TRUE)
-#'
+#' ## Create temporary taxonomizr accession
+#' tmp_accession <- system.file("extdata", "example_accessions.sql", package = "MetaScope")
 #'
 #' ## Download genome
 #' all_ref <- MetaScope::download_refseq(tax,
@@ -285,7 +259,6 @@ merge_bam_files <- function(bam_files, destination,
 #'
 #' ## Remove temporary folder
 #' unlink(target_ref_temp, recursive = TRUE)
-#' unlink(tmp_accession, recursive = TRUE)
 #' }
 
 align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
@@ -385,40 +358,7 @@ align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
 #' target_ref_temp <- tempfile()
 #' dir.create(target_ref_temp)
 #'
-#' namesText<-c(
-#'   "3052345\t|\tMorbillivirus hominis\t|\t|\tscientific name\t|",
-#'   "11229\t|\tMorbillivirus\t|\t|\tscientific name\t|",
-#'   "2560076\t|\tOrthoparamyxovirinae\t|\t|\tscientific name\t|",
-#'   "11158\t|\tParamyxoviridae\t|\t|\tscientific name\t|",
-#'   "11157\t|\tMononegavirales\t|\t|\tscientific name\t|",
-#'   "2497574\t|\tMonjiviricetes\t|\t|\tscientific name\t|",
-#'   "2497570\t|\tHaploviricotina\t|\t|\tscientific name\t|",
-#'   "2497569\t|\tNegarnaviricota\t|\t|\tscientific name\t|",
-#'   "2732396\t|\tOrthornavirae\t|\t|\tscientific name\t|",
-#'   "2559587\t|\tRiboviria\t|\t|\tscientific name\t|",
-#'   "10239\t|\tViruses\t|\t|\tscientific name\t|"
-#' )
-#'
-#'
-#' nodesText<-c(
-#'   "1\t|\t1\t|\tno rank\t|\t\t|\t8\t|\t0\t|\t1\t|\t0\t|\t0\t|\t0\t|\t0\t|\t0\t|\t\t|",
-#'   "11234\t|\t3052345\t|\tno rank",
-#'   "3052345\t|\t11229\t|\tspecies",
-#'   "11229\t|\t2560076\t|\tgenus",
-#'   "2560076\t|\t11158\t|\tsubfamily",
-#'   "11158\t|\t11157\t|\tfamily",
-#'   "11157\t|\t2497574\t|\torder",
-#'   "2497574\t|\t2497570\t|\tclass",
-#'   "2497570\t|\t2497569\t|\tsubphylum",
-#'   "2497569\t|\t2732396\t|\tphylum",
-#'   "2732396\t|\t2559587\t|\tkingdom",
-#'   "2559587\t|\t10239\t|\tclade",
-#'   "10239\t|\t1\t|\tsuperkingdom"
-#' )
-#'
-#' tmp_accession<-tempfile()
-#' taxonomizr::read.names.sql(textConnection(namesText),tmp_accession, overwrite = TRUE)
-#' taxonomizr::read.nodes.sql(textConnection(nodesText),tmp_accession, overwrite = TRUE)
+#' tmp_accession <- system.file("extdata", "example_accessions.sql", package = "MetaScope")
 #'
 #' ## Dowload reference genome
 #' MetaScope::download_refseq("Morbillivirus hominis",
@@ -466,7 +406,6 @@ align_target <- function(read1, read2 = NULL, lib_dir = NULL, libs,
 #' unlink(target_ref_temp, recursive = TRUE)
 #' unlink(index_temp, recursive = TRUE)
 #' unlink(output_temp, recursive = TRUE)
-#' unlink(tmp_accession, recursive = TRUE)
 #' }
 
 align_target_bowtie <- function(read1, read2 = NULL, lib_dir, libs,
