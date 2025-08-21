@@ -53,6 +53,7 @@ Suggests:
     lintr,
     plyr,
     R.utils,
+    RCurl,
     rmarkdown,
     Rsubread,
     spelling,
