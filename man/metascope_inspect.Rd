@@ -10,19 +10,15 @@ metascope_inspect(bt2_base, ...)
 \item{bt2_base}{The path to the Bowtie2 index files minus minus trailing
 .1.bt2/.2.bt2 extension names.}
 
-\item{...}{Additional arguments to be passed on to the \code{bowtie2-inspect}
+\item{...}{Required additional arguments to be passed on to the \code{bowtie2-inspect}
 binaries. See below for details.}
-}
-\value{
-By default, prints FASTA records of the indexed nucleotide sequences
-to standard out.
 }
 \description{
 This function can be use to call the \code{bowtie2-inspect} wrapper which
 wraps the \code{bowtie2-inspect-s} and \code{bowtie2-inspect-l} binaries.
 }
 \details{
-All additional arguments in ... are intepreted as additional
+All additional arguments in ... are intepreted as
 parameters to be passed on to \code{bowtie2-inspect} wrapper. All of them
 \code{Character} or \code{Numeric} scalar. You can put all additional
 arguments in one \code{Character} (e.g. "--across 60 --names") with white
