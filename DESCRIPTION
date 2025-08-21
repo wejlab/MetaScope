@@ -2,12 +2,12 @@ Type: Package
 Package: MetaScope
 Title: Tools and functions for preprocessing 16S and metagenomic
     sequencing microbiome data
-Version: 1.9.9
+Version: 1.9.10
 Authors@R: c(
-    person("Aubrey", "Odom", , "aodom@bu.edu", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0001-7113-7598")),
-    person("Sean", "Lu", , "sl1729@njms.rutgers.edu", role = c("aut"),
+    person("Sean", "Lu", , "seanlu96@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0009-0007-8005-6125")),
+    person("Aubrey", "Odom", , "aodom@bu.edu", role = c("aut"),
+           comment = c(ORCID = "0000-0001-7113-7598")),
     person("Rahul", "Varki", , "rvarki@bu.edu", role = "aut",
            comment = c(ORCID = "0009-0003-5721-9484")),
     person("W. Evan", "Johnson", , "wej@bu.edu", role = "aut",
